@@ -11,6 +11,9 @@ import { generateReportPdfBuffer } from "@/lib/reportPdf";
 import { sendReportPdfEmail } from "@/lib/reportEmail";
 import { successUi } from "@/lib/uiCopy";
 
+/** pdfmake + vfs_fonts need Node (not Edge). */
+export const runtime = "nodejs";
+
 function extractText(resp: unknown): string {
   if (!resp || typeof resp !== "object") return "";
   const output = (resp as { output?: unknown }).output;

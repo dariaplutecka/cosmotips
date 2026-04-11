@@ -8,10 +8,14 @@ const require = createRequire(import.meta.url);
 // pdfmake is CommonJS-only; keep on server only.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const PdfPrinter = require("pdfmake/js/Printer").default;
+/**
+ * pdfmake/build/vfs_fonts.js exports the vfs map directly (`module.exports = vfs`).
+ * Some docs / older builds used `{ pdfMake: { vfs } }` — support both for bundlers.
+ */
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfFonts = require("pdfmake/build/vfs_fonts.js") as {
-  pdfMake: { vfs: Record<string, string> };
-};
+const vfsFontsModule = require("pdfmake/build/vfs_fonts.js") as
+  | Record<string, string>
+  | { pdfMake?: { vfs?: Record<string, string> } };
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const virtualfs = require("pdfmake/js/virtual-fs").default;
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -21,11 +25,27 @@ const OutputDocument = require("pdfmake/js/OutputDocument").default;
 
 let vfsPopulated = false;
 
+function getRobotoVfs(): Record<string, string> {
+  const m = vfsFontsModule as Record<string, unknown> & {
+    pdfMake?: { vfs?: Record<string, string> };
+  };
+  const wrapped = m?.pdfMake?.vfs;
+  if (wrapped && typeof wrapped === "object") {
+    return wrapped;
+  }
+  if (m && typeof m === "object") {
+    return m as Record<string, string>;
+  }
+  throw new Error("pdfmake vfs_fonts: module did not export a VFS map");
+}
+
 function ensurePdfFontsInVfs() {
   if (vfsPopulated) return;
-  const vfs = pdfFonts.pdfMake.vfs;
+  const vfs = getRobotoVfs();
   for (const filename of Object.keys(vfs)) {
-    virtualfs.writeFileSync(filename, Buffer.from(vfs[filename], "base64"));
+    const b64 = vfs[filename];
+    if (typeof b64 !== "string") continue;
+    virtualfs.writeFileSync(filename, Buffer.from(b64, "base64"));
   }
   vfsPopulated = true;
 }
