@@ -44,6 +44,8 @@ export const successUi: Record<
     pdfEmailSent: string;
     pdfEmailSkipped: string;
     pdfEmailFailed: string;
+    pdfEmailSkipHintNoApiKey: string;
+    pdfEmailSkipHintNoFrom: string;
     generating: string;
     regenerate: string;
     print: string;
@@ -64,6 +66,10 @@ export const successUi: Record<
       "PDF email delivery isn’t configured on the server — use Print / save from this page.",
     pdfEmailFailed:
       "We couldn’t email the PDF — you can still print or save the report below.",
+    pdfEmailSkipHintNoApiKey:
+      "Tip for the site owner: set RESEND_API_KEY on the server (e.g. Vercel → Environment Variables).",
+    pdfEmailSkipHintNoFrom:
+      "Tip for the site owner: set REPORT_EMAIL_FROM to a verified sender (e.g. CosmoTips <reports@yourdomain>).",
     generating: "Generating your report…",
     regenerate: "Regenerate",
     print: "Download / Print",
@@ -87,6 +93,10 @@ export const successUi: Record<
       "Wysyłka PDF na e-mail nie jest skonfigurowana — użyj opcji druku / zapisu ze strony.",
     pdfEmailFailed:
       "Nie udało się wysłać PDF na e-mail — możesz nadal wydrukować lub zapisać raport poniżej.",
+    pdfEmailSkipHintNoApiKey:
+      "Wskazówka: na serwerze (np. Vercel) ustaw zmienną RESEND_API_KEY.",
+    pdfEmailSkipHintNoFrom:
+      "Wskazówka: ustaw REPORT_EMAIL_FROM na zweryfikowany adres nadawcy w Resend.",
     generating: "Generuję raport…",
     regenerate: "Wygeneruj ponownie",
     print: "Pobierz / drukuj",
@@ -110,6 +120,10 @@ export const successUi: Record<
       "El envío de PDF por correo no está configurado — usa imprimir / guardar desde esta página.",
     pdfEmailFailed:
       "No pudimos enviar el PDF por correo — aún puedes imprimir o guardar el informe abajo.",
+    pdfEmailSkipHintNoApiKey:
+      "Para quien administra el sitio: define RESEND_API_KEY en el servidor (p. ej. variables de entorno en Vercel).",
+    pdfEmailSkipHintNoFrom:
+      "Define REPORT_EMAIL_FROM con un remitente verificado en Resend.",
     generating: "Generando tu informe…",
     regenerate: "Regenerar",
     print: "Descargar / imprimir",

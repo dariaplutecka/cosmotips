@@ -137,7 +137,12 @@ export async function GET(req: Request) {
   const pdfTitle =
     successUi[parsed.data.lang].reportTitle[parsed.data.reportType];
 
-  let emailPdfStatus: "sent" | "skipped" | "failed" = "skipped";
+  type EmailPdfPayload = {
+    status: "sent" | "skipped" | "failed";
+    skipReason?: "no_api_key" | "no_from";
+    detail?: string;
+  };
+  let emailPdf: EmailPdfPayload = { status: "skipped" };
   try {
     const pdfBuffer = await generateReportPdfBuffer(text, pdfTitle);
     const emailResult = await sendReportPdfEmail({
@@ -146,11 +151,24 @@ export async function GET(req: Request) {
       reportType: parsed.data.reportType,
       pdfBuffer,
     });
-    if (emailResult.sent) emailPdfStatus = "sent";
-    else if (emailResult.reason === "send_failed") emailPdfStatus = "failed";
+    if (emailResult.sent) {
+      emailPdf = { status: "sent" };
+    } else if (emailResult.reason === "send_failed") {
+      emailPdf = {
+        status: "failed",
+        detail: emailResult.detail,
+      };
+    } else if (emailResult.reason === "no_api_key") {
+      emailPdf = { status: "skipped", skipReason: "no_api_key" };
+    } else if (emailResult.reason === "no_from") {
+      emailPdf = { status: "skipped", skipReason: "no_from" };
+    }
   } catch (e) {
     console.error("[report/generate] PDF or email:", e);
-    emailPdfStatus = "failed";
+    emailPdf = {
+      status: "failed",
+      detail: e instanceof Error ? e.message : "pdf_or_email_error",
+    };
   }
 
   return NextResponse.json({
@@ -163,6 +181,6 @@ export async function GET(req: Request) {
       reportType: parsed.data.reportType,
       lang: parsed.data.lang,
     },
-    emailPdf: { status: emailPdfStatus },
+    emailPdf,
   });
 }

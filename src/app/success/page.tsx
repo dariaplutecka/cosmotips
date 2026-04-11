@@ -20,11 +20,17 @@ type Meta = {
 
 type EmailPdfStatus = "sent" | "skipped" | "failed";
 
+type EmailPdfFromApi = {
+  status: EmailPdfStatus;
+  skipReason?: "no_api_key" | "no_from";
+  detail?: string;
+};
+
 type GenerateResponse =
   | {
       report: string;
       meta: Meta;
-      emailPdf?: { status: EmailPdfStatus };
+      emailPdf?: EmailPdfFromApi;
     }
   | { error: string };
 
@@ -84,7 +90,7 @@ function SuccessInner() {
   const [chart, setChart] = useState<NatalChartPayload | null>(null);
   const [chartLoading, setChartLoading] = useState(false);
   const [chartError, setChartError] = useState<string | null>(null);
-  const [emailPdfStatus, setEmailPdfStatus] = useState<EmailPdfStatus | null>(
+  const [emailPdfInfo, setEmailPdfInfo] = useState<EmailPdfFromApi | null>(
     null,
   );
 
@@ -105,7 +111,7 @@ function SuccessInner() {
     }
     setError(null);
     setLoading(true);
-    setEmailPdfStatus(null);
+    setEmailPdfInfo(null);
     try {
       const params = new URLSearchParams({ session_id: sessionId });
       if (devMode) {
@@ -134,7 +140,7 @@ function SuccessInner() {
         ...data.meta,
         lang: data.meta.lang ?? "en",
       });
-      setEmailPdfStatus(data.emailPdf?.status ?? "skipped");
+      setEmailPdfInfo(data.emailPdf ?? { status: "skipped" });
       setLoading(false);
 
       try {
@@ -293,23 +299,42 @@ function SuccessInner() {
             </div>
           ) : report ? (
             <article className="max-w-none space-y-4">
-              {emailPdfStatus ? (
-                <p
+              {emailPdfInfo ? (
+                <div
                   className={[
                     "rounded-xl border px-4 py-3 text-sm",
-                    emailPdfStatus === "sent"
+                    emailPdfInfo.status === "sent"
                       ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-50"
-                      : emailPdfStatus === "failed"
+                      : emailPdfInfo.status === "failed"
                         ? "border-amber-400/25 bg-amber-400/10 text-amber-50"
                         : "border-white/10 bg-white/[0.04] text-white/65",
                   ].join(" ")}
                 >
-                  {emailPdfStatus === "sent"
-                    ? su.pdfEmailSent
-                    : emailPdfStatus === "failed"
-                      ? su.pdfEmailFailed
-                      : su.pdfEmailSkipped}
-                </p>
+                  <p>
+                    {emailPdfInfo.status === "sent"
+                      ? su.pdfEmailSent
+                      : emailPdfInfo.status === "failed"
+                        ? su.pdfEmailFailed
+                        : su.pdfEmailSkipped}
+                  </p>
+                  {emailPdfInfo.status === "skipped" &&
+                  emailPdfInfo.skipReason === "no_api_key" ? (
+                    <p className="mt-2 text-xs text-white/50">
+                      {su.pdfEmailSkipHintNoApiKey}
+                    </p>
+                  ) : null}
+                  {emailPdfInfo.status === "skipped" &&
+                  emailPdfInfo.skipReason === "no_from" ? (
+                    <p className="mt-2 text-xs text-white/50">
+                      {su.pdfEmailSkipHintNoFrom}
+                    </p>
+                  ) : null}
+                  {emailPdfInfo.status === "failed" && emailPdfInfo.detail ? (
+                    <p className="mt-2 font-mono text-xs break-words text-white/55">
+                      {emailPdfInfo.detail}
+                    </p>
+                  ) : null}
+                </div>
               ) : null}
               {chartLoading ? (
                 <div className="flex justify-center py-6 text-sm text-white/55">

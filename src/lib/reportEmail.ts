@@ -32,6 +32,8 @@ export async function sendReportPdfEmail(opts: {
   const copy = reportEmailCopy[opts.lang];
   const resend = new Resend(apiKey);
 
+  // Resend POST body is JSON.stringify'd; Buffer becomes {"type":"Buffer","data":[...]}
+  // which the API rejects. It expects a base64 string for attachment content.
   const { data, error } = await resend.emails.send({
     from,
     to: opts.to,
@@ -41,7 +43,7 @@ export async function sendReportPdfEmail(opts: {
     attachments: [
       {
         filename: pdfFilename(opts.reportType),
-        content: opts.pdfBuffer,
+        content: opts.pdfBuffer.toString("base64"),
         contentType: "application/pdf",
       },
     ],
