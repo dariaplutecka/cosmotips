@@ -57,7 +57,7 @@ body::before {
 
   /* Under hero lead: no outer margin, subtler glow */
   .cosmic-tool-pitch--in-hero {
-    @apply mb-0 py-2 sm:py-2.5;
+    @apply mb-0 py-1.5 sm:py-2;
   }
 
   .cosmic-tool-pitch--in-hero::before {

@@ -81,7 +81,7 @@ export const successUi: Record<
     chartError: "Chart unavailable",
     reportTitle: {
       personality: "Personality portrait",
-      weekly: "🗓️ Weekly forecast",
+      weekly: "📅 Weekly forecast",
       monthly: "Monthly forecast",
     },
   },
@@ -108,7 +108,7 @@ export const successUi: Record<
     chartError: "Nie udało się narysować mapy",
     reportTitle: {
       personality: "Opis osobowościowy",
-      weekly: "🗓️ Prognoza tygodniowa",
+      weekly: "📅 Prognoza tygodniowa",
       monthly: "Prognoza miesięczna",
     },
   },
@@ -135,7 +135,7 @@ export const successUi: Record<
     chartError: "No se pudo dibujar la carta",
     reportTitle: {
       personality: "Retrato de personalidad",
-      weekly: "🗓️ Pronóstico semanal",
+      weekly: "📅 Pronóstico semanal",
       monthly: "Pronóstico mensual",
     },
   },
@@ -195,15 +195,15 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     reports: {
       personality: {
         title: "Personality portrait",
-        desc: "A deep, personalized snapshot of your astrological blueprint.",
+        desc: "An in-depth, personalized reading of your birth chart — who you are, your talents, and what drives you.",
       },
       weekly: {
-        title: "🗓️ Weekly forecast",
-        desc: "Seven days starting from the day you generate the report — not Mon–Sun by default.",
+        title: "📅 Weekly forecast",
+        desc: "A forecast from today for the next 7 days — highlights key influences and what matters most in the near term.",
       },
       monthly: {
         title: "Monthly forecast",
-        desc: "Thirty consecutive days from the day you generate — rolling window, not calendar month.",
+        desc: "A forecast from today for the next 30 days — main trends and key moments in the period ahead.",
       },
     },
     submit: "Generate report",
@@ -243,15 +243,15 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     reports: {
       personality: {
         title: "Opis osobowościowy",
-        desc: "Głęboki, spersonalizowany portret Twojej mapy urodzeniowej.",
+        desc: "Pogłębiony, spersonalizowany opis Twojej mapy urodzeniowej — pokazuje, jaka jesteś, jakie masz talenty i co Cię napędza.",
       },
       weekly: {
-        title: "🗓️ Prognoza tygodniowa",
-        desc: "7 kolejnych dni od wygenerowania raportu — bez sztywnego pon–niedz.",
+        title: "📅 Prognoza tygodniowa",
+        desc: "Prognoza od dzisiaj na 7 dni — wskazuje najważniejsze wpływy i wydarzenia w najbliższym czasie.",
       },
       monthly: {
         title: "Prognoza miesięczna",
-        desc: "30 kolejnych dni od wygenerowania — okno kroczące, nie kalendarzowy 1.–ostatni.",
+        desc: "Prognoza od dzisiaj na kolejne 30 dni — pokazuje główne trendy i kluczowe momenty nadchodzącego okresu.",
       },
     },
     submit: "Generuj raport",
@@ -260,7 +260,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     termsAcceptLink: "regulamin",
     termsAcceptAfter: ".",
     priceLine:
-      "Cena: 5 USD za raport · Dostawa od razu · Bezpieczna płatność Stripe",
+      "Cena: 5 EUR za raport · Dostawa od razu · Bezpieczna płatność Stripe",
     footer:
       "Astrologia służy refleksji i rozrywce. Zawsze decydujesz o swoich wyborach.",
     langLabel: "Język raportu",
@@ -291,15 +291,15 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     reports: {
       personality: {
         title: "Retrato de personalidad",
-        desc: "Un retrato profundo y personalizado de tu carta natal.",
+        desc: "Una lectura profunda y personalizada de tu carta natal: quién eres, tus talentos y qué te impulsa.",
       },
       weekly: {
-        title: "🗓️ Pronóstico semanal",
-        desc: "7 días seguidos desde que generas el informe — no necesariamente lun–dom.",
+        title: "📅 Pronóstico semanal",
+        desc: "Pronóstico desde hoy para los próximos 7 días: destaca las influencias clave y lo más importante a corto plazo.",
       },
       monthly: {
         title: "Pronóstico mensual",
-        desc: "30 días seguidos desde la generación; ventana móvil, no mes de calendario.",
+        desc: "Pronóstico desde hoy para los próximos 30 días: tendencias principales y momentos clave del período que viene.",
       },
     },
     submit: "Generar informe",

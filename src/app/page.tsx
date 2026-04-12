@@ -237,43 +237,47 @@ export default function HomePage() {
           </div>
         </div>
 
-        <header className="relative isolate mb-5 flex min-h-[min(39vw,240px)] items-center overflow-hidden py-[1.125rem] sm:mb-6 sm:min-h-[255px] sm:py-[1.875rem] md:min-h-[285px]">
+        <header className="relative isolate mb-5 flex w-full min-h-0 items-center overflow-hidden py-2 sm:mb-6 sm:py-3">
           {/* Natal wheel as background — does not affect layout flow */}
           <div
             className="pointer-events-none absolute inset-0 flex items-center justify-center sm:justify-end"
             aria-hidden
           >
-            <div className="translate-x-[6%] scale-[1.35] opacity-[0.5] sm:translate-x-[12%] sm:scale-[1.55] sm:opacity-[0.48] md:scale-[1.7] md:opacity-[0.45]">
+            <div className="translate-x-[2%] scale-[1.58] opacity-[0.72] sm:translate-x-[6%] sm:scale-[1.95] sm:opacity-[0.68] md:scale-[2.15] md:opacity-[0.62]">
               <NatalChartHeroIllustration
                 variant="background"
-                className="h-[min(92vw,420px)] w-[min(92vw,420px)] sm:h-[min(72vw,520px)] sm:w-[min(72vw,520px)] md:h-[580px] md:w-[580px]"
+                className="h-[min(100vw,500px)] w-[min(100vw,500px)] sm:h-[min(82vw,600px)] sm:w-[min(82vw,600px)] md:h-[min(90vw,680px)] md:w-[min(90vw,680px)]"
               />
             </div>
           </div>
-          {/* Readable scrim over chart */}
+          {/* Lighter scrims so the wheel stays visible behind copy */}
           <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#070412]/95 from-15% via-[#070412]/80 via-40% to-[#070412]/25 sm:bg-gradient-to-r sm:from-20% sm:via-45% sm:to-88%"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#070412]/78 from-0% via-[#070412]/42 via-45% to-transparent to-92% sm:bg-gradient-to-r sm:from-[#070412]/80 sm:from-0% sm:via-[#070412]/38 sm:via-42% sm:to-transparent sm:to-72%"
             aria-hidden
           />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#070412]/50 to-transparent sm:from-[#070412]/30" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#070412]/28 to-transparent sm:from-[#070412]/18" />
 
-          <div className="relative z-10 w-full text-center lg:text-left">
-            <h1 className="font-heading text-balance text-4xl font-medium leading-[1.15] tracking-tight text-white sm:text-5xl md:text-[3.125rem] md:leading-[1.12]">
-              {copy.heroTitle}
-              <span className="mt-2 block font-heading text-xl font-normal leading-snug tracking-normal text-white/75 sm:mt-2.5 sm:text-2xl md:text-[1.75rem] md:leading-snug">
-                {copy.heroLead}
-              </span>
-            </h1>
-            <div
-              className="cosmic-tool-pitch cosmic-tool-pitch--in-hero mx-auto mt-3 max-w-2xl lg:mx-0"
-              lang={lang}
-            >
-              <div className="relative z-10 text-pretty text-sm leading-snug text-white/72 sm:mt-1 sm:leading-relaxed">
-                {copy.toolPitchParagraphs.map((para, i) => (
-                  <p key={i} className={i > 0 ? "mt-2 sm:mt-2" : undefined}>
-                    {para}
-                  </p>
-                ))}
+          <div className="relative z-10 w-full">
+            <div className="w-full rounded-2xl border border-white/12 bg-[#070412]/42 px-4 pt-3 pb-3 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.55)] backdrop-blur-md sm:rounded-3xl sm:px-7 sm:pt-4 sm:pb-4 md:px-9 md:pt-5 md:pb-4">
+              <div className="text-center lg:text-left">
+                <h1 className="font-heading text-balance text-2xl font-medium leading-snug tracking-tight text-white sm:text-3xl md:text-4xl md:leading-[1.15]">
+                  {copy.heroTitle}
+                  <span className="mt-1.5 block font-heading text-base font-normal leading-snug tracking-normal text-white/75 sm:mt-2 sm:text-lg md:text-xl md:leading-snug">
+                    {copy.heroLead}
+                  </span>
+                </h1>
+                <div
+                  className="cosmic-tool-pitch cosmic-tool-pitch--in-hero mx-auto mt-2 max-w-2xl sm:mt-2.5 lg:mx-0"
+                  lang={lang}
+                >
+                  <div className="relative z-10 text-pretty text-sm leading-snug text-white/72 sm:mt-1 sm:leading-relaxed">
+                    {copy.toolPitchParagraphs.map((para, i) => (
+                      <p key={i} className={i > 0 ? "mt-2 sm:mt-2" : undefined}>
+                        {para}
+                      </p>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -282,7 +286,7 @@ export default function HomePage() {
         <main className="mx-auto mt-0 max-w-6xl">
           <section className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur sm:p-7">
             <form onSubmit={onSubmit} className="space-y-4">
-              <p className="text-pretty text-sm leading-7 text-white/70 sm:text-base">
+              <p className="rounded-r-xl border-l-2 border-violet-300/55 bg-violet-500/[0.12] py-3 pl-4 pr-3 text-left text-pretty text-sm leading-7 text-white/85 sm:py-3.5 sm:pl-5 sm:text-base">
                 {copy.heroSub}
               </p>
               <div className="mx-auto w-full max-w-2xl space-y-3">

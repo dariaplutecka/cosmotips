@@ -202,7 +202,7 @@ function plWeeklyOutline(
   const cc = chartContextLines(chart, dob, tob, pob, "pl");
   return [
     `Zacznij od:`,
-    `# 🗓️ Prognoza Tygodniowa`,
+    `# 📅 Prognoza Tygodniowa`,
     ``,
     `KRYTYCZNE: Pisz WYŁĄCZNIE o 7 kolejnych dniach od daty generowania: od ${fw.weekly.start} do ${fw.weekly.end} włącznie (strefa ${fw.timezone}). Nie używaj „poniedziałek–niedziela” jako domyślnego tygodnia — liczy się wyłącznie ten zakres dat.`,
     ``,
@@ -345,7 +345,7 @@ function enWeeklyOutline(
   const cc = chartContextLines(chart, dob, tob, pob, "en");
   return [
     `Start with:`,
-    `# 🗓️ Weekly forecast`,
+    `# 📅 Weekly forecast`,
     ``,
     `CRITICAL: Write ONLY about 7 consecutive days from the generation date: ${fw.weekly.start} through ${fw.weekly.end} inclusive (${fw.timezone}). Do NOT default to Monday–Sunday; only these dates matter.`,
     ``,
@@ -487,7 +487,7 @@ function esWeeklyOutline(
   const cc = chartContextLines(chart, dob, tob, pob, "es");
   return [
     `Empieza con:`,
-    `# 🗓️ Pronóstico semanal`,
+    `# 📅 Pronóstico semanal`,
     ``,
     `CRÍTICO: Solo 7 días consecutivos desde la generación: ${fw.weekly.start}–${fw.weekly.end} (${fw.timezone}). No uses lunes–domingo por defecto; solo estas fechas.`,
     ``,
