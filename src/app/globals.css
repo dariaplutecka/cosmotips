@@ -3,13 +3,20 @@
 :root {
   --background: #070412;
   --foreground: #f5f3ff;
+  /* Cosmotips logo palette (SVG) */
+  --cosmotips-champagne: #f3e3ba;
+  --cosmotips-gold: #ddc8a2;
+  --cosmotips-gold-deep: #c9b08a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-cosmotips-champagne: var(--cosmotips-champagne);
+  --color-cosmotips-gold: var(--cosmotips-gold);
+  --color-cosmotips-gold-deep: var(--cosmotips-gold-deep);
   --font-sans: var(--font-lato);
-  --font-heading: var(--font-playfair), ui-serif, Georgia, "Times New Roman", serif;
+  --font-heading: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -135,7 +142,33 @@ body::before {
   }
 }
 
-/* Marketing hero title — Playfair Display (see layout.tsx --font-playfair) */
+/* Headlines — Montserrat (see layout.tsx --font-montserrat) */
 .font-heading {
   font-family: var(--font-heading);
+}
+
+/* Primary headlines — gradient aligned with logo gold / champagne */
+.cosmotips-headline {
+  background-image: linear-gradient(
+    165deg,
+    #fcf9f0 0%,
+    #f7ecd0 24%,
+    var(--cosmotips-champagne) 48%,
+    #e8d4aa 74%,
+    var(--cosmotips-gold) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .cosmotips-headline {
+    background: none;
+    color: var(--cosmotips-champagne);
+  }
+}
+
+.cosmotips-headline-lead {
+  color: color-mix(in srgb, var(--cosmotips-gold) 88%, white 12%);
 }

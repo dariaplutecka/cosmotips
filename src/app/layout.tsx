@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Lato, Playfair_Display } from "next/font/google";
+import { Lato, Montserrat } from "next/font/google";
 import "./globals.css";
 
 const lato = Lato({
@@ -8,8 +8,8 @@ const lato = Lato({
   weight: ["300", "400", "700", "900"],
 });
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin", "latin-ext"],
   weight: ["400", "500", "600", "700"],
 });
@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${lato.variable} ${playfair.variable} antialiased`}>
+      <body className={`${lato.variable} ${montserrat.variable} antialiased`}>
         {children}
       </body>
     </html>

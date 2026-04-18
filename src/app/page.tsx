@@ -1,18 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { CheckoutPayloadSchema, type AppLang } from "@/lib/reportSchema";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import {
+  CheckoutPayloadSchema,
+  type AppLang,
+  type ReportType,
+} from "@/lib/reportSchema";
 import {
   MIN_BIRTH_YEAR,
   currentBirthYearMax,
   daysInMonth,
   isoFromPartStrings,
 } from "@/lib/birthDateParts";
+import { CosmotipsTopBar } from "@/components/CosmotipsTopBar";
+import { HomeFooter } from "@/components/HomeFooter";
 import { NatalChartHeroIllustration } from "@/components/NatalChartHeroIllustration";
 import { homeCopy } from "@/lib/uiCopy";
-
-type ReportType = "personality" | "weekly" | "monthly";
 
 const placeSuggestions = [
   "Warsaw, Poland",
@@ -26,18 +31,20 @@ const placeSuggestions = [
   "Tokyo, Japan",
 ] as const;
 
-const reportCardIds: ReportType[] = ["personality", "weekly", "monthly"];
+const reportCardIds: ReportType[] = [
+  "natal_basic",
+  "personality",
+  "weekly",
+  "monthly",
+];
+
+const NATAL_SAMPLE_STORAGE_KEY = "astroapka:natal_sample_v1";
 
 const TOB_HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => i);
 const TOB_MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) => i);
 
-const LANGS: Array<{ code: AppLang; flag: string; abbr: string }> = [
-  { code: "en", flag: "🇬🇧", abbr: "EN" },
-  { code: "pl", flag: "🇵🇱", abbr: "PL" },
-  { code: "es", flag: "🇪🇸", abbr: "ES" },
-];
-
-export default function HomePage() {
+function HomePageContent() {
+  const searchParams = useSearchParams();
   const [lang, setLang] = useState<AppLang>("en");
   const [dobYear, setDobYear] = useState("");
   const [dobMonth, setDobMonth] = useState("");
@@ -51,10 +58,27 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [placeOpen, setPlaceOpen] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [freeBasicUsed, setFreeBasicUsed] = useState(false);
 
   const copy = homeCopy[lang];
 
   useEffect(() => {
+    try {
+      if (typeof window === "undefined") return;
+      if (localStorage.getItem(NATAL_SAMPLE_STORAGE_KEY) === "1") {
+        setFreeBasicUsed(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    const q = searchParams.get("lang");
+    if (q === "en" || q === "pl" || q === "es") {
+      setLang(q);
+      return;
+    }
     let cancelled = false;
     void (async () => {
       try {
@@ -77,7 +101,7 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [searchParams]);
 
   const maxBirthYear = useMemo(() => currentBirthYearMax(), []);
 
@@ -152,9 +176,10 @@ export default function HomePage() {
           emailValid &&
           reportType &&
           termsAccepted &&
-          !loading,
+          !loading &&
+          !(reportType === "natal_basic" && freeBasicUsed),
       ),
-    [dob, tob, pob, emailValid, reportType, termsAccepted, loading],
+    [dob, tob, pob, emailValid, reportType, termsAccepted, loading, freeBasicUsed],
   );
 
   const filteredPlaces = useMemo(() => {
@@ -168,6 +193,10 @@ export default function HomePage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (reportType === "natal_basic" && freeBasicUsed) {
+      setError(copy.freeBasicAlreadyUsedError);
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/stripe/checkout", {
@@ -189,6 +218,14 @@ export default function HomePage() {
       if (!res.ok) throw new Error(data?.error ?? "Unable to start checkout.");
       if (!data?.url) throw new Error("Missing checkout URL.");
 
+      if (reportType === "natal_basic") {
+        try {
+          localStorage.setItem(NATAL_SAMPLE_STORAGE_KEY, "1");
+        } catch {
+          /* ignore */
+        }
+      }
+
       window.location.assign(data.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -199,43 +236,12 @@ export default function HomePage() {
   return (
     <div className="min-h-dvh">
       <div className="mx-auto max-w-6xl px-4 pb-10 pt-6 sm:px-5 sm:pb-14 sm:pt-8">
-        <div className="mb-6 flex justify-end sm:mb-8">
-          <div
-            className="flex gap-0.5 rounded-full border border-white/15 bg-black/35 p-1 shadow-lg shadow-black/20 backdrop-blur-sm"
-            role="group"
-            aria-label={copy.langLabel}
-          >
-            {LANGS.map(({ code, flag, abbr }) => {
-              const on = lang === code;
-              return (
-                <button
-                  key={code}
-                  type="button"
-                  onClick={() => setLang(code)}
-                  className={[
-                    "flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-semibold tracking-wide transition",
-                    on
-                      ? "bg-violet-400/30 text-white ring-1 ring-violet-300/45"
-                      : "text-white/65 hover:bg-white/10 hover:text-white",
-                  ].join(" ")}
-                  aria-pressed={on}
-                  aria-label={
-                    code === "en"
-                      ? "English"
-                      : code === "pl"
-                        ? "Polski"
-                        : "Español"
-                  }
-                >
-                  <span className="text-[1.05rem] leading-none" aria-hidden>
-                    {flag}
-                  </span>
-                  <span>{abbr}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <CosmotipsTopBar
+          lang={lang}
+          langLabel={copy.langLabel}
+          logoAriaLabel={copy.navLogoHomeAria}
+          onLangChange={setLang}
+        />
 
         <header className="relative isolate mb-5 flex w-full min-h-0 items-center overflow-hidden py-2 sm:mb-6 sm:py-3">
           {/* Natal wheel as background — does not affect layout flow */}
@@ -259,15 +265,15 @@ export default function HomePage() {
 
           <div className="relative z-10 w-full">
             <div className="w-full rounded-2xl border border-white/12 bg-[#070412]/42 px-4 pt-3 pb-3 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.55)] backdrop-blur-md sm:rounded-3xl sm:px-7 sm:pt-4 sm:pb-4 md:px-9 md:pt-5 md:pb-4">
-              <div className="text-center lg:text-left">
-                <h1 className="font-heading text-balance text-2xl font-medium leading-snug tracking-tight text-white sm:text-3xl md:text-4xl md:leading-[1.15]">
-                  {copy.heroTitle}
-                  <span className="mt-1.5 block font-heading text-base font-normal leading-snug tracking-normal text-white/75 sm:mt-2 sm:text-lg md:text-xl md:leading-snug">
+              <div className="text-center">
+                <h1 className="font-heading text-balance text-2xl font-medium leading-snug tracking-tight sm:text-3xl md:text-4xl md:leading-[1.15]">
+                  <span className="cosmotips-headline block">{copy.heroTitle}</span>
+                  <span className="cosmotips-headline-lead mt-1.5 block text-base font-normal leading-snug tracking-normal sm:mt-2 sm:text-lg md:text-xl md:leading-snug">
                     {copy.heroLead}
                   </span>
                 </h1>
                 <div
-                  className="cosmic-tool-pitch cosmic-tool-pitch--in-hero mx-auto mt-2 max-w-2xl sm:mt-2.5 lg:mx-0"
+                  className="cosmic-tool-pitch cosmic-tool-pitch--in-hero mx-auto mt-2 max-w-2xl sm:mt-2.5"
                   lang={lang}
                 >
                   <div className="relative z-10 text-pretty text-sm leading-snug text-white/72 sm:mt-1 sm:leading-relaxed">
@@ -551,26 +557,39 @@ export default function HomePage() {
                   {copy.reportSectionTitle}
                 </h2>
 
-                <div className="mt-4 grid gap-2.5 md:grid-cols-3 md:items-stretch">
+                <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4 lg:items-stretch">
                   {reportCardIds.map((id) => {
                     const selected = reportType === id;
                     const c = copy.reports[id];
+                    const locked = id === "natal_basic" && freeBasicUsed;
                     return (
                       <button
                         key={id}
                         type="button"
-                        onClick={() => setReportType(id)}
+                        onClick={() => {
+                          if (locked) return;
+                          setReportType(id);
+                        }}
                         className={[
                           "flex h-full min-h-0 flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
-                          selected
-                            ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
-                            : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
+                          locked
+                            ? "cursor-not-allowed border-white/10 bg-black/20 opacity-45"
+                            : selected
+                              ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
+                              : id === "natal_basic"
+                                ? "border-amber-300/35 bg-amber-950/20 hover:border-amber-200/45 hover:bg-amber-950/30"
+                                : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
                         ].join(" ")}
                       >
                         <div className="flex min-h-0 flex-1 gap-3">
                           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                            <div className="shrink-0 text-sm font-semibold text-white sm:text-[0.9375rem]">
-                              {c.title}
+                            <div className="flex shrink-0 flex-wrap items-center gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
+                              <span>{c.title}</span>
+                              {c.freeBadge ? (
+                                <span className="rounded-full border border-amber-300/45 bg-amber-400/20 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-amber-100">
+                                  {c.freeBadge}
+                                </span>
+                              ) : null}
                             </div>
                             <p className="mt-1 min-h-0 flex-1 text-sm leading-6 text-white/75">
                               {c.desc}
@@ -590,6 +609,11 @@ export default function HomePage() {
                     );
                   })}
                 </div>
+                {freeBasicUsed ? (
+                  <p className="mt-3 text-pretty text-xs leading-relaxed text-amber-100/75">
+                    {copy.freeBasicUsedHint}
+                  </p>
+                ) : null}
               </div>
 
               <div className="mx-auto mt-6 flex w-full max-w-4xl items-start gap-3 sm:mt-7">
@@ -647,10 +671,24 @@ export default function HomePage() {
           </section>
         </main>
 
-        <footer className="mx-auto mt-10 max-w-4xl text-center text-xs text-white/45">
-          {copy.footer}
-        </footer>
+        <HomeFooter copy={copy} lang={lang} />
       </div>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-dvh">
+          <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-5 sm:pt-8">
+            <div className="mb-6 flex h-9 animate-pulse items-center justify-between rounded-lg bg-white/[0.06] sm:mb-8" />
+          </div>
+        </div>
+      }
+    >
+      <HomePageContent />
+    </Suspense>
   );
 }

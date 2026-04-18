@@ -1,8 +1,140 @@
 import type { AppLang } from "@/lib/reportSchema";
+import {
+  emptyArticleSlot,
+  natalHistoryArticleEn,
+  natalHistoryArticleEs,
+  natalHistoryArticlePl,
+} from "@/content/natalHistoryArticle";
 
-export type ReportTypeId = "personality" | "weekly" | "monthly";
+export type ReportTypeId =
+  | "natal_basic"
+  | "personality"
+  | "weekly"
+  | "monthly";
 
-type HomeCopy = {
+export type HomeFooterArticle = {
+  title: string;
+  teaser: string;
+  /** Pełna treść artykułu — na razie placeholder; można podmienić później */
+  body: string;
+};
+
+export type ArticlesPageCopy = {
+  pageTitle: string;
+  backHome: string;
+  articleOpen: string;
+  articleCloseAria: string;
+  articles: HomeFooterArticle[];
+};
+
+export const articlesPageCopy: Record<AppLang, ArticlesPageCopy> = {
+  en: {
+    pageTitle: "Articles",
+    backHome: "Back home",
+    articleOpen: "Read article",
+    articleCloseAria: "Close article",
+    articles: [
+      natalHistoryArticleEn,
+      emptyArticleSlot,
+      emptyArticleSlot,
+    ],
+  },
+  pl: {
+    pageTitle: "Artykuły",
+    backHome: "Strona główna",
+    articleOpen: "Czytaj artykuł",
+    articleCloseAria: "Zamknij artykuł",
+    articles: [
+      natalHistoryArticlePl,
+      emptyArticleSlot,
+      emptyArticleSlot,
+    ],
+  },
+  es: {
+    pageTitle: "Artículos",
+    backHome: "Inicio",
+    articleOpen: "Leer artículo",
+    articleCloseAria: "Cerrar artículo",
+    articles: [
+      natalHistoryArticleEs,
+      emptyArticleSlot,
+      emptyArticleSlot,
+    ],
+  },
+};
+
+export type ContactPageCopy = {
+  pageTitle: string;
+  backHome: string;
+  lead: string;
+  fieldName: string;
+  fieldNameHint: string;
+  fieldEmail: string;
+  fieldMessage: string;
+  submit: string;
+  submitting: string;
+  success: string;
+  errorValidation: string;
+  errorSend: string;
+  fallbackNotConfigured: string;
+  supportEmail: string;
+};
+
+export const contactPageCopy: Record<AppLang, ContactPageCopy> = {
+  en: {
+    pageTitle: "Contact",
+    backHome: "Back home",
+    lead: "Send us a message about reports, payments, or anything else. We read every note.",
+    fieldName: "Name",
+    fieldNameHint: "optional",
+    fieldEmail: "Email",
+    fieldMessage: "Message",
+    submit: "Send message",
+    submitting: "Sending…",
+    success: "Thanks — your message was sent. We’ll reply when we can.",
+    errorValidation: "Please check your email and write a bit more in the message (at least 10 characters).",
+    errorSend: "We couldn’t send the message. Try again or use the email link below.",
+    fallbackNotConfigured:
+      "The contact form isn’t wired to email on this server yet. You can reach us directly at:",
+    supportEmail: "raporty@cosmotips.eu",
+  },
+  pl: {
+    pageTitle: "Kontakt",
+    backHome: "Strona główna",
+    lead: "Napisz w sprawie raportów, płatności lub innych pytań — czytamy każdą wiadomość.",
+    fieldName: "Imię lub pseudonim",
+    fieldNameHint: "opcjonalnie",
+    fieldEmail: "E-mail",
+    fieldMessage: "Wiadomość",
+    submit: "Wyślij wiadomość",
+    submitting: "Wysyłanie…",
+    success: "Dziękujemy — wiadomość została wysłana. Odpowiemy, gdy będzie to możliwe.",
+    errorValidation: "Sprawdź adres e-mail i treść (minimum ok. 10 znaków).",
+    errorSend: "Nie udało się wysłać wiadomości. Spróbuj ponownie lub użyj linku mailowego poniżej.",
+    fallbackNotConfigured:
+      "Formularz nie jest jeszcze podpięty do wysyłki e-mail na tym serwerze. Napisz bezpośrednio na:",
+    supportEmail: "raporty@cosmotips.eu",
+  },
+  es: {
+    pageTitle: "Contacto",
+    backHome: "Inicio",
+    lead: "Escríbenos sobre informes, pagos u otras dudas — leemos todos los mensajes.",
+    fieldName: "Nombre",
+    fieldNameHint: "opcional",
+    fieldEmail: "Correo electrónico",
+    fieldMessage: "Mensaje",
+    submit: "Enviar mensaje",
+    submitting: "Enviando…",
+    success: "Gracias — tu mensaje se envió. Responderemos cuando podamos.",
+    errorValidation: "Revisa tu correo y escribe un poco más (mínimo unos 10 caracteres).",
+    errorSend: "No pudimos enviar el mensaje. Inténtalo de nuevo o usa el enlace de correo abajo.",
+    fallbackNotConfigured:
+      "El formulario aún no está conectado al correo en este servidor. Escríbenos directamente a:",
+    supportEmail: "raporty@cosmotips.eu",
+  },
+};
+
+export type HomeCopy = {
   heroTitle: string;
   heroLead: string;
   heroSub: string;
@@ -22,7 +154,7 @@ type HomeCopy = {
   reportSectionTitle: string;
   reports: Record<
     ReportTypeId,
-    { title: string; desc: string }
+    { title: string; desc: string; freeBadge?: string }
   >;
   submit: string;
   submitting: string;
@@ -32,15 +164,24 @@ type HomeCopy = {
   termsAcceptAfter: string;
   priceLine: string;
   footer: string;
+  /** Etykieta linku w stopce → /articles */
+  footerArticlesTitle: string;
+  /** Etykieta linku w stopce → /contact */
+  footerContactTitle: string;
+  /** Aria dla logo prowadzącego na stronę główną z formularzem */
+  navLogoHomeAria: string;
   langLabel: string;
   placeNoMatch: string;
+  /** Gdy darmowy podgląd (natal_basic) już zużyty w tej przeglądarce */
+  freeBasicUsedHint: string;
+  /** Przy próbie ponownego zamówienia darmowego typu */
+  freeBasicAlreadyUsedError: string;
 };
 
 export const successUi: Record<
   AppLang,
   {
     pendingTitle: string;
-    paymentOk: string;
     pdfEmailSent: string;
     pdfEmailSkipped: string;
     pdfEmailFailed: string;
@@ -60,7 +201,6 @@ export const successUi: Record<
 > = {
   en: {
     pendingTitle: "Your report",
-    paymentOk: "Payment confirmed",
     pdfEmailSent: "We sent a PDF copy of this report to your email.",
     pdfEmailSkipped:
       "PDF email delivery isn’t configured on the server — use Print / save from this page.",
@@ -80,6 +220,7 @@ export const successUi: Record<
     chartLoading: "Computing chart…",
     chartError: "Chart unavailable",
     reportTitle: {
+      natal_basic: "Basic natal chart",
       personality: "Personality portrait",
       weekly: "📅 Weekly forecast",
       monthly: "Monthly forecast",
@@ -87,7 +228,6 @@ export const successUi: Record<
   },
   pl: {
     pendingTitle: "Twój raport",
-    paymentOk: "Płatność potwierdzona",
     pdfEmailSent: "Wysłaliśmy kopię raportu w PDF na Twój e-mail.",
     pdfEmailSkipped:
       "Wysyłka PDF na e-mail nie jest skonfigurowana — użyj opcji druku / zapisu ze strony.",
@@ -107,6 +247,7 @@ export const successUi: Record<
     chartLoading: "Liczenie mapy…",
     chartError: "Nie udało się narysować mapy",
     reportTitle: {
+      natal_basic: "Podstawowy wykres natalny",
       personality: "Opis osobowościowy",
       weekly: "📅 Prognoza tygodniowa",
       monthly: "Prognoza miesięczna",
@@ -114,7 +255,6 @@ export const successUi: Record<
   },
   es: {
     pendingTitle: "Tu informe",
-    paymentOk: "Pago confirmado",
     pdfEmailSent: "Te hemos enviado una copia en PDF a tu correo.",
     pdfEmailSkipped:
       "El envío de PDF por correo no está configurado — usa imprimir / guardar desde esta página.",
@@ -134,6 +274,7 @@ export const successUi: Record<
     chartLoading: "Calculando carta…",
     chartError: "No se pudo dibujar la carta",
     reportTitle: {
+      natal_basic: "Carta natal básica",
       personality: "Retrato de personalidad",
       weekly: "📅 Pronóstico semanal",
       monthly: "Pronóstico mensual",
@@ -193,6 +334,11 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     emailPlaceholder: "you@example.com",
     reportSectionTitle: "Choose a report type",
     reports: {
+      natal_basic: {
+        title: "Basic natal chart",
+        desc: "Discover your natal chart and what your Sun, Moon, and Ascendant mean. Your first access is completely free.",
+        freeBadge: "Free",
+      },
       personality: {
         title: "Personality portrait",
         desc: "An in-depth, personalized reading of your birth chart — who you are, your talents, and what drives you.",
@@ -211,12 +357,18 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     termsAcceptBefore: "I have read and accept the ",
     termsAcceptLink: "Terms of Service",
     termsAcceptAfter: ".",
-    priceLine:
-      "Price: €5 per report · Delivered instantly · Secure Stripe Checkout",
+    priceLine: "Full reports: €5 each · Instant delivery · Stripe",
     footer:
       "Astrology is for reflection and entertainment. You’re always in control of your choices.",
+    footerArticlesTitle: "Articles",
+    footerContactTitle: "Contact",
+    navLogoHomeAria: "CosmoTips — home and order form",
     langLabel: "Report language",
     placeNoMatch: "No matches",
+    freeBasicUsedHint:
+      "The free basic natal option was already used in this browser. Choose a paid report below.",
+    freeBasicAlreadyUsedError:
+      "The free basic natal preview was already used on this device. Pick a paid report type.",
   },
   pl: {
     heroTitle: "Twoja historia została zapisana jeszcze przed Twoimi narodzinami.",
@@ -241,6 +393,11 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     emailPlaceholder: "twoj@email.pl",
     reportSectionTitle: "Wybierz typ raportu",
     reports: {
+      natal_basic: {
+        title: "Podstawowy wykres natalny",
+        desc: "Odkryj swój wykres natalny i znaczenie Słońca, Księżyca oraz Ascendentu. Pierwszy dostęp całkowicie za darmo.",
+        freeBadge: "Darmowe",
+      },
       personality: {
         title: "Opis osobowościowy",
         desc: "Pogłębiony, spersonalizowany opis Twojej mapy urodzeniowej — pokazuje, jaka jesteś, jakie masz talenty i co Cię napędza.",
@@ -259,12 +416,18 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     termsAcceptBefore: "Akceptuję ",
     termsAcceptLink: "regulamin",
     termsAcceptAfter: ".",
-    priceLine:
-      "Cena: 5 EUR za raport · Dostawa od razu · Bezpieczna płatność Stripe",
+    priceLine: "Pełne raporty: 5 EUR · Od razu · Stripe",
     footer:
       "Astrologia służy refleksji i rozrywce. Zawsze decydujesz o swoich wyborach.",
+    footerArticlesTitle: "Artykuły",
+    footerContactTitle: "Kontakt",
+    navLogoHomeAria: "CosmoTips — strona główna z formularzem zamówienia",
     langLabel: "Język raportu",
     placeNoMatch: "Brak dopasowań",
+    freeBasicUsedHint:
+      "Darmowy podstawowy wykres został już wykorzystany w tej przeglądarce. Wybierz płatny raport poniżej.",
+    freeBasicAlreadyUsedError:
+      "Darmowy podgląd mapy był już użyty na tym urządzeniu. Wybierz typ raportu płatnego.",
   },
   es: {
     heroTitle: "Tu historia escrita antes de nacer.",
@@ -289,6 +452,11 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     emailPlaceholder: "tu@ejemplo.com",
     reportSectionTitle: "Elige el tipo de informe",
     reports: {
+      natal_basic: {
+        title: "Carta natal básica",
+        desc: "Descubre tu carta natal y el significado del Sol, la Luna y el Ascendente. El primer acceso es totalmente gratis.",
+        freeBadge: "Gratis",
+      },
       personality: {
         title: "Retrato de personalidad",
         desc: "Una lectura profunda y personalizada de tu carta natal: quién eres, tus talentos y qué te impulsa.",
@@ -307,12 +475,18 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     termsAcceptBefore: "He leído y acepto los ",
     termsAcceptLink: "términos y condiciones",
     termsAcceptAfter: ".",
-    priceLine:
-      "Precio: 5 EUR por informe · Entrega al instante · Pago seguro con Stripe",
+    priceLine: "Informes completos: 5 EUR · Al instante · Stripe",
     footer:
       "La astrología es para reflexionar y entretener. Tú decides siempre.",
+    footerArticlesTitle: "Artículos",
+    footerContactTitle: "Contacto",
+    navLogoHomeAria: "CosmoTips — inicio con el formulario de pedido",
     langLabel: "Idioma del informe",
     placeNoMatch: "Sin coincidencias",
+    freeBasicUsedHint:
+      "Ya usaste la opción básica gratuita en este navegador. Elige un informe de pago abajo.",
+    freeBasicAlreadyUsedError:
+      "La vista básica gratuita ya se usó en este dispositivo. Elige un tipo de informe de pago.",
   },
 };
 

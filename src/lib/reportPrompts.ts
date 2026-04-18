@@ -8,7 +8,7 @@ import {
 import type { NatalChartPayload } from "@/lib/natalChart";
 import { natalChartSummaryJson } from "@/lib/natalChart";
 
-type ReportType = "personality" | "weekly" | "monthly";
+type ReportType = "natal_basic" | "personality" | "weekly" | "monthly";
 
 const weeklyDayBullet: Record<AppLang, string> = {
   pl: `- 2–4 zdania wyłącznie o tym jednym dniu (data w nagłówku); mapa urodzeniowa i tranzyty.`,
@@ -34,17 +34,20 @@ function monthlySegmentOutlineBlocks(fw: ForecastWindows, lang: AppLang): string
     if (lang === "pl") {
       lines.push(`## Etap ${n}: ${seg.start} – ${seg.end}`);
       lines.push(
-        `- 3–5 zdań tylko dla tego przedziału; cała prognoza obejmuje 30 dni od ${fw.monthly.start} do ${fw.monthly.end}.`,
+        `- 4–7 zdań wyłącznie o tym przedziale; całość raportu = 30 dni ${fw.monthly.start}–${fw.monthly.end}.`,
+        `- W każdym etapie: nazwij przynajmniej jeden czynnik z mapy (planeta w znaku/domu lub aspekt natalny) oraz jego związek z tranzytem w tych datach; nie powtarzaj tego samego ogólnego motywu „relacji” w każdym etapie — różnicuj wątki (np. praca, dom, energia, decyzje).`,
       );
     } else if (lang === "es") {
       lines.push(`## Parte ${n}: ${seg.start} – ${seg.end}`);
       lines.push(
-        `- 3–5 frases solo para este tramo; el informe completo cubre 30 días desde ${fw.monthly.start} hasta ${fw.monthly.end}.`,
+        `- 4–7 frases solo para este tramo; el informe completo = 30 días ${fw.monthly.start}–${fw.monthly.end}.`,
+        `- En cada parte: cita al menos un factor de la carta (planeta en signo/casa o aspecto natal) y su vínculo con un tránsito en esas fechas; evita repetir el mismo cliché relacional en todas las partes — varía temas (trabajo, hogar, energía, decisiones).`,
       );
     } else {
       lines.push(`## Part ${n}: ${seg.start} – ${seg.end}`);
       lines.push(
-        `- 3–5 sentences for this date range only; full forecast covers 30 days from ${fw.monthly.start} through ${fw.monthly.end}.`,
+        `- 4–7 sentences for this date range only; full forecast = 30 days ${fw.monthly.start}–${fw.monthly.end}.`,
+        `- In each part: name at least one natal factor (planet in sign/house or natal aspect) and how a transit in these dates activates it; do not repeat the same generic “relationships” theme in every part — vary life areas (work, home, energy, decisions).`,
       );
     }
     lines.push(``);
@@ -158,28 +161,33 @@ function plMonthlyOutline(
     ``,
     `KRYTYCZNE: Pisz WYŁĄCZNIE o 30 kolejnych dniach kalendarzowych od daty generowania: od ${fw.monthly.start} do ${fw.monthly.end} włącznie (strefa ${fw.timezone}). To nie jest „miesiąc kalendarzowy” od 1. do ostatniego dnia miesiąca — liczy się wyłącznie ten zakres.`,
     ``,
+    `STYL (jak u doświadczonego astrologa przy konsultacji): każdy akapit musi wynikać z połączenia TEJ mapy (JSON) z realnymi tranzytami w podanych datach. Unikaj pustych ogólników („komunikacja”, „zaufanie”, „otwórz serce”) bez wskazania planety, znaku, domu całoznakowego od Ascendentu lub aspektu z JSON. Tam gdzie piszesz o relacjach, pracy lub zdrowiu psychicznym — uzasadnij to konkretnym czynnikiem mapy + tranzytem w ${fw.monthly.start}–${fw.monthly.end}, nie dla „typowej” osoby ze znakiem słonecznym.`,
+    ``,
     `Nagłówki ## w tej kolejności:`,
     ``,
     `## Wykres Natalny`,
     ...cc.map((l) => `- ${l}`),
-    `- Krótko przypomnij układ potrzebny do tranzytów w tym miesiącu.`,
+    `- 2–3 zdania: które ciała z JSON (Słońce, Księżyc, planety, Ascendent) są najsilniej aktywowane tranzytami w tym oknie — bez powtarzania całego opisu osobowości.`,
     ``,
     `## Ogólna energia 30 dni`,
-    `- 2–4 zdania nastroju całego okresu względem mapy urodzeniowej; tylko ${fw.monthly.start}–${fw.monthly.end}.`,
+    `- 3–6 zdań: syntetyczny nastrój okresu ${fw.monthly.start}–${fw.monthly.end} z wyraźnym odniesieniem do dominującego wzorca tranzytowego (np. seria aspektów do tej samej planety natalnej) oraz do Słońca / Księżyca / Ascendentu z mapy.`,
     ``,
     `## Kluczowe tranzyty (30 dni)`,
-    `- Lista 4–7 punktów: tranzyty względem natalu (mogą być przybliżone, jeśli oznaczysz „około”); wyłącznie ${fw.monthly.start}–${fw.monthly.end}.`,
+    `- Lista 6–9 punktów; każdy punkt = pełna myśl: „tranzytująca planeta X w okolicach … aspektuje natalne Y (znak/dom)” + jedno zdanie interpretacji dla TEJ osoby w tym zakresie dat. Bez jednowyrazowych punktów typu „Saturn — dyscyplina”.`,
     ``,
     ...monthlySegmentOutlineBlocks(fw, "pl"),
     ``,
-    `## Miłość i relacje (ten 30-dniowy okres)`,
-    `- Jeden akapit; wyłącznie ${fw.monthly.start}–${fw.monthly.end}; bez diagnoz.`,
+    `## Relacje i dynamika serca (${fw.monthly.start}–${fw.monthly.end})`,
+    `- 2 zdania: Wenus i Księżyc w mapie (znak; dom całoznakowy od Ascendentu jeśli da się to sensownie odczytać z danych) jako baza stylu dawania i odbierania bliskości.`,
+    `- 4–6 zdań: które tranzyty w tym 30-dniowym oknie najsilniej dotykają tych miejsc w mapie (aspekty, wejście planety do znaku/domu); pisz o konkretnych napięciach lub wsparciach, nie o horoskopowych frazach.`,
+    `- Jeśli w mapie są napięcia (np. Saturn, Pluton, Mars) wokół relacji — opisz możliwy przebieg w praktyce (scenariusze zachowań), bez straszenia i bez diagnoz.`,
+    `- 1 zdanie domykające: refleksyjny kierunek pracy z energią miesiąca, spójny z mapą.`,
     ``,
-    `## Praca i finanse (ten 30-dniowy okres)`,
-    `- Jeden akapit; ten sam zakres dat; bez porad inwestycyjnych.`,
+    `## Praca, pieniądze i realizacja (${fw.monthly.start}–${fw.monthly.end})`,
+    `- 4–6 zdań: powiąż Saturna, Jowisza, Marsa i Merkurego (z JSON) z tranzytami okresu — które obszary życia (projekty, odpowiedzialność, widoczność) się aktywizują; bez konkretnych porad inwestycyjnych i bez obietnic zarobku.`,
     ``,
-    `## Zdrowie i energia (ten 30-dniowy okres)`,
-    `- Jeden akapit o energii i rytmie (bez diagnoz medycznych); ${fw.monthly.start}–${fw.monthly.end}.`,
+    `## Rytm ciała i energii (${fw.monthly.start}–${fw.monthly.end})`,
+    `- 3–5 zdań: Księżyc i ewentualnie 6. dom / Mars w mapie vs tranzyty — sen, regeneracja, obciążenie (bez diagnoz medycznych i bez suplementów).`,
     ``,
     `## Najlepsze dni w tym okresie`,
     `- Lista 3–5 dat (YYYY-MM-DD w ${fw.timezone}) z jednym zdaniem uzasadnienia każdej z mapy.`,
@@ -303,26 +311,31 @@ function enMonthlyOutline(
     ``,
     `CRITICAL: Write ONLY about 30 consecutive calendar days from the generation date: ${fw.monthly.start} through ${fw.monthly.end} inclusive (${fw.timezone}). This is NOT “the calendar month from the 1st to the last day of a month” — only this exact range.`,
     ``,
+    `STYLE (professional consultation): every section must tie THIS chart (JSON) to real transits in those dates. Ban empty clichés (“communication”, “trust”, “open your heart”) unless you name the planet, sign, whole-sign house from Ascendant, or aspect from JSON. For love, work, or emotional strain — always show chart factor + transit in ${fw.monthly.start}–${fw.monthly.end}, not generic Sun-sign advice.`,
+    ``,
     `## Natal chart`,
     ...cc.map((l) => `- ${l}`),
-    `- Brief note on what matters for transits this month.`,
+    `- 2–3 sentences: which bodies from JSON (Sun, Moon, planets, Ascendant) are most activated by transits in this window — without re-writing the full personality portrait.`,
     ``,
     `## Overall energy (30-day window)`,
-    `- 2–4 sentences vs the natal chart; only ${fw.monthly.start}–${fw.monthly.end}.`,
+    `- 3–6 sentences: the mood of ${fw.monthly.start}–${fw.monthly.end} with a clear dominant transit pattern (e.g. repeated hits to one natal planet) woven with Sun / Moon / Ascendant from the chart.`,
     ``,
     `## Key transits (30 days)`,
-    `- 4–7 transit bullets vs natal (approximate OK if labeled); only ${fw.monthly.start}–${fw.monthly.end}.`,
+    `- 6–9 bullets; each bullet = one full thought: “transiting X around … aspects natal Y (sign/house)” + one sentence of interpretation for THIS person in this date range. No one-word bullets like “Saturn — discipline”.`,
     ``,
     ...monthlySegmentOutlineBlocks(fw, "en"),
     ``,
-    `## Love & relationships (this 30-day period)`,
-    `- One paragraph; only ${fw.monthly.start}–${fw.monthly.end}.`,
+    `## Relationships & emotional climate (${fw.monthly.start}–${fw.monthly.end})`,
+    `- 2 sentences: natal Venus and Moon (sign; whole-sign house from Ascendant if you can infer it sensibly) as the baseline for closeness and needs.`,
+    `- 4–6 sentences: which transits in this 30-day window most touch those chart areas (aspects, sign/house ingress); describe concrete tensions or support, not magazine phrases.`,
+    `- If the chart shows strain (Saturn, Pluto, Mars) around relating — describe likely behavioral patterns in practice, without fear-mongering or diagnoses.`,
+    `- 1 closing sentence: a reflective way to work with the month’s energy, consistent with the chart.`,
     ``,
-    `## Work & finances (this 30-day period)`,
-    `- One paragraph; same date range; no investment advice.`,
+    `## Work, money & execution (${fw.monthly.start}–${fw.monthly.end})`,
+    `- 4–6 sentences: link Saturn, Jupiter, Mars, and Mercury (from JSON) to transits of the period — which life themes (projects, responsibility, visibility) activate; no investment picks or income promises.`,
     ``,
-    `## Health & energy (this 30-day period)`,
-    `- One paragraph on rhythm/energy only; no medical diagnosis.`,
+    `## Body rhythm & energy (${fw.monthly.start}–${fw.monthly.end})`,
+    `- 3–5 sentences: Moon and optionally 6th house / Mars vs transits — sleep, recovery, load (no medical diagnosis or supplement advice).`,
     ``,
     `## Best days in this window`,
     `- 3–5 dates (YYYY-MM-DD, ${fw.timezone}) with one-sentence rationale each.`,
@@ -446,25 +459,31 @@ function esMonthlyOutline(
     ``,
     `CRÍTICO: Solo 30 días naturales consecutivos desde la fecha de generación: ${fw.monthly.start}–${fw.monthly.end} inclusive (${fw.timezone}). No es “el mes del calendario” del día 1 al último día del mes — solo este rango.`,
     ``,
+    `ESTILO (consulta profesional): cada apartado debe enlazar ESTA carta (JSON) con tránsitos reales en esas fechas. Evita clichés vacíos (“comunicación”, “confianza”) sin planeta, signo, casa entera desde el ascendente o aspecto del JSON. En amor, trabajo o carga emocional — siempre factor natal + tránsito en ${fw.monthly.start}–${fw.monthly.end}, no consejos genéricos de signo solar.`,
+    ``,
     `## Carta natal`,
     ...cc.map((l) => `- ${l}`),
+    `- 2–3 frases: qué cuerpos del JSON (Sol, Luna, planetas, Ascendente) reciben más “luz” de tránsitos en esta ventana — sin rehacer el retrato completo.`,
     ``,
     `## Energía general (ventana de 30 días)`,
-    `- 2–4 frases; solo ${fw.monthly.start}–${fw.monthly.end}.`,
+    `- 3–6 frases: clima de ${fw.monthly.start}–${fw.monthly.end} con un patrón dominante de tránsitos (p. ej. repetición de aspectos al mismo planeta natal) y Sol / Luna / Ascendente de la carta.`,
     ``,
     `## Tránsitos clave (30 días)`,
-    `- 4–7 viñetas de tránsitos vs natal (aprox. OK si lo indicas); solo ${fw.monthly.start}–${fw.monthly.end}.`,
+    `- 6–9 viñetas; cada una = idea completa: “tránsito X hacia … aspecta natal Y (signo/casa)” + una frase de interpretación para ESTA persona en esas fechas. Nada de viñetas de una palabra.`,
     ``,
     ...monthlySegmentOutlineBlocks(fw, "es"),
     ``,
-    `## Amor y relaciones (este período de 30 días)`,
-    `- Un párrafo; sin diagnósticos.`,
+    `## Relaciones y clima emocional (${fw.monthly.start}–${fw.monthly.end})`,
+    `- 2 frases: Venus y Luna natales (signo; casa entera desde el ascendente si se infiere con sentido) como base de vínculo y necesidades.`,
+    `- 4–6 frases: qué tránsitos de esta ventana tocan más esas zonas (aspectos, ingreso a signo/casa); tensiones o apoyos concretos, no frases de revista.`,
+    `- Si la carta muestra tensión (Saturno, Plutón, Marte) en el vínculo — describe patrones de conducta probables, sin alarmismo ni diagnósticos.`,
+    `- 1 frase de cierre: reflexión práctica acorde a la carta.`,
     ``,
-    `## Trabajo y finanzas (este período de 30 días)`,
-    `- Un párrafo; sin consejos de inversión.`,
+    `## Trabajo, dinero y ejecución (${fw.monthly.start}–${fw.monthly.end})`,
+    `- 4–6 frases: Saturno, Júpiter, Marte y Mercurio (JSON) con tránsitos del período — qué temas (proyectos, responsabilidad, visibilidad) se activan; sin recomendaciones de inversión ni promesas de ingreso.`,
     ``,
-    `## Salud y energía (este período de 30 días)`,
-    `- Un párrafo sobre ritmo/energía; sin consejos médicos.`,
+    `## Ritmo corporal y energía (${fw.monthly.start}–${fw.monthly.end})`,
+    `- 3–5 frases: Luna y opcionalmente casa 6 / Marte vs tránsitos — sueño, recuperación, carga (sin diagnóstico médico ni suplementos).`,
     ``,
     `## Mejores días en esta ventana`,
     `- 3–5 fechas YYYY-MM-DD (${fw.timezone}) con una frase cada una.`,
@@ -518,6 +537,165 @@ function esWeeklyOutline(
   ];
 }
 
+function natalBasicFreeOutline(
+  lang: AppLang,
+  chart: NatalChartPayload,
+  dob: string,
+  tob: string,
+  pob: string,
+): string[] {
+  const jsonHint =
+    lang === "pl"
+      ? `Trzymaj się liczb z JSON (długości ekliptyczne, Ascendent, strefa ${chart.timezone}, współrzędne) — nie zaprzeczaj im.`
+      : lang === "es"
+        ? `Respeta las cifras del JSON (longitudes, Ascendente, zona ${chart.timezone}, coordenadas) — no las contradigas.`
+        : `Stay consistent with the JSON numbers (longitudes, Ascendant, timezone ${chart.timezone}, coordinates) — do not contradict them.`;
+  if (lang === "pl") {
+    return [
+      `Nie używaj nagłówka poziomu # — pierwszy nagłówek w treści interpretacji to wyłącznie „## Dane urodzenia”.`,
+      ``,
+      `Sekcja „## Dane urodzenia”: jeden akapit (2–3 zdania) z datą ${dob}, godziną ${tob}, miejscem ${pob} i strefą ${chart.timezone}.`,
+      ``,
+      `Potem — wyłącznie trzy nagłówki ## w tej kolejności (bez innych sekcji poza „Dane urodzenia”):`,
+      ``,
+      `## Słońce`,
+      `- 5–8 zdań: wyłącznie dla TEJ osoby i TEJ mapy (JSON). Podaj znak i sens stopnia Słońca z danych; rdzeń motywacji, styl bycia, jak „świeci” energia słoneczna w życiu codziennym.`,
+      `- Możesz wpleść 1–2 najsilniejsze aspekty natalne dotykające Słońca (orb ~6° według długości ekliptycznej z JSON); nie wymyślaj ciał spoza JSON.`,
+      ``,
+      `## Księżyc`,
+      `- 5–8 zdań: znak i sens Księżyca z mapy; potrzeby emocjonalne, reakcje, co daje poczucie bezpieczeństwa; 0–2 aspekty do Księżyca z JSON, jeśli są czytelne.`,
+      ``,
+      `## Ascendent`,
+      `- 4–7 zdań: Ascendent ok. ${chart.ascendantDeg.toFixed(1)}° i jego znak; pierwsze wrażenie, sposób wchodzenia w kontakt z otoczeniem; bez przepowiadania zdarzeń.`,
+      ``,
+      `Sekcji „## Wykres Natalny” z pełną listą aspektów: NIE — to wyłącznie okrojony podgląd.`,
+      jsonHint,
+    ];
+  }
+  if (lang === "es") {
+    return [
+      `No uses un encabezado de nivel # — el primer encabezado del texto interpretativo es solo “## Datos de nacimiento”.`,
+      ``,
+      `“## Datos de nacimiento”: un párrafo (2–3 frases) con fecha ${dob}, hora ${tob}, lugar ${pob} y zona ${chart.timezone}.`,
+      ``,
+      `Después, SOLO tres encabezados ## en este orden (tras “Datos de nacimiento”):`,
+      ``,
+      `## Sol`,
+      `- 5–8 frases: solo para ESTA persona y ESTA carta (JSON). Signo y sentido del grado solar; núcleo motivacional y estilo de presencia.`,
+      `- Puedes incluir 1–2 aspectos natales fuertes al Sol (orbe ~6° según longitudes del JSON); no inventes cuerpos fuera del JSON.`,
+      ``,
+      `## Luna`,
+      `- 5–8 frases: signo lunar; necesidades emocionales, reacciones, qué aporta calma; 0–2 aspectos a la Luna si se ven claros en el JSON.`,
+      ``,
+      `## Ascendente`,
+      `- 4–7 frases: Ascendente ~${chart.ascendantDeg.toFixed(1)}° y su signo; primera impresión y filtro social; sin predicciones de eventos.`,
+      ``,
+      `No escribas una sección larga “Carta natal” con listas de aspectos.`,
+      jsonHint,
+    ];
+  }
+  return [
+    `Do not use a level-# heading — the first heading in the interpretive text must be “## Birth details” only.`,
+    ``,
+    `“## Birth details”: one paragraph (2–3 sentences) with date ${dob}, time ${tob}, place ${pob}, timezone ${chart.timezone}.`,
+    ``,
+    `Then add ONLY these three ## headings, in this order (after “Birth details”):`,
+    ``,
+    `## Sun sign`,
+    `- 5–8 sentences: for THIS person and THIS chart (JSON) only. State the Sun’s sign and degree sense from the data; core motivation, how solar energy shows up day to day.`,
+    `- You may weave in 1–2 strongest natal aspects to the Sun (~6° orb from ecliptic longitudes in JSON); do not invent bodies not in JSON.`,
+    ``,
+    `## Moon sign`,
+    `- 5–8 sentences: Moon sign from the chart; emotional needs, reactions, what helps you feel grounded; 0–2 aspects to the Moon from JSON if clearly readable.`,
+    ``,
+    `## Ascendant`,
+    `- 4–7 sentences: Ascendant ~${chart.ascendantDeg.toFixed(1)}° and its sign; first impression and social “filter”; no event fortune-telling.`,
+    ``,
+    `Do NOT add a long “Natal chart” section listing all aspects.`,
+    jsonHint,
+  ];
+}
+
+export function buildNatalBasicFreePrompt(input: {
+  dob: string;
+  tob: string;
+  pob: string;
+  lang: AppLang;
+  chart: NatalChartPayload;
+}): string {
+  const { dob, tob, pob, lang, chart } = input;
+  const ephem = natalChartSummaryJson(chart);
+  const outline = natalBasicFreeOutline(lang, chart, dob, tob, pob);
+
+  if (lang === "pl") {
+    return [
+      `Jesteś doświadczonym astrologiem. Klient otrzymuje DARMOWY, krótszy podgląd mapy — tylko interpretacja Słońca, Księżyca i Ascendentu (nie zastępuje pełnego płatnego raportu osobowości).`,
+      ``,
+      `WAŻNE: Cały dokument wyłącznie po polsku.`,
+      ``,
+      `Dane urodzenia:`,
+      `- Data: ${dob}`,
+      `- Godzina: ${tob}`,
+      `- Miejsce: ${pob}`,
+      ``,
+      `JSON ephemeridy (tropik, geocentryczny). Nie zaprzeczaj liczbom — interpretuj tylko w ramach trzech sekcji:`,
+      "```json",
+      ephem,
+      "```",
+      ``,
+      ...outline,
+      ``,
+      `Format: Markdown; poza powyższym blokiem JSON bez innych JSON-ów i bez fence’ów kodu w interpretacji.`,
+      `Nie wstawiaj żadnego tytułu marketingowego typu „Darmowy podgląd” — tylko sekcje ## opisane w outline.`,
+      `Ton: ciepły, konkretny, refleksyjny; bez medycyny, prawa i inwestycji.`,
+    ].join("\n");
+  }
+  if (lang === "es") {
+    return [
+      `Eres un astrólogo experimentado. La persona recibe una vista gratuita y breve: solo Sol, Luna y Ascendente (no reemplaza el informe de personalidad de pago).`,
+      ``,
+      `IMPORTANTE: Todo en español.`,
+      ``,
+      `Datos de nacimiento:`,
+      `- Fecha: ${dob}`,
+      `- Hora: ${tob}`,
+      `- Lugar: ${pob}`,
+      ``,
+      `JSON de efemérides. No lo contradigas; interpreta solo en las tres secciones:`,
+      "```json",
+      ephem,
+      "```",
+      ``,
+      ...outline,
+      ``,
+      `Formato: Markdown; sin más JSON ni fences en la lectura.`,
+      `No insertes un titular promocional tipo “Vista gratuita” — solo las secciones ## del outline.`,
+      `Evita consejos médicos, legales o financieros.`,
+    ].join("\n");
+  }
+  return [
+    `You are an experienced astrologer. The user receives a FREE, shorter chart preview: only individualized Sun, Moon, and Ascendant interpretation (not the full paid personality report).`,
+    ``,
+    `IMPORTANT: Entire document in English.`,
+    ``,
+    `Birth data:`,
+    `- Date: ${dob}`,
+    `- Time: ${tob}`,
+    `- Place: ${pob}`,
+    ``,
+    `Ephemeris JSON (tropical, geocentric). Do not contradict — interpret only within the three sections:`,
+    "```json",
+    ephem,
+    "```",
+    ``,
+    ...outline,
+    ``,
+    `Formatting: Markdown only; no extra JSON or code fences in the reading.`,
+    `Do not add a promotional H1 like “Free preview” — only the ## sections from the outline.`,
+    `Tone: warm, specific, reflective. Avoid medical, legal, or financial advice.`,
+  ].join("\n");
+}
+
 function outlineFor(
   reportType: ReportType,
   lang: AppLang,
@@ -551,6 +729,9 @@ export function buildReportPrompt(input: {
   chart: NatalChartPayload;
 }): string {
   const { dob, tob, pob, reportType, lang, chart } = input;
+  if (reportType === "natal_basic") {
+    throw new Error("natal_basic is generated without an LLM prompt.");
+  }
   const fw = getForecastWindows();
   const ephem = natalChartSummaryJson(chart);
   const outline = outlineFor(reportType, lang, chart, dob, tob, pob, fw);

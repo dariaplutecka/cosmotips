@@ -26,6 +26,21 @@ export async function POST(req: Request) {
     stripeMode !== "live" &&
     (process.env.STRIPE_SKIP_PAYMENT_FOR_DEV ?? "false") === "true";
 
+  if (reportType === "natal_basic") {
+    const sessionId = `fnb_${randomUUID()}`;
+    const params = new URLSearchParams({
+      session_id: sessionId,
+      fnb: "1",
+      email,
+      dob,
+      tob,
+      pob,
+      reportType,
+      lang,
+    });
+    return NextResponse.json({ url: `${origin}/success?${params.toString()}` });
+  }
+
   if (skipPaymentForDev) {
     const sessionId = `dev_${randomUUID()}`;
     const params = new URLSearchParams({
@@ -58,14 +73,16 @@ export async function POST(req: Request) {
                 ? "Personality Description"
                 : reportType === "weekly"
                   ? "7-day forecast from purchase date"
-                  : "30-day forecast from purchase date",
+                  : reportType === "monthly"
+                    ? "30-day forecast from purchase date"
+                    : "Report",
           },
         },
         quantity: 1,
       },
     ],
     success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/cancel`,
+    cancel_url: `${origin}/cancel?lang=${encodeURIComponent(lang)}`,
     metadata: {
       email,
       dob,

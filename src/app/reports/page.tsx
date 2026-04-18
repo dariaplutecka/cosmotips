@@ -1,8 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+import { CosmotipsTopBar } from "@/components/CosmotipsTopBar";
+import type { AppLang } from "@/lib/reportSchema";
+import { homeCopy } from "@/lib/uiCopy";
 
 type SavedReport = {
   id: string;
@@ -11,7 +15,7 @@ type SavedReport = {
   dob: string;
   tob: string;
   pob: string;
-  reportType: "personality" | "weekly" | "monthly";
+  reportType: "natal_basic" | "personality" | "weekly" | "monthly";
   report: string;
 };
 
@@ -30,7 +34,8 @@ const zodiacSigns = [
   { name: "Sagittarius", symbol: "♐", start: [11, 22], end: [12, 21] },
 ] as const;
 
-function reportTypeLabel(t: SavedReport["reportType"]) {
+function reportTypeLabel(t: SavedReport["reportType"], lang: AppLang) {
+  if (t === "natal_basic") return homeCopy[lang].reports.natal_basic.title;
   if (t === "weekly") return "Weekly Forecast";
   if (t === "monthly") return "Monthly Forecast";
   return "Personality Description";
@@ -55,7 +60,13 @@ function getZodiac(dob: string) {
   return null;
 }
 
-export default function ReportsPage() {
+function ReportsPageContent() {
+  const searchParams = useSearchParams();
+  const raw = searchParams.get("lang");
+  const lang: AppLang =
+    raw === "pl" || raw === "es" ? raw : "en";
+  const hc = homeCopy[lang];
+
   const [reports] = useState<SavedReport[]>(() => {
     try {
       const key = "astroapka:reports";
@@ -80,9 +91,14 @@ export default function ReportsPage() {
   return (
     <div className="min-h-dvh">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+        <CosmotipsTopBar
+          lang={lang}
+          langLabel={hc.langLabel}
+          logoAriaLabel={hc.navLogoHomeAria}
+        />
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-white">
+            <h1 className="cosmotips-headline text-3xl font-semibold tracking-tight">
               Saved reports
             </h1>
             <p className="mt-2 text-sm text-white/60">
@@ -90,7 +106,7 @@ export default function ReportsPage() {
             </p>
           </div>
           <Link
-            href="/"
+            href={`/?lang=${lang}`}
             className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-b from-violet-300 to-violet-500 px-4 py-2 text-sm font-semibold text-black shadow-lg shadow-violet-500/20 transition"
           >
             Generate new
@@ -120,7 +136,7 @@ export default function ReportsPage() {
                       ].join(" ")}
                     >
                       <div className="text-sm font-semibold text-white">
-                        {reportTypeLabel(r.reportType)}
+                        {reportTypeLabel(r.reportType, lang)}
                       </div>
                       <div className="mt-1 text-xs text-white/60">
                         {new Date(r.createdAt).toLocaleString()}
@@ -141,7 +157,7 @@ export default function ReportsPage() {
               {selected ? (
                 <>
                   <h2 className="text-2xl font-semibold tracking-tight text-white">
-                    {reportTypeLabel(selected.reportType)}
+                    {reportTypeLabel(selected.reportType, lang)}
                   </h2>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-white/60">
                     <span>
@@ -165,7 +181,7 @@ export default function ReportsPage() {
                       <ReactMarkdown
                         components={{
                           h1: ({ children }) => (
-                            <h1 className="mb-5 text-3xl font-semibold tracking-tight text-white">
+                            <h1 className="cosmotips-headline mb-5 text-3xl font-semibold tracking-tight">
                               {children}
                             </h1>
                           ),
@@ -211,3 +227,18 @@ export default function ReportsPage() {
   );
 }
 
+export default function ReportsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-dvh">
+          <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+            <div className="h-10 animate-pulse rounded-lg bg-white/[0.06]" />
+          </div>
+        </div>
+      }
+    >
+      <ReportsPageContent />
+    </Suspense>
+  );
+}

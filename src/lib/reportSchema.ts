@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const ReportTypeSchema = z.enum([
+  "natal_basic",
   "personality",
   "weekly",
   "monthly",

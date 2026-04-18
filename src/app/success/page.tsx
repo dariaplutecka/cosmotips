@@ -4,17 +4,18 @@ import Link from "next/link";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+import { CosmotipsTopBar } from "@/components/CosmotipsTopBar";
 import { NatalChartWheel } from "@/components/NatalChartWheel";
 import type { AppLang } from "@/lib/reportSchema";
 import type { NatalChartPayload } from "@/lib/natalChart";
-import { successUi } from "@/lib/uiCopy";
+import { homeCopy, successUi } from "@/lib/uiCopy";
 
 type Meta = {
   email: string;
   dob: string;
   tob: string;
   pob: string;
-  reportType: "personality" | "weekly" | "monthly";
+  reportType: "natal_basic" | "personality" | "weekly" | "monthly";
   lang: AppLang;
 };
 
@@ -23,7 +24,6 @@ type EmailPdfStatus = "sent" | "skipped" | "failed";
 type EmailPdfFromApi = {
   status: EmailPdfStatus;
   skipReason?: "no_api_key" | "no_from";
-  detail?: string;
 };
 
 type GenerateResponse =
@@ -71,8 +71,8 @@ function getZodiac(dob: string) {
 function SuccessInner() {
   const sp = useSearchParams();
   const sessionId = sp.get("session_id") ?? "";
-  const devMode =
-    sp.get("dev") === "1" || sessionId.startsWith("dev_");
+  const devMode = sp.get("dev") === "1" || sessionId.startsWith("dev_");
+  const freeNatalMode = sp.get("fnb") === "1" && sessionId.startsWith("fnb_");
   const devEmail = sp.get("email") ?? "";
   const devDob = sp.get("dob") ?? "";
   const devTob = sp.get("tob") ?? "";
@@ -94,7 +94,8 @@ function SuccessInner() {
     null,
   );
 
-  const uiLang: AppLang = meta?.lang ?? (devMode ? devLang : "en");
+  const uiLang: AppLang =
+    meta?.lang ?? (devMode || freeNatalMode ? devLang : "en");
   const su = successUi[uiLang];
 
   const title = useMemo(() => {
@@ -116,6 +117,14 @@ function SuccessInner() {
       const params = new URLSearchParams({ session_id: sessionId });
       if (devMode) {
         params.set("dev", "1");
+        params.set("email", devEmail);
+        params.set("dob", devDob);
+        params.set("tob", devTob);
+        params.set("pob", devPob);
+        params.set("reportType", devReportType);
+        params.set("lang", devLang);
+      } else if (freeNatalMode) {
+        params.set("fnb", "1");
         params.set("email", devEmail);
         params.set("dob", devDob);
         params.set("tob", devTob);
@@ -165,6 +174,7 @@ function SuccessInner() {
   }, [
     sessionId,
     devMode,
+    freeNatalMode,
     devEmail,
     devDob,
     devTob,
@@ -223,15 +233,19 @@ function SuccessInner() {
     };
   }, [meta]);
 
+  const hc = homeCopy[uiLang];
+
   return (
     <div className="min-h-dvh">
       <div className="mx-auto max-w-4xl px-4 py-10 sm:py-14">
+        <CosmotipsTopBar
+          lang={uiLang}
+          langLabel={hc.langLabel}
+          logoAriaLabel={hc.navLogoHomeAria}
+        />
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-sm text-emerald-100 backdrop-blur">
-              {su.paymentOk}
-            </div>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            <h1 className="cosmotips-headline text-3xl font-semibold tracking-tight sm:text-4xl">
               {title}
             </h1>
             {meta ? (
@@ -290,7 +304,7 @@ function SuccessInner() {
                   {su.tryAgain}
                 </button>
                 <Link
-                  href="/"
+                  href={`/?lang=${uiLang}`}
                   className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
                 >
                   {su.backHome}
@@ -329,11 +343,6 @@ function SuccessInner() {
                       {su.pdfEmailSkipHintNoFrom}
                     </p>
                   ) : null}
-                  {emailPdfInfo.status === "failed" && emailPdfInfo.detail ? (
-                    <p className="mt-2 font-mono text-xs break-words text-white/55">
-                      {emailPdfInfo.detail}
-                    </p>
-                  ) : null}
                 </div>
               ) : null}
               {chartLoading ? (
@@ -353,7 +362,7 @@ function SuccessInner() {
               <ReactMarkdown
                 components={{
                   h1: ({ children }) => (
-                    <h1 className="mb-5 text-3xl font-semibold tracking-tight text-white">
+                    <h1 className="cosmotips-headline mb-5 text-3xl font-semibold tracking-tight">
                       {children}
                     </h1>
                   ),
@@ -399,13 +408,13 @@ function SuccessInner() {
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Link
-            href="/"
+            href={`/?lang=${uiLang}`}
             className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
           >
             {su.another}
           </Link>
           <Link
-            href="/reports"
+            href={`/reports?lang=${uiLang}`}
             className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
           >
             {su.saved}
