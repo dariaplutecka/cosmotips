@@ -366,7 +366,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     langLabel: "Report language",
     placeNoMatch: "No matches",
     freeBasicUsedHint:
-      "The free basic natal option was already used in this browser. Choose a paid report below.",
+      "The free report can only be used once. Please choose the full report option below.",
     freeBasicAlreadyUsedError:
       "The free basic natal preview was already used on this device. Pick a paid report type.",
   },
@@ -425,7 +425,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     langLabel: "Język raportu",
     placeNoMatch: "Brak dopasowań",
     freeBasicUsedHint:
-      "Darmowy podstawowy wykres został już wykorzystany w tej przeglądarce. Wybierz płatny raport poniżej.",
+      "Z darmowego raportu można skorzystać tylko raz. Wybierz poniżej opcję pełnego raportu.",
     freeBasicAlreadyUsedError:
       "Darmowy podgląd mapy był już użyty na tym urządzeniu. Wybierz typ raportu płatnego.",
   },
@@ -484,7 +484,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     langLabel: "Idioma del informe",
     placeNoMatch: "Sin coincidencias",
     freeBasicUsedHint:
-      "Ya usaste la opción básica gratuita en este navegador. Elige un informe de pago abajo.",
+      "El informe gratuito solo puede usarse una vez. Elige abajo la opción de informe completo.",
     freeBasicAlreadyUsedError:
       "La vista básica gratuita ya se usó en este dispositivo. Elige un tipo de informe de pago.",
   },
