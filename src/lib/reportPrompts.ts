@@ -10,18 +10,42 @@ import { natalChartSummaryJson } from "@/lib/natalChart";
 
 type ReportType = "natal_basic" | "personality" | "weekly" | "monthly";
 
-const weeklyDayBullet: Record<AppLang, string> = {
-  pl: `- 2–4 zdania wyłącznie o tym jednym dniu (data w nagłówku); mapa urodzeniowa i tranzyty.`,
-  en: `- 2–4 sentences for this calendar day only (date in the heading); natal chart and transits.`,
-  es: `- 2–4 frases solo para este día (fecha en el encabezado); carta natal y tránsitos.`,
-};
+function weeklyDayDetailBullets(lang: AppLang, tz: string): string[] {
+  if (lang === "pl") {
+    return [
+      `Napisz **5–8 zdań** wyłącznie o tym jednym dniu (data w nagłówku).`,
+      `Opieraj się **wyłącznie** na dacie, godzinie i miejscu urodzenia z formularza (powtórzone w sekcji „Wykres natalny”) oraz na JSON mapy natalnej i tranzytach w tym prompcie dla tej daty w strefie ${tz}. Nie wymyślaj innych danych urodzenia, nie dopisuj biografii spoza formularza ani „horoskopu ogólnego”.`,
+      `Wskaż co najmniej jeden **konkretny** czynnik natalny (planeta w znaku, dom całoznakowy od Ascendentu lub aspekt z JSON) i powiąż go z tranzytem lub układem dnia **z tych samych danych** — bez sprzeczności z liczbami i znakami z JSON.`,
+      `Wyjaśnij, czym ten dzień różni się od sąsiednich dni w tym tygodniu; nie kopiuj tej samej ogólnej myśli do każdej sekcji dnia.`,
+      `Unikaj pustych fraz („komunikacja”, „zaufanie”, „energia”) bez nazwania planety, znaku, domu lub aspektu z mapy albo tranzytu.`,
+    ];
+  }
+  if (lang === "es") {
+    return [
+      `Escribe **5–8 frases** solo para este día (la fecha va en el encabezado).`,
+      `Basa la interpretación **exclusivamente** en la fecha, hora y lugar de nacimiento del formulario (repetidos en la carta natal) y en el JSON de la carta y los tránsitos de este prompt para esa fecha en ${tz}. No inventes otros datos de nacimiento ni biografía fuera del formulario ni “horóscopo genérico”.`,
+      `Cita al menos un **factor natal concreto** (planeta en signo, casa entera contando desde el Ascendente o aspecto del JSON) y vincúlalo con un tránsito o configuración del día **de estos datos** — sin contradecir cifras ni signos del JSON.`,
+      `Explica en qué se diferencia este día de los adyacentes en esta semana; no repitas la misma idea vaga en cada día.`,
+      `Evita frases vacías sin planeta, signo, casa o aspecto del mapa o del tránsito.`,
+    ];
+  }
+  return [
+    `Write **5–8 sentences** for this calendar day only (date in the heading).`,
+    `Ground everything **exclusively** in the birth date, time, and place from the form (repeated in the Natal chart section) and in this prompt’s natal JSON and transits for that date in ${tz}. Do not invent other birth facts, biography beyond the form, or a generic sun-sign forecast.`,
+    `Name at least one **specific** natal factor (planet in sign, whole-sign house from the Ascendant, or aspect from the JSON) and tie it to a transit or same-day pattern **from the supplied data** — do not contradict the JSON.`,
+    `Explain how this day differs from its neighbors in this week; do not paste the same vague paragraph into every day.`,
+    `Avoid empty buzzwords unless you anchor them to a planet, sign, house, or aspect from the chart or transits.`,
+  ];
+}
 
 function weeklyDayOutlineBlocks(fw: ForecastWindows, lang: AppLang): string[] {
   const lines: string[] = [];
-  const bullet = weeklyDayBullet[lang];
+  const bullets = weeklyDayDetailBullets(lang, fw.timezone);
   for (const iso of fw.weeklyDates) {
     lines.push(`## ${formatForecastDayHeading(iso, lang)} (${iso})`);
-    lines.push(bullet);
+    for (const b of bullets) {
+      lines.push(`- ${b}`);
+    }
     lines.push(``);
   }
   return lines;
@@ -214,6 +238,10 @@ function plWeeklyOutline(
     ``,
     `KRYTYCZNE: Pisz WYŁĄCZNIE o 7 kolejnych dniach od daty generowania: od ${fw.weekly.start} do ${fw.weekly.end} włącznie (strefa ${fw.timezone}). Nie używaj „poniedziałek–niedziela” jako domyślnego tygodnia — liczy się wyłącznie ten zakres dat.`,
     ``,
+    `DANE: Interpretujesz wyłącznie osobę z formularza: ${dob}, godzina ${tob}, miejsce ${pob} — plus pozycje i aspekty z załączonego JSON mapy natalnej oraz tranzyty / ephemerida przekazane w tym prompcie dla dat ${fw.weekly.start}–${fw.weekly.end}. Nie uzupełniaj braków „z głowy” ani z ogólnej astrologii spoza tych danych.`,
+    ``,
+    `STYL: Każdy dzień to mini-konsultacja z mapy — opis ma być **obszerniejszy** niż jedna myśl: rozwijaj wątek dnia (napięcie, wsparcie, tempo) z nazwanymi czynnikami mapy i tranzytów; bez diagnoz medycznych i bez obietnic finansowych.`,
+    ``,
     `Nagłówki ## w tej kolejności:`,
     ``,
     `## Wykres Natalny`,
@@ -362,6 +390,10 @@ function enWeeklyOutline(
     ``,
     `CRITICAL: Write ONLY about 7 consecutive days from the generation date: ${fw.weekly.start} through ${fw.weekly.end} inclusive (${fw.timezone}). Do NOT default to Monday–Sunday; only these dates matter.`,
     ``,
+    `DATA: You only have the form birth facts (${dob}, ${tob}, ${pob}) plus the attached natal JSON and the transits / ephemeris supplied in this prompt for ${fw.weekly.start}–${fw.weekly.end}. Do not invent other birth details or fill gaps from general astrology outside this payload.`,
+    ``,
+    `STYLE: Each day should read like a short chart-based consultation — **more detailed** than a single vague line: develop the day’s theme (tension, support, pacing) with named chart and transit factors; no medical diagnoses or financial promises.`,
+    ``,
     `## Natal chart`,
     ...cc.map((l) => `- ${l}`),
     `- One sentence linking the chart to this week.`,
@@ -509,6 +541,10 @@ function esWeeklyOutline(
     `# 📅 Pronóstico semanal`,
     ``,
     `CRÍTICO: Solo 7 días consecutivos desde la generación: ${fw.weekly.start}–${fw.weekly.end} (${fw.timezone}). No uses lunes–domingo por defecto; solo estas fechas.`,
+    ``,
+    `DATOS: Solo la persona del formulario: ${dob}, hora ${tob}, lugar ${pob}, más el JSON natal y los tránsitos / efemérides de este prompt para ${fw.weekly.start}–${fw.weekly.end}. No inventes otros datos de nacimiento ni rellenes vacíos con astrología genérica fuera de estos datos.`,
+    ``,
+    `ESTILO: Cada día debe leerse como una mini-consulta basada en la carta — **más extenso** que una sola idea vaga: desarrolla el tema del día (tensión, apoyo, ritmo) citando factores concretos del mapa y tránsitos; sin diagnósticos médicos ni promesas financieras.`,
     ``,
     `## Carta natal`,
     ...cc.map((l) => `- ${l}`),

@@ -5,7 +5,7 @@ import { reportEmailCopy } from "@/lib/uiCopy";
 
 function pdfFilename(reportType: string): string {
   const safe = reportType.replace(/[^a-z0-9_-]/gi, "-").toLowerCase() || "report";
-  return `astroapka-${safe}.pdf`;
+  return `Cosmotips-${safe}.pdf`;
 }
 
 export type SendReportPdfResult =
