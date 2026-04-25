@@ -16,7 +16,7 @@ export async function geocodePlace(query: string): Promise<GeocodeHit | null> {
   const res = await fetch(url.toString(), {
     headers: {
       Accept: "application/json",
-      "User-Agent": "astroapka/1.0 (personalized horoscope app)",
+      "User-Agent": "cosmotips/1.0 (personalized horoscope app)",
     },
   });
 

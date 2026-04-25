@@ -69,7 +69,7 @@ function ReportsPageContent() {
 
   const [reports] = useState<SavedReport[]>(() => {
     try {
-      const key = "astroapka:reports";
+      const key = "cosmotips:reports";
       const items = JSON.parse(localStorage.getItem(key) ?? "[]") as SavedReport[];
       return items;
     } catch {

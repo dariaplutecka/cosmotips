@@ -38,7 +38,7 @@ const reportCardIds: ReportType[] = [
   "monthly",
 ];
 
-const NATAL_SAMPLE_STORAGE_KEY = "astroapka:natal_sample_v1";
+const NATAL_SAMPLE_STORAGE_KEY = "cosmotips:natal_sample_v1";
 
 const TOB_HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => i);
 const TOB_MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) => i);

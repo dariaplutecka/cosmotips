@@ -15,7 +15,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "AstroApka — Personalized Horoscope Reports",
+  title: "CosmoTips — Personalized Horoscope Reports",
   description:
     "Generate a personalized astrology report from your birth details. Pay securely with Stripe, get an AI-crafted report instantly.",
 };

@@ -1,7 +1,5 @@
 import { createRequire } from "node:module";
-import { marked } from "marked";
 import type { Content, TDocumentDefinitions } from "pdfmake/interfaces";
-import type { Token, Tokens } from "marked";
 
 const require = createRequire(import.meta.url);
 
@@ -59,40 +57,136 @@ const robotoFontPaths = {
   },
 };
 
-function extractInlineText(tokens: Token[] | undefined): string {
-  if (!tokens?.length) return "";
-  return tokens
-    .map((t) => {
-      if (t.type === "text") return (t as Tokens.Text).text;
-      if (t.type === "escape") return (t as Tokens.Escape).text;
-      if (
-        t.type === "strong" ||
-        t.type === "em" ||
-        t.type === "del" ||
-        t.type === "link" ||
-        t.type === "image"
-      ) {
-        const withInner = t as { tokens?: Token[]; text?: string };
-        if (withInner.tokens?.length)
-          return extractInlineText(withInner.tokens);
-        return typeof withInner.text === "string" ? withInner.text : "";
-      }
-      if (t.type === "codespan") return (t as Tokens.Codespan).text;
-      if (t.type === "br") return "\n";
-      return "";
-    })
-    .join("");
+type MarkdownBlock =
+  | { type: "heading"; depth: number; text: string }
+  | { type: "paragraph"; text: string }
+  | { type: "list"; ordered: boolean; start: number; items: string[] }
+  | { type: "hr" }
+  | { type: "code"; text: string }
+  | { type: "blockquote"; blocks: MarkdownBlock[]; text: string };
+
+function stripInlineMarkdown(text: string): string {
+  return text
+    .replace(/\\\n/g, "\n")
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/(\*\*|__)(.*?)\1/g, "$2")
+    .replace(/(\*|_)(.*?)\1/g, "$2")
+    .replace(/~~(.*?)~~/g, "$1")
+    .replace(/\\([\\`*{}\[\]()#+\-.!_>])/g, "$1");
 }
 
-function markdownBlocksToPdfContent(tokens: Token[]): Content[] {
+function parseMarkdownBlocks(markdown: string): MarkdownBlock[] {
+  const blocks: MarkdownBlock[] = [];
+  const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
+  let i = 0;
+
+  const pushParagraph = (parts: string[]) => {
+    const text = stripInlineMarkdown(parts.join(" ").trim());
+    if (text) blocks.push({ type: "paragraph", text });
+  };
+
+  while (i < lines.length) {
+    const line = lines[i] ?? "";
+    if (!line.trim()) {
+      i++;
+      continue;
+    }
+
+    const heading = /^(#{1,6})\s+(.+)$/.exec(line);
+    if (heading) {
+      blocks.push({
+        type: "heading",
+        depth: heading[1].length,
+        text: stripInlineMarkdown(heading[2].trim()),
+      });
+      i++;
+      continue;
+    }
+
+    if (/^\s*(?:---|\*\*\*|___)\s*$/.test(line)) {
+      blocks.push({ type: "hr" });
+      i++;
+      continue;
+    }
+
+    if (/^```/.test(line)) {
+      i++;
+      const code: string[] = [];
+      while (i < lines.length && !/^```/.test(lines[i] ?? "")) {
+        code.push(lines[i] ?? "");
+        i++;
+      }
+      if (i < lines.length) i++;
+      blocks.push({ type: "code", text: code.join("\n") });
+      continue;
+    }
+
+    if (/^>\s?/.test(line)) {
+      const quote: string[] = [];
+      while (i < lines.length && /^>\s?/.test(lines[i] ?? "")) {
+        quote.push((lines[i] ?? "").replace(/^>\s?/, ""));
+        i++;
+      }
+      blocks.push({
+        type: "blockquote",
+        blocks: parseMarkdownBlocks(quote.join("\n")),
+        text: stripInlineMarkdown(quote.join(" ").trim()),
+      });
+      continue;
+    }
+
+    const unordered = /^\s*[-*+]\s+(.+)$/.exec(line);
+    const ordered = /^\s*(\d+)\.\s+(.+)$/.exec(line);
+    if (unordered || ordered) {
+      const items: string[] = [];
+      const listOrdered = Boolean(ordered);
+      const start = ordered ? Number(ordered[1]) : 1;
+      while (i < lines.length) {
+        const current = lines[i] ?? "";
+        const match = listOrdered
+          ? /^\s*\d+\.\s+(.+)$/.exec(current)
+          : /^\s*[-*+]\s+(.+)$/.exec(current);
+        if (!match) break;
+        items.push(stripInlineMarkdown(match[1].trim()));
+        i++;
+      }
+      blocks.push({ type: "list", ordered: listOrdered, start, items });
+      continue;
+    }
+
+    const paragraph: string[] = [];
+    while (i < lines.length) {
+      const current = lines[i] ?? "";
+      if (
+        !current.trim() ||
+        /^(#{1,6})\s+/.test(current) ||
+        /^\s*(?:---|\*\*\*|___)\s*$/.test(current) ||
+        /^```/.test(current) ||
+        /^>\s?/.test(current) ||
+        /^\s*[-*+]\s+/.test(current) ||
+        /^\s*\d+\.\s+/.test(current)
+      ) {
+        break;
+      }
+      paragraph.push(current.trim());
+      i++;
+    }
+    pushParagraph(paragraph);
+  }
+
+  return blocks;
+}
+
+function markdownBlocksToPdfContent(tokens: MarkdownBlock[]): Content[] {
   const content: Content[] = [];
   for (const token of tokens) {
     switch (token.type) {
       case "heading": {
-        const h = token as Tokens.Heading;
-        const size = h.depth <= 1 ? 16 : h.depth === 2 ? 14 : 12;
+        const size = token.depth <= 1 ? 16 : token.depth === 2 ? 14 : 12;
         content.push({
-          text: extractInlineText(h.tokens),
+          text: token.text,
           fontSize: size,
           bold: true,
           margin: [0, 10, 0, 6],
@@ -100,9 +194,8 @@ function markdownBlocksToPdfContent(tokens: Token[]): Content[] {
         break;
       }
       case "paragraph": {
-        const p = token as Tokens.Paragraph;
         content.push({
-          text: extractInlineText(p.tokens),
+          text: token.text,
           fontSize: 11,
           margin: [0, 0, 0, 8],
           alignment: "justify",
@@ -110,15 +203,11 @@ function markdownBlocksToPdfContent(tokens: Token[]): Content[] {
         break;
       }
       case "list": {
-        const list = token as Tokens.List;
-        let n =
-          typeof list.start === "number" && Number.isFinite(list.start)
-            ? list.start
-            : 1;
-        for (const item of list.items) {
-          const bullet = list.ordered ? `${n++}. ` : "• ";
+        let n = Number.isFinite(token.start) ? token.start : 1;
+        for (const item of token.items) {
+          const bullet = token.ordered ? `${n++}. ` : "• ";
           content.push({
-            text: bullet + extractInlineText(item.tokens),
+            text: bullet + item,
             fontSize: 11,
             margin: [14, 0, 0, 4],
           });
@@ -142,27 +231,23 @@ function markdownBlocksToPdfContent(tokens: Token[]): Content[] {
         });
         break;
       case "code": {
-        const c = token as Tokens.Code;
         content.push({
-          text: c.text,
+          text: token.text,
           fontSize: 9,
           margin: [0, 4, 0, 8],
         });
         break;
       }
       case "blockquote": {
-        const b = token as Tokens.Blockquote;
-        const inner = b.tokens?.length
-          ? markdownBlocksToPdfContent(b.tokens)
-          : [{ text: b.text, italics: true, fontSize: 11 }];
+        const inner = token.blocks.length
+          ? markdownBlocksToPdfContent(token.blocks)
+          : [{ text: token.text, italics: true, fontSize: 11 }];
         content.push({
           stack: inner,
           margin: [16, 4, 0, 8],
         });
         break;
       }
-      case "space":
-        break;
       default:
         break;
     }
@@ -180,7 +265,7 @@ export async function generateReportPdfBuffer(
     virtualfs,
     new URLResolver(virtualfs),
   );
-  const blocks = marked.lexer(markdown);
+  const blocks = parseMarkdownBlocks(markdown);
   const docDefinition: TDocumentDefinitions = {
     info: { title: docTitle },
     defaultStyle: { font: "Roboto", fontSize: 11 },

@@ -97,6 +97,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
   const [chart, setChart] = useState<NatalChartPayload | null>(null);
   const [chartLoading, setChartLoading] = useState(false);
   const [chartError, setChartError] = useState<string | null>(null);
+  const [pdfDownloading, setPdfDownloading] = useState(false);
   const [emailPdfInfo, setEmailPdfInfo] = useState<EmailPdfFromApi | null>(
     null,
   );
@@ -112,6 +113,37 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
     return successUi[uiLang].reportTitle[meta.reportType];
   }, [meta, uiLang]);
   const zodiac = useMemo(() => (meta ? getZodiac(meta.dob) : null), [meta]);
+
+  const downloadPdf = useCallback(async () => {
+    if (!report) return;
+    setPdfDownloading(true);
+    try {
+      const res = await fetch("/api/report/pdf", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          report,
+          title,
+          filename: `Cosmotips-${meta?.reportType ?? "report"}`,
+        }),
+      });
+      if (!res.ok) throw new Error("PDF generation failed.");
+      const blob = await res.blob();
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href;
+      a.download = `Cosmotips-${meta?.reportType ?? "report"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(href);
+    } catch (err) {
+      console.error("[success] PDF download failed:", err);
+      window.alert("Could not download PDF. Try again later.");
+    } finally {
+      setPdfDownloading(false);
+    }
+  }, [meta?.reportType, report, title]);
 
   const fetchReport = useCallback(async () => {
     if (!sessionId) {
@@ -162,7 +194,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
       setLoading(false);
 
       try {
-        const key = "astroapka:reports";
+        const key = "cosmotips:reports";
         const existing = JSON.parse(localStorage.getItem(key) ?? "[]") as unknown[];
         const entry = {
           id: `${Date.now()}-${sessionId}`,
@@ -409,6 +441,15 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
               >
                 {report}
               </ReactMarkdown>
+              <div className="mt-8 flex justify-center">
+                <button
+                  onClick={() => void downloadPdf()}
+                  className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-b from-violet-300 to-violet-500 px-4 py-2 text-sm font-semibold text-black shadow-lg shadow-violet-500/20 transition disabled:opacity-60"
+                  disabled={pdfDownloading}
+                >
+                  {pdfDownloading ? "Preparing PDF…" : "Download PDF"}
+                </button>
+              </div>
             </article>
           ) : (
             <div className="text-white/70">No report found.</div>

@@ -290,23 +290,23 @@ export const reportEmailCopy: Record<
   en: {
     subject: "CosmoTips Report",
     htmlBody:
-      "<p>Thank you for your purchase.</p><p>Your personalized report is attached as a PDF.</p><p>— AstroApka</p>",
+      "<p>Thank you for your purchase.</p><p>Your personalized report is attached as a PDF.</p><p>— CosmoTips</p>",
     textBody:
-      "Thank you for your purchase.\n\nYour personalized report is attached as a PDF.\n\n— AstroApka",
+      "Thank you for your purchase.\n\nYour personalized report is attached as a PDF.\n\n— CosmoTips",
   },
   pl: {
     subject: "CosmoTips Report",
     htmlBody:
-      "<p>Dziękujemy za zakup.</p><p>Twój spersonalizowany raport znajdziesz w załączniku PDF.</p><p>— AstroApka</p>",
+      "<p>Dziękujemy za zakup.</p><p>Twój spersonalizowany raport znajdziesz w załączniku PDF.</p><p>— CosmoTips</p>",
     textBody:
-      "Dziękujemy za zakup.\n\nTwój spersonalizowany raport znajdziesz w załączniku PDF.\n\n— AstroApka",
+      "Dziękujemy za zakup.\n\nTwój spersonalizowany raport znajdziesz w załączniku PDF.\n\n— CosmoTips",
   },
   es: {
     subject: "CosmoTips Report",
     htmlBody:
-      "<p>Gracias por tu compra.</p><p>Tu informe personalizado va adjunto en PDF.</p><p>— AstroApka</p>",
+      "<p>Gracias por tu compra.</p><p>Tu informe personalizado va adjunto en PDF.</p><p>— CosmoTips</p>",
     textBody:
-      "Gracias por tu compra.\n\nTu informe personalizado va adjunto en PDF.\n\n— AstroApka",
+      "Gracias por tu compra.\n\nTu informe personalizado va adjunto en PDF.\n\n— CosmoTips",
   },
 };
 

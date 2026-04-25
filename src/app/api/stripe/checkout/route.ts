@@ -3,8 +3,23 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { CheckoutPayloadSchema } from "@/lib/reportSchema";
+import { checkRateLimit } from "@/lib/rateLimit";
+
+function getClientIp(req: Request) {
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  if (forwardedFor) return forwardedFor.split(",")[0]?.trim() || "unknown";
+  return req.headers.get("x-real-ip")?.trim() || "unknown";
+}
 
 export async function POST(req: Request) {
+  const rateLimit = await checkRateLimit(getClientIp(req));
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again later." },
+      { status: 429 },
+    );
+  }
+
   const body = await req.json().catch(() => null);
   const parsed = CheckoutPayloadSchema.safeParse(body);
   if (!parsed.success) {

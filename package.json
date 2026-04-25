@@ -1,5 +1,5 @@
 {
-  "name": "astroapka",
+  "name": "cosmotips",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,10 +10,11 @@
   },
   "dependencies": {
     "@date-fns/tz": "^1.4.1",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
     "astronomy-engine": "^2.1.19",
     "date-fns": "^4.1.0",
     "geo-tz": "^8.1.6",
-    "marked": "^17.0.5",
     "next": "16.1.7",
     "openai": "^6.31.0",
     "pdfmake": "^0.3.7",
