@@ -11,7 +11,7 @@ import { computeNatalChart } from "@/lib/natalChart";
 import { buildNatalSampleBlurb } from "@/lib/natalSampleBlurb";
 import { generateReportPdfBuffer } from "@/lib/reportPdf";
 import { sendReportPdfEmail } from "@/lib/reportEmail";
-import { reportCache } from "@/lib/reportCache";
+import { getReport, setReport } from "@/lib/reportCache";
 import { successUi } from "@/lib/uiCopy";
 
 /** Stripe webhook signature verification needs the raw request body. */
@@ -125,7 +125,8 @@ export async function POST(req: Request) {
 
   const session = event.data.object;
   const sessionId = session.id;
-  if (reportCache.has(sessionId)) {
+  if (await getReport(sessionId)) {
+    console.log("[webhook] cache hit, skipping generation", session.id);
     return NextResponse.json({ received: true, cached: true });
   }
 
@@ -160,7 +161,7 @@ export async function POST(req: Request) {
       reportType: parsed.data.reportType,
       lang: parsed.data.lang,
     });
-    reportCache.set(sessionId, report);
+    await setReport(sessionId, report);
 
     const pdfTitle = successUi[parsed.data.lang].reportTitle[parsed.data.reportType];
     const pdfBuffer = await generateReportPdfBuffer(report, pdfTitle);

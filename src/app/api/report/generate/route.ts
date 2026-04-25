@@ -10,7 +10,7 @@ import { computeNatalChart } from "@/lib/natalChart";
 import { buildNatalSampleBlurb } from "@/lib/natalSampleBlurb";
 import { generateReportPdfBuffer } from "@/lib/reportPdf";
 import { sendReportPdfEmail } from "@/lib/reportEmail";
-import { reportCache } from "@/lib/reportCache";
+import { getReport, setReport } from "@/lib/reportCache";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { successUi } from "@/lib/uiCopy";
 
@@ -157,7 +157,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: message }, { status: 422 });
   }
 
-  const cachedReport = reportCache.get(sessionId);
+  const cachedReport = await getReport(sessionId);
   if (cachedReport) {
     return NextResponse.json({
       report: cachedReport,
@@ -193,7 +193,7 @@ export async function GET(req: Request) {
     }
     const blurb = buildNatalSampleBlurb(chart, parsed.data.lang);
     const report = `${blurb}\n\n---\n\n${aiText.trim()}`;
-    reportCache.set(sessionId, report);
+    await setReport(sessionId, report);
 
     const pdfTitle = successUi[parsed.data.lang].reportTitle.natal_basic;
     let emailPdf: EmailPdfPayload = { status: "skipped" };
@@ -275,7 +275,7 @@ export async function GET(req: Request) {
       { status: 502 },
     );
   }
-  reportCache.set(sessionId, text);
+  await setReport(sessionId, text);
 
   const pdfTitle =
     successUi[parsed.data.lang].reportTitle[parsed.data.reportType];
