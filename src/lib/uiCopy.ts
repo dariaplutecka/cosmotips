@@ -288,21 +288,21 @@ export const reportEmailCopy: Record<
   { subject: string; htmlBody: string; textBody: string }
 > = {
   en: {
-    subject: "Your AstroApka horoscope report (PDF)",
+    subject: "CosmoTips Report",
     htmlBody:
       "<p>Thank you for your purchase.</p><p>Your personalized report is attached as a PDF.</p><p>— AstroApka</p>",
     textBody:
       "Thank you for your purchase.\n\nYour personalized report is attached as a PDF.\n\n— AstroApka",
   },
   pl: {
-    subject: "Twój raport AstroApka (PDF)",
+    subject: "CosmoTips Report",
     htmlBody:
       "<p>Dziękujemy za zakup.</p><p>Twój spersonalizowany raport znajdziesz w załączniku PDF.</p><p>— AstroApka</p>",
     textBody:
       "Dziękujemy za zakup.\n\nTwój spersonalizowany raport znajdziesz w załączniku PDF.\n\n— AstroApka",
   },
   es: {
-    subject: "Tu informe AstroApka (PDF)",
+    subject: "CosmoTips Report",
     htmlBody:
       "<p>Gracias por tu compra.</p><p>Tu informe personalizado va adjunto en PDF.</p><p>— AstroApka</p>",
     textBody:
@@ -414,8 +414,8 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     submit: "Generuj raport",
     submitting: "Przekierowanie…",
     termsAcceptBefore: "Akceptuję ",
-    termsAcceptLink: "regulamin",
-    termsAcceptAfter: ".",
+    termsAcceptLink: "Terms of Service",
+    termsAcceptAfter: " (regulamin).",
     priceLine: "Pełne raporty: 5 EUR · Od razu · Stripe",
     footer:
       "Astrologia służy refleksji i rozrywce. Zawsze decydujesz o swoich wyborach.",
@@ -473,7 +473,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     submit: "Generar informe",
     submitting: "Redirigiendo…",
     termsAcceptBefore: "He leído y acepto los ",
-    termsAcceptLink: "términos y condiciones",
+    termsAcceptLink: "Términos de servicio (Terms of Service)",
     termsAcceptAfter: ".",
     priceLine: "Informes completos: 5 EUR · Al instante · Stripe",
     footer:
@@ -490,26 +490,28 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
   },
 };
 
-export const termsPageCopy: Record<
-  AppLang,
-  { title: string; placeholderBody: string; backHome: string }
-> = {
+export type TermsPageCopy = {
+  title: string;
+  backHome: string;
+  /** Markdown shown above the English Terms body (PL/ES only). */
+  preambleMarkdown?: string;
+};
+
+export const termsPageCopy: Record<AppLang, TermsPageCopy> = {
   en: {
     title: "Terms of Service",
-    placeholderBody:
-      "This is a placeholder. The full terms of service will be published here soon.",
     backHome: "Back home",
   },
   pl: {
-    title: "Regulamin",
-    placeholderBody:
-      "To jest miejsce na treść regulaminu. Pełny tekst zostanie tu dodany wkrótce.",
+    title: "Terms of Service",
     backHome: "Strona główna",
+    preambleMarkdown:
+      "**Wersja językowa.** Poniżej znajduje się pełny tekst **Terms of Service** (regulamin świadczenia usług) CosmoTips w języku angielskim — wersja 1.0, obowiązuje od 1 maja 2025 r. W razie rozbieżności między tłumaczeniami pierwszeństwo ma brzmienie angielskie.",
   },
   es: {
-    title: "Términos y condiciones",
-    placeholderBody:
-      "Este es un texto provisional. Los términos completos se publicarán aquí próximamente.",
+    title: "Terms of Service",
     backHome: "Inicio",
+    preambleMarkdown:
+      "**Idioma.** A continuación figura el texto completo de los **Terms of Service** (términos de servicio) de CosmoTips en inglés — versión 1.0, vigente desde el 1 de mayo de 2025. En caso de discrepancia entre traducciones, prevalecerá la versión en inglés.",
   },
 };

@@ -81,7 +81,7 @@ export async function POST(req: Request) {
         quantity: 1,
       },
     ],
-    success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&lang=${encodeURIComponent(lang)}`,
     cancel_url: `${origin}/cancel?lang=${encodeURIComponent(lang)}`,
     metadata: {
       email,
