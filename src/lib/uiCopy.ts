@@ -27,6 +27,45 @@ export type ArticlesPageCopy = {
   articles: HomeFooterArticle[];
 };
 
+export const seoMeta: Record<
+  AppLang,
+  {
+    homeTitle: string;
+    homeDescription: string;
+    articlesTitle: string;
+    articlesDescription: string;
+    successTitle: string;
+  }
+> = {
+  en: {
+    homeTitle: "CosmoTips — Personalized AI Astrology Reports",
+    homeDescription:
+      "Get your personalized astrology report in minutes. Enter your birth data and receive an AI-generated horoscope report by email.",
+    articlesTitle: "Astrology Articles — CosmoTips",
+    articlesDescription:
+      "Read our astrology articles and learn more about your birth chart.",
+    successTitle: "Your Report is Ready — CosmoTips",
+  },
+  pl: {
+    homeTitle: "CosmoTips — Spersonalizowane Raporty Astrologiczne AI",
+    homeDescription:
+      "Otrzymaj spersonalizowany raport astrologiczny w kilka minut. Podaj dane urodzenia i odbierz horoskop na maila.",
+    articlesTitle: "Artykuły Astrologiczne — CosmoTips",
+    articlesDescription:
+      "Czytaj nasze artykuły astrologiczne i dowiedz się więcej o swoim horoskopie.",
+    successTitle: "Twój Raport Jest Gotowy — CosmoTips",
+  },
+  es: {
+    homeTitle: "CosmoTips — Informes Astrológicos Personalizados con IA",
+    homeDescription:
+      "Obtén tu informe astrológico personalizado en minutos. Introduce tus datos de nacimiento y recibe tu horóscopo por email.",
+    articlesTitle: "Artículos de Astrología — CosmoTips",
+    articlesDescription:
+      "Lee nuestros artículos de astrología y aprende más sobre tu carta natal.",
+    successTitle: "Tu Informe Está Listo — CosmoTips",
+  },
+};
+
 export const articlesPageCopy: Record<AppLang, ArticlesPageCopy> = {
   en: {
     pageTitle: "Articles",

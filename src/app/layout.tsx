@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Lato, Montserrat } from "next/font/google";
+import type { AppLang } from "@/lib/reportSchema";
+import { seoMeta } from "@/lib/uiCopy";
 import "./globals.css";
 
 const lato = Lato({
@@ -14,19 +17,48 @@ const montserrat = Montserrat({
   weight: ["400", "500", "600", "700"],
 });
 
-export const metadata: Metadata = {
-  title: "CosmoTips — Personalized Horoscope Reports",
-  description:
-    "Generate a personalized astrology report from your birth details. Pay securely with Stripe, get an AI-crafted report instantly.",
-};
+function parseAppLang(value: string | null): AppLang {
+  if (value === "pl" || value === "es" || value === "en") return value;
+  return "en";
+}
 
-export default function RootLayout({
+function metadataForPath(lang: AppLang, pathname: string): Metadata {
+  const meta = seoMeta[lang];
+  if (pathname === "/articles") {
+    return {
+      title: meta.articlesTitle,
+      description: meta.articlesDescription,
+    };
+  }
+  if (pathname === "/success") {
+    return {
+      title: meta.successTitle,
+      description: meta.homeDescription,
+    };
+  }
+  return {
+    title: meta.homeTitle,
+    description: meta.homeDescription,
+  };
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const h = await headers();
+  const lang = parseAppLang(h.get("x-cosmotips-lang"));
+  const pathname = h.get("x-cosmotips-pathname") ?? "/";
+  return metadataForPath(lang, pathname);
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const h = await headers();
+  const lang = parseAppLang(h.get("x-cosmotips-lang"));
+
   return (
-    <html lang="en">
+    <html lang={lang}>
       <body className={`${lato.variable} ${montserrat.variable} antialiased`}>
         {children}
       </body>
