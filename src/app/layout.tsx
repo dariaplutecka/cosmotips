@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { Lato, Montserrat } from "next/font/google";
 import type { AppLang } from "@/lib/reportSchema";
+import { buildAlternates } from "@/lib/seoUtils";
 import { seoMeta } from "@/lib/uiCopy";
 import "./globals.css";
 
@@ -28,6 +29,7 @@ function metadataForPath(lang: AppLang, pathname: string): Metadata {
     return {
       title: meta.articlesTitle,
       description: meta.articlesDescription,
+      alternates: buildAlternates("/articles"),
     };
   }
   if (pathname === "/success") {
@@ -39,6 +41,7 @@ function metadataForPath(lang: AppLang, pathname: string): Metadata {
   return {
     title: meta.homeTitle,
     description: meta.homeDescription,
+    alternates: buildAlternates("/"),
   };
 }
 

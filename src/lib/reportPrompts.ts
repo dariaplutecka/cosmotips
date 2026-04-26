@@ -79,6 +79,32 @@ function monthlySegmentOutlineBlocks(fw: ForecastWindows, lang: AppLang): string
   return lines;
 }
 
+function editorialQualityInstructions(lang: AppLang): string[] {
+  if (lang === "pl") {
+    return [
+      `JAKOŚĆ JĘZYKA: Pisz jak bardzo dobry polski autor i redaktor, nie jak automatyczne tłumaczenie. Tekst ma brzmieć naturalnie, płynnie i elegancko po polsku.`,
+      `Unikaj kalek z angielskiego, niezgrabnych konstrukcji i sztywnego tonu. Nie używaj form typu „możesz doświadczać energii” co drugi akapit; zamiast tego pisz konkretnie, obrazowo i z wyczuciem.`,
+      `Różnicuj długość zdań. Łącz interpretację astrologiczną z żywym, literackim językiem, ale bez patosu, przesady i ezoterycznego żargonu.`,
+      `Dbaj o poprawną polszczyznę: właściwy szyk zdania, interpunkcję, odmianę, naturalne kolokacje i spójne przejścia między akapitami.`,
+      `Nazwy astrologiczne zapisuj konsekwentnie po polsku: Słońce, Księżyc, Ascendent, Merkury, Wenus, Mars, Jowisz, Saturn, Uran, Neptun, Pluton; unikaj mieszania języków.`,
+      `Przed finalną odpowiedzią mentalnie zredaguj tekst: usuń powtórzenia, puste frazy i zdania, które brzmią jak wypełniacz.`,
+    ];
+  }
+  if (lang === "es") {
+    return [
+      `CALIDAD DEL LENGUAJE: Escribe como una persona nativa con gran capacidad literaria y editorial en español, no como una traducción automática.`,
+      `Evita calcos del inglés, frases rígidas y tono genérico de IA. El texto debe sonar natural, fluido, elegante y emocionalmente preciso.`,
+      `Varía la longitud de las frases. Une la interpretación astrológica con un estilo cuidado y evocador, sin caer en exageración, dramatismo ni jerga esotérica vacía.`,
+      `Cuida la gramática, la puntuación, las concordancias, las colocaciones naturales y las transiciones entre párrafos.`,
+      `Usa terminología astrológica coherente en español: Sol, Luna, Ascendente, Mercurio, Venus, Marte, Júpiter, Saturno, Urano, Neptuno, Plutón; no mezcles idiomas.`,
+      `Antes de responder, revisa mentalmente el texto: elimina repeticiones, frases de relleno y cualquier oración que suene vaga o poco humana.`,
+    ];
+  }
+  return [
+    `Language quality: write polished, natural, human prose with varied sentence rhythm and no generic filler.`,
+  ];
+}
+
 function chartContextLines(
   chart: NatalChartPayload,
   dob: string,
@@ -156,6 +182,9 @@ function plPersonalityOutline(
     ``,
     `## Wyzwania i cienie`,
     `- Lista punktowana (5–8 punktów); każdy punkt = czynnik mapy, bez stygmatyzacji.`,
+    ``,
+    `## Najważniejsze domy w mapie`,
+    `- 3–5 akapitów: opisz najważniejsze obszary życia widoczne przez domy całoznakowe liczone od Ascendentu (~${chart.ascendantDeg.toFixed(1)}°). Wybierz domy, które są najmocniej podkreślone przez planety z JSON (np. I, IV, VII, X albo inne obsadzone domy). Każdy akapit ma podać: numer domu, temat domu, które planety/znaki go aktywują oraz co to znaczy w praktyce dla tej osoby. Nie wymyślaj dokładnych cuspów ani planet, których nie ma w JSON.`,
     ``,
     `## Ścieżka życiowa i misja`,
     `- 1 akapit syntetyczny (np. oś Słońce–Księżyc–Ascendent–Saturn–Jowisz); bez wymyślania Węzłów Księżycowych, jeśli nie ma ich w JSON.`,
@@ -313,6 +342,9 @@ function enPersonalityOutline(
     `## Challenges & shadows`,
     `- 5–8 bullets; chart-based, non-judgmental.`,
     ``,
+    `## Key houses in the chart`,
+    `- 3–5 paragraphs: describe the most important life areas through whole-sign houses counted from the Ascendant (~${chart.ascendantDeg.toFixed(1)}°). Choose the houses most emphasized by planets in the JSON (e.g. 1st, 4th, 7th, 10th, or other occupied houses). Each paragraph must state: house number, house theme, which planets/signs activate it, and what it means in practice for this person. Do not invent exact cusps or planets not present in the JSON.`,
+    ``,
     `## Life path & purpose`,
     `- One synthesizing paragraph (e.g. Sun–Moon–Asc–Saturn–Jupiter). Do not invent lunar nodes if not in JSON.`,
     ``,
@@ -462,6 +494,9 @@ function esPersonalityOutline(
     ``,
     `## Retos y sombras`,
     `- 5–8 viñetas; sin juicios duros.`,
+    ``,
+    `## Casas principales de la carta`,
+    `- 3–5 párrafos: describe las áreas de vida más importantes mediante casas enteras contadas desde el Ascendente (~${chart.ascendantDeg.toFixed(1)}°). Elige las casas más enfatizadas por planetas del JSON (por ejemplo I, IV, VII, X u otras casas ocupadas). Cada párrafo debe indicar: número de casa, tema de la casa, qué planetas/signos la activan y qué significa en la práctica para esta persona. No inventes cúspides exactas ni planetas que no estén en el JSON.`,
     ``,
     `## Camino de vida y misión`,
     `- Un párrafo (Sol–Luna–Asc–Saturno–Júpiter); no inventes nodos si no están en el JSON.`,
@@ -669,6 +704,8 @@ export function buildNatalBasicFreePrompt(input: {
       ``,
       `WAŻNE: Cały dokument wyłącznie po polsku.`,
       ``,
+      ...editorialQualityInstructions("pl"),
+      ``,
       `Dane urodzenia:`,
       `- Data: ${dob}`,
       `- Godzina: ${tob}`,
@@ -683,7 +720,7 @@ export function buildNatalBasicFreePrompt(input: {
       ``,
       `Format: Markdown; poza powyższym blokiem JSON bez innych JSON-ów i bez fence’ów kodu w interpretacji.`,
       `Nie wstawiaj żadnego tytułu marketingowego typu „Darmowy podgląd” — tylko sekcje ## opisane w outline.`,
-      `Ton: ciepły, konkretny, refleksyjny; bez medycyny, prawa i inwestycji.`,
+      `Ton: ciepły, konkretny, refleksyjny, stylistycznie dopracowany; bez medycyny, prawa i inwestycji.`,
     ].join("\n");
   }
   if (lang === "es") {
@@ -691,6 +728,8 @@ export function buildNatalBasicFreePrompt(input: {
       `Eres un astrólogo experimentado. La persona recibe una vista gratuita y breve: solo Sol, Luna y Ascendente (no reemplaza el informe de personalidad de pago).`,
       ``,
       `IMPORTANTE: Todo en español.`,
+      ``,
+      ...editorialQualityInstructions("es"),
       ``,
       `Datos de nacimiento:`,
       `- Fecha: ${dob}`,
@@ -706,6 +745,7 @@ export function buildNatalBasicFreePrompt(input: {
       ``,
       `Formato: Markdown; sin más JSON ni fences en la lectura.`,
       `No insertes un titular promocional tipo “Vista gratuita” — solo las secciones ## del outline.`,
+      `Tono: cálido, concreto, reflexivo y cuidadosamente escrito.`,
       `Evita consejos médicos, legales o financieros.`,
     ].join("\n");
   }
@@ -777,6 +817,8 @@ export function buildReportPrompt(input: {
     ``,
     `WAŻNE: Cały dokument musi być wyłącznie po polsku (nagłówki i treść).`,
     ``,
+    ...editorialQualityInstructions("pl"),
+    ``,
     `Dane urodzenia (dokładnie):`,
     `- Data: ${dob}`,
     `- Godzina: ${tob}`,
@@ -792,7 +834,7 @@ export function buildReportPrompt(input: {
     ...outline,
     ``,
     `Format: Markdown; poza powyższym blokiem JSON bez innych JSON-ów i bez fence’ów kodu w interpretacji.`,
-    `Ton: ciepły, konkretny, refleksyjny.`,
+    `Ton: ciepły, konkretny, refleksyjny, stylistycznie dopracowany.`,
     `Unikaj porad medycznych, prawnych i inwestycyjnych.`,
   ];
 
@@ -800,6 +842,8 @@ export function buildReportPrompt(input: {
     `Eres un astrólogo experimentado. Lectura personal en español.`,
     ``,
     `IMPORTANTE: Todo en español.`,
+    ``,
+    ...editorialQualityInstructions("es"),
     ``,
     `Datos de nacimiento:`,
     `- Fecha: ${dob}`,
@@ -816,6 +860,7 @@ export function buildReportPrompt(input: {
     ...outline,
     ``,
     `Formato: Markdown; sin más JSON ni bloques de código en la interpretación.`,
+    `Tono: cálido, concreto, reflexivo y cuidadosamente escrito.`,
     `Evita consejos médicos, legales o financieros.`,
   ];
 
