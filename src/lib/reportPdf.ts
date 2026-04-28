@@ -1,5 +1,12 @@
 import { createRequire } from "node:module";
 import type { Content, TDocumentDefinitions } from "pdfmake/interfaces";
+import type { AppLang } from "@/lib/reportSchema";
+import {
+  celticCrossPositions,
+  type SpreadType,
+  type TarotCard,
+  type TarotTopic,
+} from "@/lib/tarotDeck";
 
 const require = createRequire(import.meta.url);
 
@@ -272,6 +279,95 @@ export async function generateReportPdfBuffer(
     content: [
       { text: docTitle, fontSize: 18, bold: true, margin: [0, 0, 0, 14] },
       ...markdownBlocksToPdfContent(blocks),
+    ],
+  };
+  const pdfDocPromise = printer.createPdfKitDocument(docDefinition);
+  const doc = new OutputDocument(pdfDocPromise);
+  return doc.getBuffer();
+}
+
+function tarotCardName(card: TarotCard, lang: AppLang): string {
+  if (lang === "pl") {
+    return card.reversed ? `${card.namePl} (odwrócona)` : card.namePl;
+  }
+  if (lang === "es") {
+    return card.reversed ? `${card.nameEs} (invertida)` : card.nameEs;
+  }
+  return card.reversed ? `${card.name} (Reversed)` : card.name;
+}
+
+function tarotPositions(spreadType: SpreadType, lang: AppLang): string[] {
+  if (spreadType === "celtic_cross") return celticCrossPositions[lang];
+  if (lang === "pl") return ["Przeszłość", "Teraźniejszość", "Przyszłość"];
+  if (lang === "es") return ["Pasado", "Presente", "Futuro"];
+  return ["Past", "Present", "Future"];
+}
+
+function tarotTopicLabel(topic: TarotTopic, lang: AppLang): string {
+  if (topic === "love") {
+    if (lang === "pl") return "Miłość";
+    if (lang === "es") return "Amor";
+    return "Love";
+  }
+  if (topic === "finance_career") {
+    if (lang === "pl") return "Finanse i Kariera";
+    if (lang === "es") return "Finanzas y Carrera";
+    return "Finance & Career";
+  }
+  if (lang === "pl") return "Zdrowie";
+  if (lang === "es") return "Salud";
+  return "Health";
+}
+
+export async function generateTarotPdfBuffer(opts: {
+  title: string;
+  cards: TarotCard[];
+  interpretation: string;
+  spreadType: SpreadType;
+  topic: TarotTopic;
+  lang: AppLang;
+}): Promise<Buffer> {
+  ensurePdfFontsInVfs();
+  const printer = new PdfPrinter(
+    robotoFontPaths,
+    virtualfs,
+    new URLResolver(virtualfs),
+  );
+  const positions = tarotPositions(opts.spreadType, opts.lang);
+  const cardContent: Content[] = opts.cards.map((card, index) => ({
+    text: `${positions[index] ?? index + 1}: ${tarotCardName(card, opts.lang)}`,
+    fontSize: 11,
+    bold: true,
+    margin: [0, 0, 0, 5],
+    color: "#3a2b0a",
+  }));
+  const interpretationContent: Content[] = opts.interpretation
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+    .map((paragraph) => ({
+      text: paragraph,
+      fontSize: 11,
+      margin: [0, 0, 0, 8],
+      alignment: "justify",
+    }));
+
+  const docDefinition: TDocumentDefinitions = {
+    info: { title: opts.title },
+    defaultStyle: { font: "Roboto", fontSize: 11 },
+    content: [
+      { text: opts.title, fontSize: 18, bold: true, margin: [0, 0, 0, 6] },
+      {
+        text: tarotTopicLabel(opts.topic, opts.lang),
+        fontSize: 11,
+        color: "#7a5a10",
+        margin: [0, 0, 0, 14],
+      },
+      {
+        stack: cardContent,
+        margin: [0, 0, 0, 14],
+      },
+      ...interpretationContent,
     ],
   };
   const pdfDocPromise = printer.createPdfKitDocument(docDefinition);
