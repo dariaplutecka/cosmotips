@@ -34,6 +34,8 @@ export const seoMeta: Record<
     homeDescription: string;
     articlesTitle: string;
     articlesDescription: string;
+    tarotTitle: string;
+    tarotDescription: string;
     successTitle: string;
   }
 > = {
@@ -44,6 +46,9 @@ export const seoMeta: Record<
     articlesTitle: "Astrology Articles — CosmoTips",
     articlesDescription:
       "Read our astrology articles and learn more about your birth chart.",
+    tarotTitle: "Tarot Reading — CosmoTips",
+    tarotDescription:
+      "Choose a tarot spread and receive an intuitive AI-assisted reading for love, career, or health.",
     successTitle: "Your Report is Ready — CosmoTips",
   },
   pl: {
@@ -53,6 +58,9 @@ export const seoMeta: Record<
     articlesTitle: "Artykuły Astrologiczne — CosmoTips",
     articlesDescription:
       "Czytaj nasze artykuły astrologiczne i dowiedz się więcej o swoim horoskopie.",
+    tarotTitle: "Rozkład Tarota — CosmoTips",
+    tarotDescription:
+      "Wybierz rozkład tarota i otrzymaj intuicyjną interpretację AI dotyczącą miłości, kariery lub zdrowia.",
     successTitle: "Twój Raport Jest Gotowy — CosmoTips",
   },
   es: {
@@ -62,7 +70,87 @@ export const seoMeta: Record<
     articlesTitle: "Artículos de Astrología — CosmoTips",
     articlesDescription:
       "Lee nuestros artículos de astrología y aprende más sobre tu carta natal.",
+    tarotTitle: "Lectura de Tarot — CosmoTips",
+    tarotDescription:
+      "Elige una tirada de tarot y recibe una interpretación intuitiva con IA sobre amor, carrera o salud.",
     successTitle: "Tu Informe Está Listo — CosmoTips",
+  },
+};
+
+export const tarotCopy: Record<
+  AppLang,
+  {
+    pageTitle: string;
+    pageSubtitle: string;
+    buyTokens: string;
+    tokensLeft: string;
+    chooseSpread: string;
+    threeCard: string;
+    threeCardDesc: string;
+    celticCross: string;
+    celticCrossDesc: string;
+    chooseTopic: string;
+    topicLove: string;
+    topicFinance: string;
+    topicHealth: string;
+    shuffling: string;
+    generating: string;
+    emailSent: string;
+  }
+> = {
+  en: {
+    pageTitle: "Tarot Reading",
+    pageSubtitle: "3 tokens for $5 — one token per reading",
+    buyTokens: "Buy 3 tokens — $5",
+    tokensLeft: "Tokens left: {n}",
+    chooseSpread: "Choose your spread",
+    threeCard: "Three-Card Spread",
+    threeCardDesc: "Past · Present · Future",
+    celticCross: "Celtic Cross",
+    celticCrossDesc: "Deep 10-card reading on a topic",
+    chooseTopic: "Choose a topic",
+    topicLove: "Love",
+    topicFinance: "Finance & Career",
+    topicHealth: "Health",
+    shuffling: "Shuffling the cards...",
+    generating: "Reading the cards...",
+    emailSent: "Your reading has been sent to your email.",
+  },
+  pl: {
+    pageTitle: "Rozkład Tarota",
+    pageSubtitle: "3 tokeny za $5 — jeden token za rozkład",
+    buyTokens: "Kup 3 tokeny — $5",
+    tokensLeft: "Pozostałe tokeny: {n}",
+    chooseSpread: "Wybierz rozkład",
+    threeCard: "Rozkład 3 Kart",
+    threeCardDesc: "Przeszłość · Teraźniejszość · Przyszłość",
+    celticCross: "Krzyż Celtycki",
+    celticCrossDesc: "Głęboki rozkład 10 kart na wybrany temat",
+    chooseTopic: "Wybierz temat",
+    topicLove: "Miłość",
+    topicFinance: "Finanse i Kariera",
+    topicHealth: "Zdrowie",
+    shuffling: "Tasowanie kart...",
+    generating: "Czytanie kart...",
+    emailSent: "Twój rozkład został wysłany na maila.",
+  },
+  es: {
+    pageTitle: "Lectura de Tarot",
+    pageSubtitle: "3 fichas por $5 — una ficha por tirada",
+    buyTokens: "Comprar 3 fichas — $5",
+    tokensLeft: "Fichas restantes: {n}",
+    chooseSpread: "Elige tu tirada",
+    threeCard: "Tirada de 3 Cartas",
+    threeCardDesc: "Pasado · Presente · Futuro",
+    celticCross: "Cruz Celta",
+    celticCrossDesc: "Tirada profunda de 10 cartas sobre un tema",
+    chooseTopic: "Elige un tema",
+    topicLove: "Amor",
+    topicFinance: "Finanzas y Carrera",
+    topicHealth: "Salud",
+    shuffling: "Barajando las cartas...",
+    generating: "Leyendo las cartas...",
+    emailSent: "Tu tirada ha sido enviada a tu email.",
   },
 };
 
@@ -177,8 +265,16 @@ export type HomeCopy = {
   heroTitle: string;
   heroLead: string;
   heroSub: string;
-  /** Encouraging copy about the natal chart; shown between hero and form */
+  /** Encouraging copy about the currently selected module; shown below the hero. */
   toolPitchParagraphs: string[];
+  tarotPitchParagraphs: string[];
+  moduleTabs: {
+    natal: string;
+    tarot: string;
+  };
+  tarotPanelTitle: string;
+  tarotPanelLead: string;
+  tarotPanelNote: string;
   dob: string;
   dobYear: string;
   dobMonth: string;
@@ -361,6 +457,20 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       "Based on this, you can receive both an in-depth personality profile and forecasts highlighting the trends and influences that may unfold in your future.",
       "Generate your report and discover what your unique cosmic blueprint reveals. ✨",
     ],
+    tarotPitchParagraphs: [
+      "Tarot works through symbols, archetypes, and intuitive reflection. A spread can help you name what is already moving beneath the surface of a question.",
+      "Use it when you need a fresh perspective on a decision, relationship, emotional pattern, or moment of transition.",
+      "Soon you’ll be able to generate a personalized tarot reading here. ✨",
+    ],
+    moduleTabs: {
+      natal: "Personal birth horoscope",
+      tarot: "Tarot reading",
+    },
+    tarotPanelTitle: "Tarot reading",
+    tarotPanelLead:
+      "A new CosmoTips module is coming here: an intuitive tarot spread for questions, decisions, and inner guidance.",
+    tarotPanelNote:
+      "For now, choose the birth horoscope tab to generate your astrological report.",
     dob: "Date of birth",
     dobYear: "Year",
     dobMonth: "Month",
@@ -421,6 +531,20 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       "Na tej podstawie można stworzyć zarówno pogłębiony opis osobowości, jak i prognozy wskazujące, jakie tendencje mogą pojawiać się w Twoim życiu w przyszłości.",
       "Wygeneruj swój raport i odkryj, co wynika z Twojego indywidualnego układu gwiazd. ✨",
     ],
+    tarotPitchParagraphs: [
+      "Tarot działa językiem symboli, archetypów i intuicyjnej refleksji. Rozkład może pomóc nazwać to, co już porusza się pod powierzchnią pytania.",
+      "Sięgnij po niego, gdy potrzebujesz świeżego spojrzenia na decyzję, relację, emocjonalny wzorzec albo moment przejścia.",
+      "Wkrótce wygenerujesz tutaj spersonalizowany rozkład tarota. ✨",
+    ],
+    moduleTabs: {
+      natal: "Indywidualny horoskop urodzeniowy",
+      tarot: "Rozkład tarota",
+    },
+    tarotPanelTitle: "Rozkład tarota",
+    tarotPanelLead:
+      "Tutaj pojawi się nowy moduł CosmoTips: intuicyjny rozkład tarota do pytań, decyzji i pracy z tym, co dzieje się wewnętrznie.",
+    tarotPanelNote:
+      "Na razie wybierz zakładkę horoskopu urodzeniowego, aby wygenerować raport astrologiczny.",
     dob: "Data urodzenia",
     dobYear: "Rok",
     dobMonth: "Miesiąc",
@@ -481,6 +605,20 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       "A partir de ello, se puede crear tanto una descripción profunda de tu personalidad como predicciones sobre las tendencias que pueden manifestarse en tu futuro.",
       "Genera tu informe y descubre qué revela tu mapa cósmico único. ✨",
     ],
+    tarotPitchParagraphs: [
+      "El tarot habla a través de símbolos, arquetipos y reflexión intuitiva. Una tirada puede ayudarte a nombrar lo que ya se mueve bajo la superficie de una pregunta.",
+      "Úsalo cuando necesites una perspectiva nueva sobre una decisión, una relación, un patrón emocional o un momento de transición.",
+      "Pronto podrás generar aquí una lectura de tarot personalizada. ✨",
+    ],
+    moduleTabs: {
+      natal: "Horóscopo natal personalizado",
+      tarot: "Lectura de tarot",
+    },
+    tarotPanelTitle: "Lectura de tarot",
+    tarotPanelLead:
+      "Aquí aparecerá un nuevo módulo de CosmoTips: una tirada intuitiva de tarot para preguntas, decisiones y orientación interior.",
+    tarotPanelNote:
+      "Por ahora, elige la pestaña del horóscopo natal para generar tu informe astrológico.",
     dob: "Fecha de nacimiento",
     dobYear: "Año",
     dobMonth: "Mes",

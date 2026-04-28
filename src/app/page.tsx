@@ -42,6 +42,7 @@ const NATAL_SAMPLE_STORAGE_KEY = "cosmotips:natal_sample_v1";
 
 const TOB_HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => i);
 const TOB_MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) => i);
+type HomeModule = "natal" | "tarot";
 
 function HomePageContent() {
   const searchParams = useSearchParams();
@@ -60,8 +61,11 @@ function HomePageContent() {
   const [placeOpen, setPlaceOpen] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [freeBasicUsed, setFreeBasicUsed] = useState(false);
+  const [activeModule, setActiveModule] = useState<HomeModule>("natal");
 
   const copy = homeCopy[lang];
+  const activePitch =
+    activeModule === "tarot" ? copy.tarotPitchParagraphs : copy.toolPitchParagraphs;
 
   useEffect(() => {
     try {
@@ -275,12 +279,33 @@ function HomePageContent() {
                     {copy.heroLead}
                   </span>
                 </h1>
+                <div className="mx-auto mt-4 flex w-full max-w-2xl rounded-2xl border border-white/10 bg-white/[0.04] p-1 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur sm:mt-5">
+                  {(["natal", "tarot"] as const).map((module) => {
+                    const selected = activeModule === module;
+                    return (
+                      <button
+                        key={module}
+                        type="button"
+                        onClick={() => setActiveModule(module)}
+                        className={[
+                          "flex-1 rounded-xl px-3 py-2.5 text-center text-sm font-semibold transition sm:px-4",
+                          selected
+                            ? "bg-violet-300 text-black shadow-lg shadow-violet-950/20"
+                            : "text-white/68 hover:bg-white/[0.06] hover:text-white",
+                        ].join(" ")}
+                        aria-pressed={selected}
+                      >
+                        {copy.moduleTabs[module]}
+                      </button>
+                    );
+                  })}
+                </div>
                 <div
-                  className="cosmic-tool-pitch cosmic-tool-pitch--in-hero mx-auto mt-2 max-w-2xl sm:mt-2.5"
+                  className="cosmic-tool-pitch cosmic-tool-pitch--in-hero mx-auto mt-3 max-w-2xl sm:mt-3.5"
                   lang={lang}
                 >
                   <div className="relative z-10 text-pretty text-sm leading-snug text-white/72 sm:mt-1 sm:leading-relaxed">
-                    {copy.toolPitchParagraphs.map((para, i) => (
+                    {activePitch.map((para, i) => (
                       <p key={i} className={i > 0 ? "mt-2 sm:mt-2" : undefined}>
                         {para}
                       </p>
@@ -293,7 +318,8 @@ function HomePageContent() {
         </header>
 
         <main className="mx-auto mt-0 max-w-6xl">
-          <section className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur sm:p-7">
+          {activeModule === "natal" ? (
+            <section className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur sm:p-7">
             <form onSubmit={onSubmit} className="space-y-4">
               <p className="rounded-r-xl border-l-2 border-violet-300/55 bg-violet-500/[0.12] py-3 pl-4 pr-3 text-left text-pretty text-sm leading-7 text-white/85 sm:py-3.5 sm:pl-5 sm:text-base">
                 {copy.heroSub}
@@ -682,7 +708,25 @@ function HomePageContent() {
                 {error}
               </div>
             ) : null}
-          </section>
+            </section>
+          ) : (
+            <section className="rounded-3xl border border-white/10 bg-white/5 p-6 text-center shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur sm:p-9">
+              <div className="mx-auto max-w-2xl">
+                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-300/35 bg-violet-400/15 text-2xl">
+                  ✦
+                </div>
+                <h2 className="cosmotips-headline text-2xl font-semibold tracking-tight sm:text-3xl">
+                  {copy.tarotPanelTitle}
+                </h2>
+                <p className="mt-4 text-pretty text-base leading-8 text-white/78">
+                  {copy.tarotPanelLead}
+                </p>
+                <p className="mt-4 rounded-2xl border border-violet-300/20 bg-violet-400/10 px-4 py-3 text-sm leading-6 text-violet-100/82">
+                  {copy.tarotPanelNote}
+                </p>
+              </div>
+            </section>
+          )}
         </main>
 
         <HomeFooter copy={copy} lang={lang} />
