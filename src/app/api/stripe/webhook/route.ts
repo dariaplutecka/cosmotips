@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Redis } from "@upstash/redis";
 import { getStripe } from "@/lib/stripe";
 import {
   AppLangSchema,
@@ -13,12 +14,35 @@ import { generateReportPdfBuffer } from "@/lib/reportPdf";
 import { sendReportPdfEmail } from "@/lib/reportEmail";
 import { getReport, setReport } from "@/lib/reportCache";
 import { successUi } from "@/lib/uiCopy";
+import { addTarotTokens } from "@/lib/tarotTokenStore";
 
 /** pdfmake + Stripe webhook verification need Node (not Edge). */
 export const runtime = "nodejs";
 
 /** OpenAI + PDF + Resend can take longer than the default serverless timeout. */
 export const maxDuration = 120;
+
+let webhookRedis: Redis | undefined;
+let webhookRedisMissingEnvWarned = false;
+
+function getWebhookRedisClient(): Redis {
+  if (webhookRedis) return webhookRedis;
+
+  const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+  if (!url || !token) {
+    if (!webhookRedisMissingEnvWarned) {
+      console.warn(
+        "[stripe/webhook] UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN is not set; tarot webhook idempotency requires Redis.",
+      );
+      webhookRedisMissingEnvWarned = true;
+    }
+    throw new Error("Tarot webhook idempotency storage is not configured.");
+  }
+
+  webhookRedis = new Redis({ url, token });
+  return webhookRedis;
+}
 
 function extractText(resp: unknown): string {
   if (!resp || typeof resp !== "object") return "";
@@ -121,6 +145,39 @@ export async function POST(req: Request) {
 
   const session = event.data.object;
   const sessionId = session.id;
+  const metadata = session.metadata;
+
+  if (metadata?.product === "tarot_tokens") {
+    const email = metadata.email;
+    if (!email) {
+      return NextResponse.json(
+        { error: "Missing tarot token email." },
+        { status: 400 },
+      );
+    }
+
+    const parsedTokens = parseInt(metadata.tokensToAdd ?? "3", 10);
+    const tokensToAdd = Number.isFinite(parsedTokens) ? parsedTokens : 3;
+
+    try {
+      const sessionKey = `tarot:session:${sessionId}`;
+      const redis = getWebhookRedisClient();
+      const alreadyProcessed = await redis.get(sessionKey);
+      if (alreadyProcessed) return NextResponse.json({ received: true });
+
+      await addTarotTokens(email, tokensToAdd);
+      await redis.set(sessionKey, "1", { ex: 86400 * 7 });
+      console.log(`[tarot] Added ${tokensToAdd} tokens for ${email}`);
+      return NextResponse.json({ received: true });
+    } catch (err) {
+      console.error("[stripe/webhook] tarot token fulfillment failed:", err);
+      return NextResponse.json(
+        { error: "Tarot token fulfillment failed." },
+        { status: 500 },
+      );
+    }
+  }
+
   if (await getReport(sessionId)) {
     console.log("[webhook] cache hit, skipping generation", session.id);
     return NextResponse.json({ received: true, cached: true });
