@@ -17,6 +17,7 @@ type Meta = {
   pob: string;
   reportType: "natal_basic" | "personality" | "weekly" | "monthly";
   lang: AppLang;
+  birthTimeUnknown?: boolean;
 };
 
 type EmailPdfStatus = "sent" | "skipped" | "failed";
@@ -73,6 +74,13 @@ function parseLangParam(raw: string | null): AppLang | null {
   return null;
 }
 
+function birthTimeDisplay(meta: Meta): string {
+  if (!meta.birthTimeUnknown) return meta.tob;
+  if (meta.lang === "pl") return "godzina nieznana";
+  if (meta.lang === "es") return "hora desconocida";
+  return "birth time unknown";
+}
+
 export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
   const sp = useSearchParams();
   const sessionId = sp.get("session_id") ?? "";
@@ -84,6 +92,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
   const devPob = sp.get("pob") ?? "";
   const devReportType = sp.get("reportType") ?? "";
   const devLangRaw = sp.get("lang") ?? "en";
+  const devBirthTimeUnknown = sp.get("birthTimeUnknown") === "1";
   const devLang: AppLang = ["en", "pl", "es"].includes(devLangRaw)
     ? (devLangRaw as AppLang)
     : "en";
@@ -164,6 +173,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
         params.set("pob", devPob);
         params.set("reportType", devReportType);
         params.set("lang", devLang);
+        if (devBirthTimeUnknown) params.set("birthTimeUnknown", "1");
       } else if (freeNatalMode) {
         params.set("fnb", "1");
         params.set("email", devEmail);
@@ -172,6 +182,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
         params.set("pob", devPob);
         params.set("reportType", devReportType);
         params.set("lang", devLang);
+        if (devBirthTimeUnknown) params.set("birthTimeUnknown", "1");
       }
 
       const res = await fetch(`/api/report/generate?${params.toString()}`, {
@@ -189,6 +200,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
       setMeta({
         ...data.meta,
         lang: data.meta.lang ?? "en",
+        birthTimeUnknown: Boolean(data.meta.birthTimeUnknown),
       });
       setEmailPdfInfo(data.emailPdf ?? { status: "skipped" });
       setLoading(false);
@@ -222,6 +234,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
     devPob,
     devReportType,
     devLang,
+    devBirthTimeUnknown,
   ]);
 
   useEffect(() => {
@@ -294,7 +307,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
                 <span>
                   {meta.email}
                   <span className="text-white/35"> · </span>
-                  {meta.dob} · {meta.tob} · {meta.pob}
+                  {meta.dob} · {birthTimeDisplay(meta)} · {meta.pob}
                 </span>
                 {zodiac ? (
                   <span className="inline-flex items-center gap-2 rounded-full border border-violet-300/30 bg-violet-400/10 px-3 py-1 text-xs text-violet-100">
@@ -462,12 +475,6 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
             className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
           >
             {su.another}
-          </Link>
-          <Link
-            href={`/reports?lang=${uiLang}`}
-            className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-          >
-            {su.saved}
           </Link>
         </div>
       </div>

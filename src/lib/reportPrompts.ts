@@ -111,6 +111,7 @@ function chartContextLines(
   tob: string,
   pob: string,
   lang: AppLang,
+  birthTimeUnknown = false,
 ): string[] {
   const lat = chart.latitude.toFixed(4);
   const lon = chart.longitude.toFixed(4);
@@ -119,6 +120,9 @@ function chartContextLines(
     return [
       `W sekcji „Wykres Natalny” (lub jej odpowiedniku w danym języku) powtórz: data ${dob}, godzina ${tob}, miejsce ${pob}.`,
       `Dodaj jednym zdaniem: strefa czasowa mapy: ${chart.timezone}; współrzędne przybliżone: szer. ${lat}°, dług. ${lon}° (jak po geokodowaniu).`,
+      birthTimeUnknown
+        ? `Ponieważ godzina urodzenia jest nieznana, mapa została policzona orientacyjnie dla 12:00; nie interpretuj Ascendentu, domów ani osi jako pewnych — jeśli je wspominasz, wyraźnie zaznacz ich przybliżony charakter.`
+        : `Godzina urodzenia jest znana, więc Ascendent i domy możesz traktować jako elementy mapy z danych.`,
       `Ascendent z ephemeridy: ok. ${asc}°. Krótko (2–4 zdania) zreferuj do JSON poniżej: Słońce, Księżyc, planety — bez zaprzeczania liczbom z JSON.`,
     ];
   }
@@ -126,13 +130,191 @@ function chartContextLines(
     return [
       `En la sección de carta natal, repite: fecha ${dob}, hora ${tob}, lugar ${pob}.`,
       `Una frase: zona horaria de la carta: ${chart.timezone}; coordenadas aprox. lat ${lat}°, lon ${lon}°.`,
+      birthTimeUnknown
+        ? `Como la hora de nacimiento es desconocida, la carta se calculó de forma aproximada para las 12:00; no trates el Ascendente, las casas ni los ejes como datos seguros, y si los mencionas marca claramente su carácter aproximado.`
+        : `La hora de nacimiento es conocida, así que puedes tratar Ascendente y casas como elementos de la carta proporcionada.`,
       `Ascendente (~${asc}°). En 2–4 frases resume Sol, Luna y planetas según el JSON — sin contradecirlo.`,
     ];
   }
   return [
     `In the Natal chart section, repeat: date ${dob}, time ${tob}, place ${pob}.`,
     `One sentence: chart timezone ${chart.timezone}; approximate coordinates lat ${lat}°, lon ${lon}°.`,
+    birthTimeUnknown
+      ? `Because the birth time is unknown, the chart was calculated approximately for 12:00; do not treat the Ascendant, houses, or axes as certain, and clearly mark them as approximate if you mention them.`
+      : `The birth time is known, so you may treat the Ascendant and houses as chart factors from the provided data.`,
     `Ascendant (~${asc}°). In 2–4 sentences summarize Sun, Moon, and planets per the JSON — do not contradict it.`,
+  ];
+}
+
+function birthTimeForPrompt(lang: AppLang, tob: string, birthTimeUnknown = false) {
+  if (!birthTimeUnknown) return tob;
+  if (lang === "pl") return "nieznana (do obliczeń orientacyjnie użyto 12:00)";
+  if (lang === "es") return "desconocida (para el cálculo aproximado se usó 12:00)";
+  return "unknown (12:00 was used for the approximate calculation)";
+}
+
+function premiumPersonalityOutline(
+  chart: NatalChartPayload,
+  dob: string,
+  tob: string,
+  pob: string,
+  lang: AppLang,
+  birthTimeUnknown = false,
+): string[] {
+  const cc = chartContextLines(chart, dob, tob, pob, lang, birthTimeUnknown);
+  const headings =
+    lang === "pl"
+      ? [
+          "Wprowadzenie: Kim jesteś w swojej esencji",
+          "Twoje rdzenne „JA”: Słońce, Księżyc i Ascendent",
+          "Twój umysł i sposób komunikacji",
+          "Miłość, relacje i potrzeby emocjonalne",
+          "Energia działania i motywacja",
+          "Talenty, potencjał i naturalne predyspozycje",
+          "Cień i potencjał: Twoja oś transformacji",
+          "Wyzwania i lekcje rozwojowe",
+          "Kierunek życia i poczucie sensu",
+          "Struktura, dyscyplina i granice",
+          "Intuicja, duchowość i świat wewnętrzny",
+          "Praca, kariera i realizacja w świecie",
+          "Relacje społeczne i środowisko",
+          "Twój unikalny „kod”: synteza wykresu",
+          "Praktyczne wskazówki",
+          "Podsumowanie: Twoja ścieżka w pigułce",
+        ]
+      : lang === "es"
+        ? [
+            "Introducción: Tu esencia central",
+            "Tu esencia: Sol, Luna y Ascendente",
+            "Tu mente y forma de comunicar",
+            "Amor, relaciones y necesidades emocionales",
+            "Energía, acción y motivación",
+            "Talentos, potencial y habilidades naturales",
+            "Sombra y potencial: Tu eje de transformación",
+            "Desafíos y lecciones de vida",
+            "Dirección de vida y propósito",
+            "Estructura, disciplina y límites",
+            "Intuición, espiritualidad y mundo interno",
+            "Carrera y realización profesional",
+            "Vida social y entorno",
+            "Tu código único: síntesis de la carta",
+            "Recomendaciones prácticas",
+            "Resumen: Tu camino en pocas palabras",
+          ]
+        : [
+            "Introduction: Your Core Essence",
+            "Your Core Self: Sun, Moon & Rising",
+            "Your Mind & Communication Style",
+            "Love, Relationships & Emotional Needs",
+            "Drive, Action & Motivation",
+            "Talents, Potential & Natural Strengths",
+            "Shadow & Potential: Your Axis of Transformation",
+            "Challenges & Growth Lessons",
+            "Life Direction & Purpose",
+            "Structure, Discipline & Boundaries",
+            "Intuition, Spirituality & Inner World",
+            "Career & Life Path in the World",
+            "Social Life & Environment",
+            "Your Unique Code: Chart Synthesis",
+            "Practical Guidance",
+            "Summary: Your Path in a Nutshell",
+          ];
+  const ascInstruction = birthTimeUnknown
+    ? lang === "pl"
+      ? `Godzina urodzenia jest nieznana, więc Ascendent, domy i osie są orientacyjne. Wyraźnie oznacz interpretacje Ascendentu/domów jako przybliżone i nie buduj na nich zbyt pewnych wniosków.`
+      : lang === "es"
+        ? `La hora de nacimiento es desconocida, por lo que el Ascendente, las casas y los ejes son orientativos. Marca claramente esas interpretaciones como aproximadas y no construyas conclusiones demasiado firmes sobre ellas.`
+        : `The birth time is unknown, so the Ascendant, houses, and axes are approximate. Clearly mark Ascendant/house interpretations as approximate and do not build overly certain conclusions from them.`
+    : lang === "pl"
+      ? `Godzina urodzenia jest znana, więc możesz korzystać z Ascendentu, domów całoznakowych i osi jako ważnych elementów syntezy.`
+      : lang === "es"
+        ? `La hora de nacimiento es conocida, así que puedes usar el Ascendente, las casas de signo entero y los ejes como elementos importantes de la síntesis.`
+        : `The birth time is known, so you may use the Ascendant, whole-sign houses, and axes as important parts of the synthesis.`;
+
+  return [
+    lang === "pl"
+      ? `To jest raport osobowościowy premium oparty na kosmogramie. Cały dokument ma być wyłącznie po polsku. Twoim zadaniem jest pełna restrukturyzacja i przepisanie raportu jako spójnego, pogłębionego dokumentu psychologiczno-astrologicznego, a nie streszczenie danych.`
+      : lang === "es"
+        ? `Este es un informe de personalidad premium basado en la carta natal. Todo el documento debe estar únicamente en español. Tu tarea es reestructurarlo y reescribirlo como un documento psicológico-astrológico coherente y profundo, no resumir los datos.`
+        : `This is a premium personality report based on the natal chart. The entire document must be in English only. Your task is to fully restructure and rewrite it as a coherent, psychologically rich astrological document, not to summarize the data.`,
+    ``,
+    lang === "pl"
+      ? `KRYTYCZNY FORMAT JĘZYKOWY: użyj wyłącznie polskiej wersji nagłówków i treści. Nie dodawaj wersji angielskiej ani hiszpańskiej w tym raporcie.`
+      : lang === "es"
+        ? `FORMATO LINGÜÍSTICO CRÍTICO: usa únicamente los encabezados y el contenido en español. No añadas versiones en polaco ni en inglés dentro de este informe.`
+        : `CRITICAL LANGUAGE FORMAT: use only the English headings and English content. Do not add Polish or Spanish versions inside this report.`,
+    ``,
+    lang === "pl"
+      ? `JAKOŚĆ JĘZYKA: tekst ma brzmieć jak napisany przez bardzo dobrą polską autorkę. Ton: premium, psychologiczny, refleksyjny, wnikliwy, naturalny, bez banałów i bez horoskopowych klisz.`
+      : lang === "es"
+        ? `CALIDAD DEL LENGUAJE: el texto debe sonar como escrito por una excelente autora nativa en español. Tono premium, psicológico, reflexivo, profundo y natural, sin banalidades ni clichés de horóscopo.`
+        : `LANGUAGE QUALITY: the text should read as if written by an excellent native English writer. Keep a premium, psychological, reflective, insightful, natural tone with no banalities or horoscope clichés.`,
+    ``,
+    lang === "pl"
+      ? `ZASADY TREŚCI: pisz w drugiej osobie. Nie używaj wypunktowań ani list numerowanych w finalnym raporcie. Każda sekcja ma mieć 2–4 akapity. Pomiędzy sekcjami zachowaj płynność i logiczne przejścia. Nie stosuj deterministycznych stwierdzeń; mów o wzorcach, tendencjach, napięciach, potencjałach i dynamikach wewnętrznych.`
+      : lang === "es"
+        ? `REGLAS DE CONTENIDO: escribe en segunda persona. No uses viñetas ni listas numeradas en el informe final. Cada sección debe tener 2–4 párrafos. Mantén transiciones fluidas y lógicas entre secciones. Evita afirmaciones deterministas; habla de patrones, tendencias, tensiones, potenciales y dinámicas internas.`
+        : `CONTENT RULES: write in the second person. Do not use bullet points or numbered lists in the final report. Each section should contain 2–4 paragraphs. Keep transitions fluid and logical. Avoid deterministic claims; describe patterns, tendencies, tensions, potentials, and inner dynamics.`,
+    ``,
+    `Dane techniczne i ograniczenia interpretacji (użyj jako fundamentu, nie twórz z nich osobnej sekcji):`,
+    ...cc.map((l) => `- ${l}`),
+    `- Dane urodzenia do uwzględnienia w tle interpretacji: ${dob}, ${tob}, ${pob}.`,
+    `- ${ascInstruction}`,
+    `- Zachowaj fakty astrologiczne z JSON: znaki, planety, aspekty, domy, Ascendent i dominujące konfiguracje. Nie wymyślaj danych spoza JSON i nie zmieniaj znaczeń astrologicznych; poprawiaj strukturę, głębię i język.`,
+    ``,
+    lang === "pl"
+      ? `OBOWIĄZKOWA STRUKTURA: użyj dokładnie poniższych nagłówków H2, w dokładnie tej kolejności.`
+      : lang === "es"
+        ? `ESTRUCTURA OBLIGATORIA: usa exactamente los siguientes encabezados H2, en este orden exacto.`
+        : `REQUIRED STRUCTURE: use exactly the following H2 headings, in this exact order.`,
+    ``,
+    `## ${headings[0]}`,
+    `Uchwyć esencję osoby bez technicznego wyliczania planet. Pokaż podstawowy ton psychologiczny wykresu: sposób bycia, główną wewnętrzną dynamikę, naturalny kontrast i to, co sprawia, że ta osoba jest rozpoznawalna.`,
+    ``,
+    `## ${headings[1]}`,
+    `Połącz Słońce, Księżyc i Ascendent w jedną spójną analizę. Opisz rdzeń motywacji, potrzeby emocjonalne i sposób wchodzenia w świat, pokazując napięcia i synergie między tymi elementami. ${birthTimeUnknown ? `Ascendent traktuj jako orientacyjny i zaznacz to w każdej wersji językowej.` : `Uwzględnij znak i sens Ascendentu z danych.`}`,
+    ``,
+    `## ${headings[2]}`,
+    `Oprzyj sekcję na Merkurym, jego znaku, aspektach i powiązaniach z resztą mapy. Pisz o stylu myślenia, uczenia się, wypowiadania, przetwarzania emocji przez słowa i o tym, jak osoba może być odbierana w rozmowie.`,
+    ``,
+    `## ${headings[3]}`,
+    `Połącz Wenus, Księżyc i istotne czynniki relacyjne z mapy. Opisz styl przywiązania, sposób dawania i przyjmowania bliskości, potrzeby bezpieczeństwa oraz to, co otwiera albo zamyka serce.`,
+    ``,
+    `## ${headings[4]}`,
+    `Oprzyj sekcję na Marsie, Słońcu i aspektach związanych z wolą działania. Pokaż, jak osoba inicjuje, rywalizuje, broni granic, reaguje na presję i odzyskuje impet.`,
+    ``,
+    `## ${headings[5]}`,
+    `Wydobądź najmocniejsze zasoby z układu planet, aspektów i domów. Nie rób listy talentów; pokaż je jako naturalne zdolności, które mogą rozwijać się w konkretnych sytuacjach życiowych.`,
+    ``,
+    `## ${headings[6]}`,
+    `To kluczowa sekcja. Zidentyfikuj nieświadome schematy, mechanizmy obronne i możliwy autosabotaż wynikający z napięć w horoskopie, zwłaszcza aspektów z Saturnem, Marsem, Plutonem, Księżycem, Wenus lub osią domów, jeśli są istotne. Pokaż, jak te same układy mogą stać się osią rozwoju, samoświadomości i większej sprawczości. Zakończ tę sekcję integrującym, wzmacniającym wnioskiem w każdej wersji językowej.`,
+    ``,
+    `## ${headings[7]}`,
+    `Opisz lekcje wynikające z Saturna, trudniejszych aspektów, napięć żywiołów lub jakości, bez straszenia i bez moralizowania. Każde wyzwanie przedstaw jako obszar dojrzewania, a nie wadę.`,
+    ``,
+    `## ${headings[8]}`,
+    `Połącz Jowisza, Słońce, węzły/osiowe tematy jeśli są w JSON, oraz dominujące domy związane z rozwojem. Pisz o kierunku, który daje poczucie sensu, nie o jednej deterministycznej misji.`,
+    ``,
+    `## ${headings[9]}`,
+    `Skup się na Saturnie i tematach odpowiedzialności. Pokaż, gdzie osoba potrzebuje struktury, jak uczy się granic i w jaki sposób może budować stabilność bez tłumienia swojej natury.`,
+    ``,
+    `## ${headings[10]}`,
+    `Uwzględnij Księżyc, Neptuna, wodne domy/znaki i aspekty związane z wyobraźnią lub wrażliwością, jeśli wynikają z JSON. Pisz o intuicji, symbolach, samotności, regeneracji i kontakcie z własnym wnętrzem.`,
+    ``,
+    `## ${headings[11]}`,
+    `Połącz Marsa, Merkurego, Saturna, Jowisza i domy pracy/kariery, jeśli można je sensownie odczytać. Dodaj konkretne przykłady środowisk, ról albo sposobów pracy, ale bez obietnic sukcesu, pieniędzy czy awansu.`,
+    ``,
+    `## ${headings[12]}`,
+    `Opisz funkcjonowanie w grupach, przyjaźniach, społecznościach i codziennym otoczeniu. Uwzględnij Merkurego, Wenus, Jowisza, 3./7./11. dom lub inne istotne czynniki, jeśli wynikają z danych.`,
+    ``,
+    `## ${headings[13]}`,
+    `Zsyntetyzuj najważniejsze wzorce całego kosmogramu. Ta sekcja ma łączyć elementy, nie powtarzać ich osobno: pokaż, jaki wewnętrzny system tworzy ta mapa i jak różne części osobowości mogą ze sobą współpracować.`,
+    ``,
+    `## ${headings[14]}`,
+    `Daj praktyczne, elegancko napisane wskazówki wynikające z mapy, ale bez wypunktowań. Mają brzmieć jak dojrzałe kierunki pracy ze sobą, nie jak ogólne porady z poradnika.`,
+    ``,
+    `## ${headings[15]}`,
+    `Zamknij raport syntetycznie i wzmacniająco. Nie streszczaj mechanicznie faktów astrologicznych; pokaż główną oś ścieżki, najważniejszy potencjał i obraz, z którym czytelnik może zostać po lekturze.`,
   ];
 }
 
@@ -141,8 +323,9 @@ function plPersonalityOutline(
   dob: string,
   tob: string,
   pob: string,
+  birthTimeUnknown = false,
 ): string[] {
-  const cc = chartContextLines(chart, dob, tob, pob, "pl");
+  const cc = chartContextLines(chart, dob, tob, pob, "pl", birthTimeUnknown);
   return [
     `To jest raport osobowościowy. NIE zaczynaj od tytułu H1 ani od technicznej sekcji „Wykres Natalny”. Zacznij od portretu — bez nagłówka.`,
     ``,
@@ -162,7 +345,7 @@ function plPersonalityOutline(
     `Napisz 3–4 zdania, które od razu chwytają esencję tej osoby. Nie wymieniaj nazw planet ani znaków. Pisz tak, jakbyś znał tę osobę: jej sposób wchodzenia w świat, napięcie wewnętrzne, naturalny urok, kontrast lub siłę. To ma być emocjonalny hook, nie techniczny opis.`,
     ``,
     `## Trójca: Słońce · Księżyc · Ascendent`,
-    `Napisz trzy krótkie nazwane bloki w tej sekcji: „Słońce”, „Księżyc”, „Ascendent”. Każdy blok ma mieć 2–3 zdania. Pokaż, jak te trzy elementy współpracują, gdzie tworzą napięcie, a gdzie wzmacniają się nawzajem — nie rób trzech osobnych notek encyklopedycznych.`,
+    `Napisz trzy nazwane bloki w tej sekcji: „Słońce”, „Księżyc”, „Ascendent”. Każdy blok ma mieć 5–8 zdań, tak szczegółowo jak w podstawowej analizie, ale bardziej dojrzale i literacko. Dla Słońca opisz znak i sens stopnia z danych, rdzeń motywacji, styl bycia i sposób „świecenia” w codzienności; możesz wpleść 1–2 najsilniejsze aspekty do Słońca z JSON. Dla Księżyca opisz znak, potrzeby emocjonalne, reakcje, poczucie bezpieczeństwa i 0–2 czytelne aspekty do Księżyca. ${birthTimeUnknown ? `Ascendent jest tylko orientacyjny, bo godzina urodzenia nie jest znana; opisz go krócej i z wyraźnym zastrzeżeniem, że nie jest to pewna część mapy.` : `Dla Ascendentu opisz ok. ${chart.ascendantDeg.toFixed(1)}°, jego znak, pierwsze wrażenie, sposób wchodzenia w kontakt ze światem i filtr społeczny.`} Pokaż, jak te trzy elementy współpracują, gdzie tworzą napięcie, a gdzie wzmacniają się nawzajem — nie rób trzech osobnych notek encyklopedycznych.`,
     ``,
     `## Umysł i komunikacja`,
     `Opisz Merkurego w 3–4 zdaniach z perspektywy „Ty”. Zacznij od sposobu myślenia i mówienia, a dopiero potem naturalnie wpleć znak/aspekty Merkurego z JSON.`,
@@ -202,8 +385,9 @@ function plMonthlyOutline(
   tob: string,
   pob: string,
   fw: ForecastWindows,
+  birthTimeUnknown = false,
 ): string[] {
-  const cc = chartContextLines(chart, dob, tob, pob, "pl");
+  const cc = chartContextLines(chart, dob, tob, pob, "pl", birthTimeUnknown);
   return [
     `Zacznij od:`,
     `# Prognoza Miesięczna`,
@@ -255,8 +439,9 @@ function plWeeklyOutline(
   tob: string,
   pob: string,
   fw: ForecastWindows,
+  birthTimeUnknown = false,
 ): string[] {
-  const cc = chartContextLines(chart, dob, tob, pob, "pl");
+  const cc = chartContextLines(chart, dob, tob, pob, "pl", birthTimeUnknown);
   return [
     `Zacznij od:`,
     `# 📅 Prognoza Tygodniowa`,
@@ -302,8 +487,9 @@ function enPersonalityOutline(
   dob: string,
   tob: string,
   pob: string,
+  birthTimeUnknown = false,
 ): string[] {
-  const cc = chartContextLines(chart, dob, tob, pob, "en");
+  const cc = chartContextLines(chart, dob, tob, pob, "en", birthTimeUnknown);
   return [
     `This is a personality report. Do NOT start with an H1 title or a technical “Natal chart” section. Start with the portrait — no heading.`,
     ``,
@@ -323,7 +509,7 @@ function enPersonalityOutline(
     `Write 3–4 sentences that immediately capture the person's essence. Do not mention planet names or signs. Write as if you already know this person: how they enter the world, their inner tension, natural charm, contrast, or strength. This is the emotional hook, not a technical description.`,
     ``,
     `## The Core Trinity: Sun · Moon · Ascendant`,
-    `Write three short named blocks inside this section: “Sun”, “Moon”, “Ascendant”. Each block should be 2–3 sentences. Show how these three elements relate to each other and create tension or synergy — do not write three separate encyclopedia entries.`,
+    `Write three named blocks inside this section: “Sun”, “Moon”, “Ascendant”. Each block should be 5–8 sentences, as detailed as the basic analysis but more mature and literary. For the Sun, describe the sign and degree sense from the data, core motivation, style of presence, and how solar energy shows up day to day; you may weave in 1–2 strongest aspects to the Sun from the JSON. For the Moon, describe the sign, emotional needs, reactions, sense of safety, and 0–2 clearly readable Moon aspects. ${birthTimeUnknown ? `The Ascendant is only approximate because the birth time is unknown; describe it more briefly and clearly state that it is not a certain part of the chart.` : `For the Ascendant, describe ~${chart.ascendantDeg.toFixed(1)}°, its sign, first impression, way of entering contact with the world, and social filter.`} Show how these three elements relate to each other and create tension or synergy — do not write three separate encyclopedia entries.`,
     ``,
     `## Mind & Communication`,
     `Describe Mercury in 3–4 sentences from the second-person perspective. Start with how you think and communicate, then naturally weave in Mercury's sign/aspects from the JSON.`,
@@ -363,8 +549,9 @@ function enMonthlyOutline(
   tob: string,
   pob: string,
   fw: ForecastWindows,
+  birthTimeUnknown = false,
 ): string[] {
-  const cc = chartContextLines(chart, dob, tob, pob, "en");
+  const cc = chartContextLines(chart, dob, tob, pob, "en", birthTimeUnknown);
   return [
     `Start with:`,
     `# Monthly forecast`,
@@ -414,8 +601,9 @@ function enWeeklyOutline(
   tob: string,
   pob: string,
   fw: ForecastWindows,
+  birthTimeUnknown = false,
 ): string[] {
-  const cc = chartContextLines(chart, dob, tob, pob, "en");
+  const cc = chartContextLines(chart, dob, tob, pob, "en", birthTimeUnknown);
   return [
     `Start with:`,
     `# 📅 Weekly forecast`,
@@ -459,8 +647,9 @@ function esPersonalityOutline(
   dob: string,
   tob: string,
   pob: string,
+  birthTimeUnknown = false,
 ): string[] {
-  const cc = chartContextLines(chart, dob, tob, pob, "es");
+  const cc = chartContextLines(chart, dob, tob, pob, "es", birthTimeUnknown);
   return [
     `Este es un informe de personalidad. NO empieces con un título H1 ni con una sección técnica de “Carta natal”. Empieza con el retrato — sin encabezado.`,
     ``,
@@ -480,7 +669,7 @@ function esPersonalityOutline(
     `Escribe 3–4 frases que capten de inmediato la esencia de la persona. No menciones nombres de planetas ni signos. Escribe como si ya conocieras a esta persona: su forma de entrar en el mundo, su tensión interior, su encanto natural, su contraste o su fuerza. Este es el gancho emocional, no una descripción técnica.`,
     ``,
     `## La Trinidad Central: Sol · Luna · Ascendente`,
-    `Escribe tres bloques breves con nombre dentro de esta sección: “Sol”, “Luna”, “Ascendente”. Cada bloque debe tener 2–3 frases. Muestra cómo estos tres elementos se relacionan entre sí y crean tensión o sinergia; no escribas tres entradas enciclopédicas separadas.`,
+    `Escribe tres bloques con nombre dentro de esta sección: “Sol”, “Luna”, “Ascendente”. Cada bloque debe tener 5–8 frases, con el nivel de detalle de la interpretación básica pero con un estilo más maduro y literario. Para el Sol, describe el signo y el sentido del grado según los datos, el núcleo motivacional, el estilo de presencia y cómo se expresa esa energía en la vida cotidiana; puedes incluir 1–2 aspectos fuertes al Sol del JSON. Para la Luna, describe el signo, necesidades emocionales, reacciones, seguridad interior y 0–2 aspectos lunares claros. ${birthTimeUnknown ? `El Ascendente es solo aproximado porque la hora de nacimiento es desconocida; descríbelo de forma más breve y deja claro que no es una parte segura de la carta.` : `Para el Ascendente, describe ~${chart.ascendantDeg.toFixed(1)}°, su signo, primera impresión, forma de entrar en contacto con el mundo y filtro social.`} Muestra cómo estos tres elementos se relacionan entre sí y crean tensión o sinergia; no escribas tres entradas enciclopédicas separadas.`,
     ``,
     `## Mente y Comunicación`,
     `Describe Mercurio en 3–4 frases desde la segunda persona. Empieza por cómo piensas y te comunicas, y después integra de forma natural el signo/aspectos de Mercurio del JSON.`,
@@ -520,8 +709,9 @@ function esMonthlyOutline(
   tob: string,
   pob: string,
   fw: ForecastWindows,
+  birthTimeUnknown = false,
 ): string[] {
-  const cc = chartContextLines(chart, dob, tob, pob, "es");
+  const cc = chartContextLines(chart, dob, tob, pob, "es", birthTimeUnknown);
   return [
     `Empieza con:`,
     `# Pronóstico mensual`,
@@ -571,8 +761,9 @@ function esWeeklyOutline(
   tob: string,
   pob: string,
   fw: ForecastWindows,
+  birthTimeUnknown = false,
 ): string[] {
-  const cc = chartContextLines(chart, dob, tob, pob, "es");
+  const cc = chartContextLines(chart, dob, tob, pob, "es", birthTimeUnknown);
   return [
     `Empieza con:`,
     `# 📅 Pronóstico semanal`,
@@ -616,6 +807,7 @@ function natalBasicFreeOutline(
   dob: string,
   tob: string,
   pob: string,
+  birthTimeUnknown = false,
 ): string[] {
   const jsonHint =
     lang === "pl"
@@ -625,11 +817,11 @@ function natalBasicFreeOutline(
         : `Stay consistent with the JSON numbers (longitudes, Ascendant, timezone ${chart.timezone}, coordinates) — do not contradict them.`;
   if (lang === "pl") {
     return [
-      `Nie używaj nagłówka poziomu # — pierwszy nagłówek w treści interpretacji to wyłącznie „## Dane urodzenia”.`,
+      `Nie używaj nagłówka poziomu # i NIE twórz sekcji „Dane urodzenia”.`,
       ``,
-      `Sekcja „## Dane urodzenia”: jeden akapit (2–3 zdania) z datą ${dob}, godziną ${tob}, miejscem ${pob} i strefą ${chart.timezone}.`,
+      `Na samej górze interpretacji wstaw tylko jedną krótką linię techniczną: **${dob} · ${tob} · ${pob}**. Bez akapitu z danymi urodzenia i bez powtarzania ich później.`,
       ``,
-      `Potem — wyłącznie trzy nagłówki ## w tej kolejności (bez innych sekcji poza „Dane urodzenia”):`,
+      `Potem — wyłącznie trzy nagłówki ## w tej kolejności:`,
       ``,
       `## Słońce`,
       `- 5–8 zdań: wyłącznie dla TEJ osoby i TEJ mapy (JSON). Podaj znak i sens stopnia Słońca z danych; rdzeń motywacji, styl bycia, jak „świeci” energia słoneczna w życiu codziennym.`,
@@ -639,7 +831,9 @@ function natalBasicFreeOutline(
       `- 5–8 zdań: znak i sens Księżyca z mapy; potrzeby emocjonalne, reakcje, co daje poczucie bezpieczeństwa; 0–2 aspekty do Księżyca z JSON, jeśli są czytelne.`,
       ``,
       `## Ascendent`,
-      `- 4–7 zdań: Ascendent ok. ${chart.ascendantDeg.toFixed(1)}° i jego znak; pierwsze wrażenie, sposób wchodzenia w kontakt z otoczeniem; bez przepowiadania zdarzeń.`,
+      birthTimeUnknown
+        ? `- 3–5 zdań: godzina urodzenia jest nieznana, więc Ascendent policzony dla 12:00 jest wyłącznie orientacyjny. Zaznacz to jasno; nie traktuj pierwszego wrażenia, domów ani osi jako pewnych.`
+        : `- 4–7 zdań: Ascendent ok. ${chart.ascendantDeg.toFixed(1)}° i jego znak; pierwsze wrażenie, sposób wchodzenia w kontakt z otoczeniem; bez przepowiadania zdarzeń.`,
       ``,
       `Sekcji „## Wykres Natalny” z pełną listą aspektów: NIE — to wyłącznie okrojony podgląd.`,
       jsonHint,
@@ -647,11 +841,11 @@ function natalBasicFreeOutline(
   }
   if (lang === "es") {
     return [
-      `No uses un encabezado de nivel # — el primer encabezado del texto interpretativo es solo “## Datos de nacimiento”.`,
+      `No uses un encabezado de nivel # y NO crees una sección “Datos de nacimiento”.`,
       ``,
-      `“## Datos de nacimiento”: un párrafo (2–3 frases) con fecha ${dob}, hora ${tob}, lugar ${pob} y zona ${chart.timezone}.`,
+      `En la parte superior de la interpretación coloca solo una línea técnica breve: **${dob} · ${tob} · ${pob}**. Sin párrafo de datos de nacimiento y sin repetirlos después.`,
       ``,
-      `Después, SOLO tres encabezados ## en este orden (tras “Datos de nacimiento”):`,
+      `Después, SOLO tres encabezados ## en este orden:`,
       ``,
       `## Sol`,
       `- 5–8 frases: solo para ESTA persona y ESTA carta (JSON). Signo y sentido del grado solar; núcleo motivacional y estilo de presencia.`,
@@ -661,18 +855,20 @@ function natalBasicFreeOutline(
       `- 5–8 frases: signo lunar; necesidades emocionales, reacciones, qué aporta calma; 0–2 aspectos a la Luna si se ven claros en el JSON.`,
       ``,
       `## Ascendente`,
-      `- 4–7 frases: Ascendente ~${chart.ascendantDeg.toFixed(1)}° y su signo; primera impresión y filtro social; sin predicciones de eventos.`,
+      birthTimeUnknown
+        ? `- 3–5 frases: la hora de nacimiento es desconocida, así que el Ascendente calculado para las 12:00 es solo orientativo. Indícalo con claridad; no trates la primera impresión, las casas ni los ejes como datos seguros.`
+        : `- 4–7 frases: Ascendente ~${chart.ascendantDeg.toFixed(1)}° y su signo; primera impresión y filtro social; sin predicciones de eventos.`,
       ``,
       `No escribas una sección larga “Carta natal” con listas de aspectos.`,
       jsonHint,
     ];
   }
   return [
-    `Do not use a level-# heading — the first heading in the interpretive text must be “## Birth details” only.`,
+    `Do not use a level-# heading and do NOT create a “Birth details” section.`,
     ``,
-    `“## Birth details”: one paragraph (2–3 sentences) with date ${dob}, time ${tob}, place ${pob}, timezone ${chart.timezone}.`,
+    `At the very top of the interpretation, include only one short technical line: **${dob} · ${tob} · ${pob}**. Do not add a birth details paragraph and do not repeat these details later.`,
     ``,
-    `Then add ONLY these three ## headings, in this order (after “Birth details”):`,
+    `Then add ONLY these three ## headings, in this order:`,
     ``,
     `## Sun sign`,
     `- 5–8 sentences: for THIS person and THIS chart (JSON) only. State the Sun’s sign and degree sense from the data; core motivation, how solar energy shows up day to day.`,
@@ -682,7 +878,9 @@ function natalBasicFreeOutline(
     `- 5–8 sentences: Moon sign from the chart; emotional needs, reactions, what helps you feel grounded; 0–2 aspects to the Moon from JSON if clearly readable.`,
     ``,
     `## Ascendant`,
-    `- 4–7 sentences: Ascendant ~${chart.ascendantDeg.toFixed(1)}° and its sign; first impression and social “filter”; no event fortune-telling.`,
+    birthTimeUnknown
+      ? `- 3–5 sentences: the birth time is unknown, so the Ascendant calculated for 12:00 is only approximate. State this clearly; do not treat first impression, houses, or axes as certain.`
+      : `- 4–7 sentences: Ascendant ~${chart.ascendantDeg.toFixed(1)}° and its sign; first impression and social “filter”; no event fortune-telling.`,
     ``,
     `Do NOT add a long “Natal chart” section listing all aspects.`,
     jsonHint,
@@ -695,10 +893,12 @@ export function buildNatalBasicFreePrompt(input: {
   pob: string;
   lang: AppLang;
   chart: NatalChartPayload;
+  birthTimeUnknown?: boolean;
 }): string {
-  const { dob, tob, pob, lang, chart } = input;
+  const { dob, tob, pob, lang, chart, birthTimeUnknown = false } = input;
+  const displayTob = birthTimeForPrompt(lang, tob, birthTimeUnknown);
   const ephem = natalChartSummaryJson(chart);
-  const outline = natalBasicFreeOutline(lang, chart, dob, tob, pob);
+  const outline = natalBasicFreeOutline(lang, chart, dob, displayTob, pob, birthTimeUnknown);
 
   if (lang === "pl") {
     return [
@@ -708,10 +908,7 @@ export function buildNatalBasicFreePrompt(input: {
       ``,
       ...editorialQualityInstructions("pl"),
       ``,
-      `Dane urodzenia:`,
-      `- Data: ${dob}`,
-      `- Godzina: ${tob}`,
-      `- Miejsce: ${pob}`,
+      `Dane urodzenia podajesz tylko raz, jako krótką linię na górze interpretacji: **${dob} · ${displayTob} · ${pob}**. Nie twórz sekcji „Dane urodzenia”.`,
       ``,
       `JSON ephemeridy (tropik, geocentryczny). Nie zaprzeczaj liczbom — interpretuj tylko w ramach trzech sekcji:`,
       "```json",
@@ -733,10 +930,7 @@ export function buildNatalBasicFreePrompt(input: {
       ``,
       ...editorialQualityInstructions("es"),
       ``,
-      `Datos de nacimiento:`,
-      `- Fecha: ${dob}`,
-      `- Hora: ${tob}`,
-      `- Lugar: ${pob}`,
+      `Muestra los datos de nacimiento solo una vez, como una línea breve al inicio de la interpretación: **${dob} · ${displayTob} · ${pob}**. No crees una sección “Datos de nacimiento”.`,
       ``,
       `JSON de efemérides. No lo contradigas; interpreta solo en las tres secciones:`,
       "```json",
@@ -756,10 +950,7 @@ export function buildNatalBasicFreePrompt(input: {
     ``,
     `IMPORTANT: Entire document in English.`,
     ``,
-    `Birth data:`,
-    `- Date: ${dob}`,
-    `- Time: ${tob}`,
-    `- Place: ${pob}`,
+    `Show the birth data only once, as a short line at the top of the interpretation: **${dob} · ${displayTob} · ${pob}**. Do not create a “Birth details” section.`,
     ``,
     `Ephemeris JSON (tropical, geocentric). Do not contradict — interpret only within the three sections:`,
     "```json",
@@ -782,20 +973,29 @@ function outlineFor(
   tob: string,
   pob: string,
   fw: ForecastWindows,
+  birthTimeUnknown = false,
 ): string[] {
+  if (reportType === "personality") {
+    return premiumPersonalityOutline(
+      chart,
+      dob,
+      tob,
+      pob,
+      lang,
+      birthTimeUnknown,
+    );
+  }
+
   if (lang === "pl") {
-    if (reportType === "personality") return plPersonalityOutline(chart, dob, tob, pob);
-    if (reportType === "monthly") return plMonthlyOutline(chart, dob, tob, pob, fw);
-    return plWeeklyOutline(chart, dob, tob, pob, fw);
+    if (reportType === "monthly") return plMonthlyOutline(chart, dob, tob, pob, fw, birthTimeUnknown);
+    return plWeeklyOutline(chart, dob, tob, pob, fw, birthTimeUnknown);
   }
   if (lang === "es") {
-    if (reportType === "personality") return esPersonalityOutline(chart, dob, tob, pob);
-    if (reportType === "monthly") return esMonthlyOutline(chart, dob, tob, pob, fw);
-    return esWeeklyOutline(chart, dob, tob, pob, fw);
+    if (reportType === "monthly") return esMonthlyOutline(chart, dob, tob, pob, fw, birthTimeUnknown);
+    return esWeeklyOutline(chart, dob, tob, pob, fw, birthTimeUnknown);
   }
-  if (reportType === "personality") return enPersonalityOutline(chart, dob, tob, pob);
-  if (reportType === "monthly") return enMonthlyOutline(chart, dob, tob, pob, fw);
-  return enWeeklyOutline(chart, dob, tob, pob, fw);
+  if (reportType === "monthly") return enMonthlyOutline(chart, dob, tob, pob, fw, birthTimeUnknown);
+  return enWeeklyOutline(chart, dob, tob, pob, fw, birthTimeUnknown);
 }
 
 export function buildReportPrompt(input: {
@@ -805,14 +1005,16 @@ export function buildReportPrompt(input: {
   reportType: ReportType;
   lang: AppLang;
   chart: NatalChartPayload;
+  birthTimeUnknown?: boolean;
 }): string {
-  const { dob, tob, pob, reportType, lang, chart } = input;
+  const { dob, tob, pob, reportType, lang, chart, birthTimeUnknown = false } = input;
   if (reportType === "natal_basic") {
     throw new Error("natal_basic is generated without an LLM prompt.");
   }
   const fw = getForecastWindows();
   const ephem = natalChartSummaryJson(chart);
-  const outline = outlineFor(reportType, lang, chart, dob, tob, pob, fw);
+  const displayTob = birthTimeForPrompt(lang, tob, birthTimeUnknown);
+  const outline = outlineFor(reportType, lang, chart, dob, displayTob, pob, fw, birthTimeUnknown);
 
   const commonPl = [
     `Jesteś doświadczonym astrologiem. Klient zapłacił za bardzo osobisty, spójny raport w języku polskim.`,
@@ -823,7 +1025,7 @@ export function buildReportPrompt(input: {
     ``,
     `Dane urodzenia (dokładnie):`,
     `- Data: ${dob}`,
-    `- Godzina: ${tob}`,
+    `- Godzina: ${displayTob}`,
     `- Miejsce: ${pob}`,
     ``,
     `Kalendarz odniesienia (${REPORT_TIMEZONE}): dzisiaj ${fw.today}; prognoza tygodniowa = 7 kolejnych dni od dziś: ${fw.weekly.start}–${fw.weekly.end}; prognoza „miesięczna” = 30 kolejnych dni od dziś: ${fw.monthly.start}–${fw.monthly.end}.`,
@@ -849,7 +1051,7 @@ export function buildReportPrompt(input: {
     ``,
     `Datos de nacimiento:`,
     `- Fecha: ${dob}`,
-    `- Hora: ${tob}`,
+    `- Hora: ${displayTob}`,
     `- Lugar: ${pob}`,
     ``,
     `Calendario (${REPORT_TIMEZONE}): hoy ${fw.today}; semanal = 7 días seguidos desde hoy: ${fw.weekly.start}–${fw.weekly.end}; “mensual” = 30 días seguidos desde hoy: ${fw.monthly.start}–${fw.monthly.end}.`,
@@ -873,7 +1075,7 @@ export function buildReportPrompt(input: {
     ``,
     `Birth data (exact):`,
     `- Date: ${dob}`,
-    `- Time: ${tob}`,
+    `- Time: ${displayTob}`,
     `- Place: ${pob}`,
     ``,
     `Calendar context (${REPORT_TIMEZONE}): today ${fw.today}; weekly forecast = 7 consecutive days from today ${fw.weekly.start}–${fw.weekly.end}; “monthly” forecast = 30 consecutive days from today ${fw.monthly.start}–${fw.monthly.end}.`,

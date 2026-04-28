@@ -34,7 +34,8 @@ export async function POST(req: Request) {
   const proto = h.get("x-forwarded-proto") ?? "http";
   const origin = `${proto}://${host}`;
 
-  const { email, dob, tob, pob, reportType, lang } = parsed.data;
+  const { email, dob, tob, pob, reportType, lang, birthTimeUnknown } = parsed.data;
+  const birthTimeUnknownParam = birthTimeUnknown ? "1" : "0";
 
   const stripeMode = process.env.STRIPE_MODE ?? "test";
   const skipPaymentForDev =
@@ -52,6 +53,7 @@ export async function POST(req: Request) {
       pob,
       reportType,
       lang,
+      birthTimeUnknown: birthTimeUnknownParam,
     });
     return NextResponse.json({ url: `${origin}/success?${params.toString()}` });
   }
@@ -67,6 +69,7 @@ export async function POST(req: Request) {
       pob,
       reportType,
       lang,
+      birthTimeUnknown: birthTimeUnknownParam,
     });
     return NextResponse.json({ url: `${origin}/success?${params.toString()}` });
   }
@@ -105,6 +108,7 @@ export async function POST(req: Request) {
       pob,
       reportType,
       lang,
+      birthTimeUnknown: birthTimeUnknownParam,
     },
   });
 

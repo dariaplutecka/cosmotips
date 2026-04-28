@@ -20,6 +20,7 @@ export const CheckoutPayloadSchema = z.object({
   pob: z.string().min(1).max(120),
   reportType: ReportTypeSchema,
   lang: AppLangSchema.default("en"),
+  birthTimeUnknown: z.boolean().default(false),
 });
 
 export type CheckoutPayload = z.infer<typeof CheckoutPayloadSchema>;

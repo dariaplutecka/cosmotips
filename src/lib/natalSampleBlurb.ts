@@ -87,41 +87,41 @@ export function buildNatalSampleBlurb(
 
   if (lang === "pl") {
     return [
-      "## Podstawowy podgląd mapy",
+      "## Twoja podstawowa analiza wykresu urodzeniowego",
       "",
-      `Dla **${place}** (lokalny czas urodzenia wg strefy z mapy) widać: **Słońce** w ${sSun}, **Księżyc** w ${sMoon}, **Ascendent** w ${sAsc}.`,
+      `**${place}** · **Słońce** w ${sSun} · **Księżyc** w ${sMoon} · **Ascendent** w ${sAsc}.`,
       "",
       "- **Słońce** — rdzeń motywacji i sposobu bycia „na co dzień”.",
       "- **Księżyc** — potrzeby emocjonalne i to, co daje poczucie bezpieczeństwa.",
       "- **Ascendent** — pierwszy kontakt z otoczeniem: jak zwykle Cię „pierwsze wrażenie” odbiera.",
       "",
-      "To **skrócona próbka** (ekliptyka + Ascendent), bez pełnej analizy domów, aspektów i prognoz. Poniżej możesz zamówić **płatne raporty** — osobowość, tydzień lub miesiąc.",
+      "To **skrócona próbka raportu** (ekliptyka + Ascendent), bez pełnej interpretacji domów, aspektów i prognoz. Wróć do strony głównej aby zamówić pełen raport.",
     ].join("\n");
   }
 
   if (lang === "es") {
     return [
-      "## Vista básica de tu carta",
+      "## Tu análisis básico de la carta natal",
       "",
-      `Para **${place}** (hora local según la zona de la carta) se ve: **Sol** en ${sSun}, **Luna** en ${sMoon}, **Ascendente** en ${sAsc}.`,
+      `**${place}** · **Sol** en ${sSun} · **Luna** en ${sMoon} · **Ascendente** en ${sAsc}.`,
       "",
       "- **Sol** — núcleo de motivación y estilo de presencia.",
       "- **Luna** — necesidades emocionales y lo que te da calma.",
       "- **Ascendente** — la primera impresión que sueles proyectar.",
       "",
-      "Es una **muestra breve** (eclíptica + Ascendente), sin casas completas, aspectos ni tránsitos. Más abajo puedes pedir los **informes de pago** — personalidad, semana o mes.",
+      "Es una **muestra breve del informe** (eclíptica + Ascendente), sin interpretación completa de casas, aspectos ni pronósticos. Vuelve a la página principal para pedir un informe completo.",
     ].join("\n");
   }
 
   return [
-    "## A quick look at your chart",
+    "## Your basic birth chart analysis",
     "",
-    `For **${place}** (local birth time per the chart timezone) we see **Sun** in ${sSun}, **Moon** in ${sMoon}, and **Ascendant** in ${sAsc}.`,
+    `**${place}** · **Sun** in ${sSun} · **Moon** in ${sMoon} · **Ascendant** in ${sAsc}.`,
     "",
     "- **Sun** — core motivation and how you “show up” day to day.",
     "- **Moon** — emotional needs and what helps you feel grounded.",
     "- **Ascendant** — the first impression you tend to give others.",
     "",
-    "This is a **short sample** (ecliptic + Ascendant only), not a full house/aspect or forecast reading. Below you can order **paid reports** — personality, weekly, or monthly.",
+    "This is a **short sample report** (ecliptic + Ascendant), without the full interpretation of houses, aspects, and forecasts. Return to the home page to order a full report.",
   ].join("\n");
 }

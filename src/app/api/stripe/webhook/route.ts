@@ -14,13 +14,6 @@ import { sendReportPdfEmail } from "@/lib/reportEmail";
 import { getReport, setReport } from "@/lib/reportCache";
 import { successUi } from "@/lib/uiCopy";
 
-/** Stripe webhook signature verification needs the raw request body. */
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 /** pdfmake + Stripe webhook verification need Node (not Edge). */
 export const runtime = "nodejs";
 
@@ -54,6 +47,7 @@ async function generateReportFromCheckoutData(opts: {
   pob: string;
   reportType: ReportType;
   lang: "en" | "pl" | "es";
+  birthTimeUnknown: boolean;
 }) {
   const chart = await computeNatalChart({
     dob: opts.dob,
@@ -71,6 +65,7 @@ async function generateReportFromCheckoutData(opts: {
         pob: opts.pob,
         lang: opts.lang,
         chart,
+        birthTimeUnknown: opts.birthTimeUnknown,
       }),
     });
     const aiText = extractText(response);
@@ -88,6 +83,7 @@ async function generateReportFromCheckoutData(opts: {
       reportType: opts.reportType,
       lang: opts.lang,
       chart,
+      birthTimeUnknown: opts.birthTimeUnknown,
     }),
   });
   const text = extractText(response);
@@ -143,6 +139,7 @@ export async function POST(req: Request) {
     pob: session.metadata?.pob ?? "",
     reportType: session.metadata?.reportType ?? "",
     lang,
+    birthTimeUnknown: session.metadata?.birthTimeUnknown === "1",
   });
 
   if (!parsed.success) {
@@ -160,6 +157,7 @@ export async function POST(req: Request) {
       pob: parsed.data.pob,
       reportType: parsed.data.reportType,
       lang: parsed.data.lang,
+      birthTimeUnknown: parsed.data.birthTimeUnknown,
     });
     await setReport(sessionId, report);
 

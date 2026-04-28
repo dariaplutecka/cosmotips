@@ -51,6 +51,7 @@ function HomePageContent() {
   const [dobDay, setDobDay] = useState("");
   const [tobHour, setTobHour] = useState("");
   const [tobMinute, setTobMinute] = useState("");
+  const [birthTimeUnknown, setBirthTimeUnknown] = useState(false);
   const [pob, setPob] = useState("");
   const [email, setEmail] = useState("");
   const [reportType, setReportType] = useState<ReportType>("personality");
@@ -133,6 +134,7 @@ function HomePageContent() {
   );
 
   const tob = useMemo(() => {
+    if (birthTimeUnknown) return "12:00";
     if (tobHour === "" || tobMinute === "") return "";
     const h = parseInt(tobHour, 10);
     const m = parseInt(tobMinute, 10);
@@ -147,7 +149,7 @@ function HomePageContent() {
       return "";
     }
     return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-  }, [tobHour, tobMinute]);
+  }, [birthTimeUnknown, tobHour, tobMinute]);
 
   useEffect(() => {
     if (dobDay === "") return;
@@ -209,6 +211,7 @@ function HomePageContent() {
           pob,
           reportType,
           lang,
+          birthTimeUnknown,
         }),
       });
       const data = (await res.json().catch(() => null)) as
@@ -398,11 +401,12 @@ function HomePageContent() {
                       </span>
                       <select
                         name="tob-hour"
-                        required
+                        required={!birthTimeUnknown}
                         aria-label={copy.tobHour}
                         value={tobHour}
                         onChange={(e) => setTobHour(e.target.value)}
-                        className="cosmic-birth-select w-full !min-w-[6.75rem] !pl-10"
+                        disabled={birthTimeUnknown}
+                        className="cosmic-birth-select w-full !min-w-[6.75rem] !pl-10 disabled:cursor-not-allowed disabled:opacity-45"
                       >
                         <option value="">{copy.tobHour}</option>
                         {TOB_HOUR_OPTIONS.map((h) => (
@@ -414,11 +418,12 @@ function HomePageContent() {
                     </div>
                     <select
                       name="tob-minute"
-                      required
+                      required={!birthTimeUnknown}
                       aria-label={copy.tobMinute}
                       value={tobMinute}
                       onChange={(e) => setTobMinute(e.target.value)}
-                      className="cosmic-birth-select w-[7.5rem] min-w-[7.5rem] shrink-0 sm:w-[8.25rem] sm:min-w-[8.25rem]"
+                      disabled={birthTimeUnknown}
+                      className="cosmic-birth-select w-[7.5rem] min-w-[7.5rem] shrink-0 disabled:cursor-not-allowed disabled:opacity-45 sm:w-[8.25rem] sm:min-w-[8.25rem]"
                     >
                       <option value="">{copy.tobMinute}</option>
                       {TOB_MINUTE_OPTIONS.map((m) => (
@@ -428,6 +433,15 @@ function HomePageContent() {
                       ))}
                     </select>
                   </div>
+                  <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm text-white/65">
+                    <input
+                      type="checkbox"
+                      checked={birthTimeUnknown}
+                      onChange={(e) => setBirthTimeUnknown(e.target.checked)}
+                      className="h-4 w-4 rounded border-white/20 bg-black/30 accent-violet-300"
+                    />
+                    <span>{copy.birthTimeUnknown}</span>
+                  </label>
                 </div>
 
                 <div>

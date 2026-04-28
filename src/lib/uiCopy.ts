@@ -186,6 +186,7 @@ export type HomeCopy = {
   tob: string;
   tobHour: string;
   tobMinute: string;
+  birthTimeUnknown: string;
   pob: string;
   pobPlaceholder: string;
   email: string;
@@ -367,6 +368,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     tob: "Time of birth",
     tobHour: "Hour",
     tobMinute: "Minute",
+    birthTimeUnknown: "I don’t know my birth time",
     pob: "Place of birth",
     pobPlaceholder: "e.g., Warsaw, Poland",
     email: "Email",
@@ -426,6 +428,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     tob: "Godzina urodzenia",
     tobHour: "Godzina",
     tobMinute: "Minuta",
+    birthTimeUnknown: "Nie znam godziny urodzenia",
     pob: "Miejsce urodzenia",
     pobPlaceholder: "np. Warszawa, Polska",
     email: "E-mail",
@@ -485,6 +488,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     tob: "Hora de nacimiento",
     tobHour: "Hora",
     tobMinute: "Minuto",
+    birthTimeUnknown: "No sé mi hora de nacimiento",
     pob: "Lugar de nacimiento",
     pobPlaceholder: "p. ej., Madrid, España",
     email: "Correo electrónico",

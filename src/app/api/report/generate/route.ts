@@ -83,6 +83,7 @@ export async function GET(req: Request) {
   let pob = "";
   let reportTypeRaw = "";
   let langRaw = "";
+  let birthTimeUnknown = false;
 
   if (skipPaymentForDev) {
     email = searchParams.get("email") ?? "";
@@ -91,6 +92,7 @@ export async function GET(req: Request) {
     pob = searchParams.get("pob") ?? "";
     reportTypeRaw = searchParams.get("reportType") ?? "";
     langRaw = searchParams.get("lang") ?? "en";
+    birthTimeUnknown = searchParams.get("birthTimeUnknown") === "1";
   } else if (freeNatalBasic) {
     email = searchParams.get("email") ?? "";
     dob = searchParams.get("dob") ?? "";
@@ -98,6 +100,7 @@ export async function GET(req: Request) {
     pob = searchParams.get("pob") ?? "";
     reportTypeRaw = searchParams.get("reportType") ?? "";
     langRaw = searchParams.get("lang") ?? "en";
+    birthTimeUnknown = searchParams.get("birthTimeUnknown") === "1";
     if (reportTypeRaw !== "natal_basic") {
       return NextResponse.json(
         { error: "Invalid free natal session." },
@@ -124,6 +127,7 @@ export async function GET(req: Request) {
     pob = session.metadata?.pob ?? "";
     reportTypeRaw = session.metadata?.reportType ?? "";
     langRaw = session.metadata?.lang ?? "en";
+    birthTimeUnknown = session.metadata?.birthTimeUnknown === "1";
   }
 
   const langParsed = AppLangSchema.safeParse(langRaw);
@@ -136,6 +140,7 @@ export async function GET(req: Request) {
     pob,
     reportType: reportTypeRaw,
     lang,
+    birthTimeUnknown,
   });
 
   if (!parsed.success) {
@@ -168,6 +173,7 @@ export async function GET(req: Request) {
         pob: parsed.data.pob,
         reportType: parsed.data.reportType,
         lang: parsed.data.lang,
+        birthTimeUnknown: parsed.data.birthTimeUnknown,
       },
     });
   }
@@ -182,6 +188,7 @@ export async function GET(req: Request) {
         pob: parsed.data.pob,
         lang: parsed.data.lang,
         chart,
+        birthTimeUnknown: parsed.data.birthTimeUnknown,
       }),
     });
     const aiText = extractText(response);
@@ -212,6 +219,7 @@ export async function GET(req: Request) {
           pob: parsed.data.pob,
           reportType: parsed.data.reportType,
           lang: parsed.data.lang,
+          birthTimeUnknown: parsed.data.birthTimeUnknown,
         },
         emailPdf,
       });
@@ -250,6 +258,7 @@ export async function GET(req: Request) {
         pob: parsed.data.pob,
         reportType: parsed.data.reportType,
         lang: parsed.data.lang,
+        birthTimeUnknown: parsed.data.birthTimeUnknown,
       },
       emailPdf,
     });
@@ -265,6 +274,7 @@ export async function GET(req: Request) {
       reportType: parsed.data.reportType,
       lang: parsed.data.lang,
       chart,
+      birthTimeUnknown: parsed.data.birthTimeUnknown,
     }),
   });
 
@@ -296,6 +306,7 @@ export async function GET(req: Request) {
         pob: parsed.data.pob,
         reportType: parsed.data.reportType,
         lang: parsed.data.lang,
+        birthTimeUnknown: parsed.data.birthTimeUnknown,
       },
       emailPdf,
     });
@@ -334,6 +345,7 @@ export async function GET(req: Request) {
       pob: parsed.data.pob,
       reportType: parsed.data.reportType,
       lang: parsed.data.lang,
+      birthTimeUnknown: parsed.data.birthTimeUnknown,
     },
     emailPdf,
   });
