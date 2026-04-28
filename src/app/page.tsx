@@ -17,7 +17,13 @@ import {
 import { CosmotipsTopBar } from "@/components/CosmotipsTopBar";
 import { HomeFooter } from "@/components/HomeFooter";
 import { NatalChartHeroIllustration } from "@/components/NatalChartHeroIllustration";
-import { homeCopy } from "@/lib/uiCopy";
+import {
+  celticCrossPositions,
+  type SpreadType,
+  type TarotCard,
+  type TarotTopic,
+} from "@/lib/tarotDeck";
+import { homeCopy, tarotCopy } from "@/lib/uiCopy";
 
 const placeSuggestions = [
   "Warsaw, Poland",
@@ -43,6 +49,39 @@ const NATAL_SAMPLE_STORAGE_KEY = "cosmotips:natal_sample_v1";
 const TOB_HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => i);
 const TOB_MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) => i);
 type HomeModule = "natal" | "tarot";
+type TarotPanelState =
+  | "idle"
+  | "topic"
+  | "email"
+  | "shuffling"
+  | "generating"
+  | "result"
+  | "no_tokens";
+
+type TarotResult = {
+  cards: TarotCard[];
+  interpretation: string;
+};
+
+function tarotCardName(card: TarotCard, lang: AppLang): string {
+  if (lang === "pl") return card.reversed ? `${card.namePl} ↓` : card.namePl;
+  if (lang === "es") return card.reversed ? `${card.nameEs} ↓` : card.nameEs;
+  return card.reversed ? `${card.name} ↓` : card.name;
+}
+
+function tarotTopicLabel(topic: TarotTopic, lang: AppLang): string {
+  const copy = tarotCopy[lang];
+  if (topic === "love") return copy.topicLove;
+  if (topic === "finance_career") return copy.topicFinance;
+  return copy.topicHealth;
+}
+
+function tarotPositions(spreadType: SpreadType, lang: AppLang): string[] {
+  if (spreadType === "celtic_cross") return celticCrossPositions[lang];
+  if (lang === "pl") return ["Przeszłość", "Teraźniejszość", "Przyszłość"];
+  if (lang === "es") return ["Pasado", "Presente", "Futuro"];
+  return ["Past", "Present", "Future"];
+}
 
 function HomePageContent() {
   const searchParams = useSearchParams();
@@ -62,8 +101,18 @@ function HomePageContent() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [freeBasicUsed, setFreeBasicUsed] = useState(false);
   const [activeModule, setActiveModule] = useState<HomeModule>("natal");
+  const [tarotState, setTarotState] = useState<TarotPanelState>("idle");
+  const [tarotBalance, setTarotBalance] = useState<number | null>(null);
+  const [tarotEmail, setTarotEmail] = useState("");
+  const [tarotSpread, setTarotSpread] = useState<SpreadType>("three_card");
+  const [tarotTopic, setTarotTopic] = useState<TarotTopic>("love");
+  const [tarotResult, setTarotResult] = useState<TarotResult | null>(null);
+  const [tarotMessage, setTarotMessage] = useState<string | null>(null);
+  const [tarotError, setTarotError] = useState<string | null>(null);
+  const [tarotCheckoutLoading, setTarotCheckoutLoading] = useState(false);
 
   const copy = homeCopy[lang];
+  const tarot = tarotCopy[lang];
   const activePitch =
     activeModule === "tarot" ? copy.tarotPitchParagraphs : copy.toolPitchParagraphs;
 
@@ -107,6 +156,44 @@ function HomePageContent() {
       cancelled = true;
     };
   }, [searchParams]);
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    const payment = searchParams.get("payment");
+    const paymentEmail = searchParams.get("email") ?? "";
+
+    if (tab === "tarot" || payment === "success" || payment === "cancelled") {
+      setActiveModule("tarot");
+    }
+    if (paymentEmail) {
+      setTarotEmail(paymentEmail);
+      setEmail((current) => current || paymentEmail);
+      void refreshTarotBalance(paymentEmail);
+    }
+    if (payment === "success") {
+      setTarotMessage(tarotCopy[lang].paymentSuccess);
+      setTarotState("idle");
+    } else if (payment === "cancelled") {
+      setTarotMessage(tarotCopy[lang].paymentCancelled);
+      setTarotState("idle");
+    }
+  }, [lang, searchParams]);
+
+  useEffect(() => {
+    const knownEmail = tarotEmail || email;
+    if (activeModule === "tarot" && knownEmail) {
+      void refreshTarotBalance(knownEmail);
+    }
+  }, [activeModule, email, tarotEmail]);
+
+  useEffect(() => {
+    if (tarotState !== "shuffling") return;
+    const timer = window.setTimeout(() => {
+      setTarotState("generating");
+      void generateTarotReading();
+    }, 2000);
+    return () => window.clearTimeout(timer);
+  }, [tarotState]);
 
   const maxBirthYear = useMemo(() => currentBirthYearMax(), []);
 
@@ -238,6 +325,121 @@ function HomePageContent() {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setLoading(false);
     }
+  }
+
+  async function refreshTarotBalance(rawEmail: string) {
+    const cleanEmail = rawEmail.trim();
+    if (!cleanEmail) {
+      setTarotBalance(null);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `/api/tarot/balance?email=${encodeURIComponent(cleanEmail)}`,
+      );
+      const data = (await res.json().catch(() => null)) as
+        | { balance?: number }
+        | null;
+      if (res.ok && typeof data?.balance === "number") {
+        setTarotBalance(data.balance);
+      }
+    } catch {
+      // Balance is informational; generation still validates server-side.
+    }
+  }
+
+  function startTarotReading(spreadType: SpreadType) {
+    setTarotError(null);
+    setTarotMessage(null);
+    setTarotSpread(spreadType);
+    if (spreadType === "celtic_cross") {
+      setTarotState("topic");
+      return;
+    }
+    setTarotState("email");
+  }
+
+  async function buyTarotTokens() {
+    const cleanEmail = (tarotEmail || email).trim();
+    if (!cleanEmail) {
+      setTarotError(tarot.enterEmail);
+      setTarotState("email");
+      return;
+    }
+    setTarotCheckoutLoading(true);
+    setTarotError(null);
+    try {
+      const res = await fetch("/api/tarot/checkout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, lang }),
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { url?: string; error?: string }
+        | null;
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.error ?? tarot.networkError);
+      }
+      window.location.assign(data.url);
+    } catch (err) {
+      setTarotError(err instanceof Error ? err.message : tarot.networkError);
+      setTarotCheckoutLoading(false);
+    }
+  }
+
+  function submitTarotEmail(e: React.FormEvent) {
+    e.preventDefault();
+    setTarotError(null);
+    if (!tarotEmail.trim()) {
+      setTarotError(tarot.enterEmail);
+      return;
+    }
+    void refreshTarotBalance(tarotEmail);
+    setTarotState("shuffling");
+  }
+
+  async function generateTarotReading() {
+    setTarotError(null);
+    try {
+      const res = await fetch("/api/tarot/generate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: tarotEmail.trim(),
+          spreadType: tarotSpread,
+          topic: tarotTopic,
+          lang,
+        }),
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { cards?: TarotCard[]; interpretation?: string; error?: string }
+        | null;
+      if (res.status === 402 || data?.error === "no_tokens") {
+        setTarotState("no_tokens");
+        void refreshTarotBalance(tarotEmail);
+        return;
+      }
+      if (!res.ok || !data?.cards || !data.interpretation) {
+        throw new Error(data?.error ?? tarot.networkError);
+      }
+      setTarotResult({
+        cards: data.cards,
+        interpretation: data.interpretation,
+      });
+      setTarotMessage(tarot.emailSent.replace("{email}", tarotEmail.trim()));
+      setTarotState("result");
+      void refreshTarotBalance(tarotEmail);
+    } catch (err) {
+      setTarotError(err instanceof Error ? err.message : tarot.networkError);
+      setTarotState("email");
+    }
+  }
+
+  function resetTarot() {
+    setTarotState("idle");
+    setTarotResult(null);
+    setTarotError(null);
+    setTarotMessage(null);
   }
 
   return (
@@ -710,20 +912,287 @@ function HomePageContent() {
             ) : null}
             </section>
           ) : (
-            <section className="rounded-3xl border border-white/10 bg-white/5 p-6 text-center shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur sm:p-9">
-              <div className="mx-auto max-w-2xl">
-                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-300/35 bg-violet-400/15 text-2xl">
-                  ✦
+            <section className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur sm:p-7">
+              <div className="mx-auto max-w-4xl">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="cosmotips-headline text-2xl font-semibold tracking-tight sm:text-3xl">
+                      {tarot.pageTitle}
+                    </h2>
+                    <p className="mt-1 text-sm text-white/60">{tarot.pageSubtitle}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-violet-300/30 bg-violet-400/10 px-3 py-1.5 text-sm font-semibold text-violet-100">
+                      {tarot.tokensLeft.replace(
+                        "{n}",
+                        tarotBalance === null ? "—" : String(tarotBalance),
+                      )}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => void buyTarotTokens()}
+                      disabled={tarotCheckoutLoading}
+                      className="rounded-full bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-2 text-sm font-bold text-black shadow-lg shadow-amber-950/20 transition disabled:opacity-60"
+                    >
+                      {tarotCheckoutLoading ? tarot.generating : tarot.buyTokens}
+                    </button>
+                  </div>
                 </div>
-                <h2 className="cosmotips-headline text-2xl font-semibold tracking-tight sm:text-3xl">
-                  {copy.tarotPanelTitle}
-                </h2>
-                <p className="mt-4 text-pretty text-base leading-8 text-white/78">
-                  {copy.tarotPanelLead}
-                </p>
-                <p className="mt-4 rounded-2xl border border-violet-300/20 bg-violet-400/10 px-4 py-3 text-sm leading-6 text-violet-100/82">
-                  {copy.tarotPanelNote}
-                </p>
+
+                {tarotMessage ? (
+                  <div className="mt-5 rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">
+                    {tarotMessage}
+                  </div>
+                ) : null}
+                {tarotError ? (
+                  <div className="mt-5 rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                    {tarotError}
+                  </div>
+                ) : null}
+
+                {tarotState === "idle" ? (
+                  <>
+                    <div className="mt-6 grid gap-4 md:grid-cols-2">
+                      {([
+                        {
+                          id: "three_card" as const,
+                          title: tarot.threeCard,
+                          desc: tarot.threeCardDesc,
+                          glyph: "✦ ✦ ✦",
+                        },
+                        {
+                          id: "celtic_cross" as const,
+                          title: tarot.celticCross,
+                          desc: tarot.celticCrossDesc,
+                          glyph: "✦ ✧ ✦",
+                        },
+                      ]).map((spread) => (
+                        <button
+                          key={spread.id}
+                          type="button"
+                          onClick={() => startTarotReading(spread.id)}
+                          className="group rounded-3xl border border-violet-200/20 bg-black/25 p-5 text-left transition hover:border-violet-300/45 hover:bg-violet-500/10"
+                        >
+                          <div className="text-2xl tracking-[0.35em] text-amber-200/80">
+                            {spread.glyph}
+                          </div>
+                          <div className="mt-4 flex items-start justify-between gap-4">
+                            <div>
+                              <h3 className="text-lg font-semibold text-white">
+                                {spread.title}
+                              </h3>
+                              <p className="mt-2 text-sm leading-6 text-white/68">
+                                {spread.desc}
+                              </p>
+                            </div>
+                            <span className="shrink-0 rounded-full border border-amber-200/35 bg-amber-300/10 px-3 py-1 text-xs font-bold text-amber-100">
+                              {tarot.oneToken}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-6 rounded-2xl border border-violet-300/20 bg-violet-500/10 p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
+                      <p className="text-sm leading-6 text-white/75">{tarot.subTeaser}</p>
+                      <a
+                        href="mailto:hello@cosmotips.com?subject=Subskrypcja"
+                        className="mt-3 inline-flex rounded-full border border-violet-200/25 px-4 py-2 text-sm font-semibold text-violet-100 transition hover:bg-white/10 sm:mt-0"
+                      >
+                        {tarot.notifyMe}
+                      </a>
+                    </div>
+                  </>
+                ) : null}
+
+                {tarotState === "topic" ? (
+                  <div className="mt-7 rounded-3xl border border-violet-200/20 bg-black/20 p-5">
+                    <h3 className="text-lg font-semibold text-white">
+                      {tarot.chooseTopic}
+                    </h3>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                      {([
+                        ["love", tarot.topicLove],
+                        ["finance_career", tarot.topicFinance],
+                        ["health", tarot.topicHealth],
+                      ] as const).map(([topic, label]) => (
+                        <button
+                          key={topic}
+                          type="button"
+                          onClick={() => {
+                            setTarotTopic(topic);
+                            setTarotState("email");
+                          }}
+                          className="rounded-2xl border border-violet-200/20 bg-violet-400/10 px-4 py-4 text-sm font-semibold text-white transition hover:border-violet-300/45 hover:bg-violet-400/20"
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={resetTarot}
+                      className="mt-5 text-sm font-semibold text-violet-200 hover:text-white"
+                    >
+                      {tarot.back}
+                    </button>
+                  </div>
+                ) : null}
+
+                {tarotState === "email" ? (
+                  <form
+                    onSubmit={submitTarotEmail}
+                    className="mt-7 rounded-3xl border border-violet-200/20 bg-black/20 p-5"
+                  >
+                    <p className="text-sm font-semibold text-violet-100">
+                      {tarotSpread === "three_card" ? tarot.threeCard : tarot.celticCross}
+                      {tarotSpread === "celtic_cross"
+                        ? ` · ${tarotTopicLabel(tarotTopic, lang)}`
+                        : ""}
+                    </p>
+                    <label className="mt-4 block text-xs font-medium text-white/70">
+                      {tarot.enterEmail}
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={tarotEmail}
+                      onChange={(e) => setTarotEmail(e.target.value)}
+                      placeholder={copy.emailPlaceholder}
+                      className="cosmic-birth-field mt-1.5"
+                    />
+                    <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <button
+                        type="button"
+                        onClick={resetTarot}
+                        className="text-sm font-semibold text-violet-200 hover:text-white"
+                      >
+                        {tarot.back}
+                      </button>
+                      <button
+                        type="submit"
+                        className="rounded-2xl bg-gradient-to-b from-violet-300 to-violet-500 px-5 py-3 text-sm font-bold text-black shadow-lg shadow-violet-950/25"
+                      >
+                        {tarot.generateReading}
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
+
+                {tarotState === "shuffling" ? (
+                  <div className="mt-8 flex flex-col items-center justify-center py-10 text-center">
+                    <style jsx>{`
+                      @keyframes tarotShuffle {
+                        0% { transform: translateX(-34px) rotate(-8deg); }
+                        50% { transform: translateX(34px) rotate(8deg); }
+                        100% { transform: translateX(-34px) rotate(-8deg); }
+                      }
+                    `}</style>
+                    <div className="relative h-28 w-44">
+                      {[0, 1, 2].map((i) => (
+                        <div
+                          key={i}
+                          className="absolute left-1/2 top-2 h-24 w-16 -translate-x-1/2 rounded-xl border border-amber-200/35 bg-gradient-to-br from-violet-300/40 to-violet-950 shadow-xl"
+                          style={{
+                            animation: "tarotShuffle 0.8s ease-in-out infinite",
+                            animationDelay: `${i * 120}ms`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <p className="mt-4 text-sm font-semibold text-violet-100">
+                      {tarot.shuffling}
+                    </p>
+                  </div>
+                ) : null}
+
+                {tarotState === "generating" ? (
+                  <div className="mt-8 flex items-center justify-center gap-3 py-10 text-white/75">
+                    <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-violet-200" />
+                    {tarot.generating}
+                  </div>
+                ) : null}
+
+                {tarotState === "no_tokens" ? (
+                  <div className="mt-7 rounded-3xl border border-amber-300/25 bg-amber-400/10 p-5 text-center">
+                    <p className="text-sm leading-6 text-amber-50">{tarot.noTokens}</p>
+                    <button
+                      type="button"
+                      onClick={() => void buyTarotTokens()}
+                      className="mt-4 rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-5 py-3 text-sm font-bold text-black"
+                    >
+                      {tarot.buyTokens}
+                    </button>
+                  </div>
+                ) : null}
+
+                {tarotState === "result" && tarotResult ? (
+                  <div className="mt-7 space-y-6">
+                    {tarotSpread === "three_card" ? (
+                      <div className="grid gap-4 sm:grid-cols-3">
+                        {tarotResult.cards.map((card, index) => (
+                          <div
+                            key={`${card.id}-${index}`}
+                            className="rounded-3xl border border-amber-200/30 bg-gradient-to-br from-violet-300/20 to-violet-950/70 p-5 text-center shadow-xl"
+                            style={{
+                              transform: "rotateY(180deg)",
+                              transition: "transform 600ms ease",
+                              transitionDelay: `${index * 300}ms`,
+                            }}
+                          >
+                            <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-100/80">
+                              {tarotPositions(tarotSpread, lang)[index]}
+                            </p>
+                            <p className="mt-4 text-lg font-semibold text-white">
+                              {tarotCardName(card, lang)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {tarotResult.cards.map((card, index) => (
+                          <div
+                            key={`${card.id}-${index}`}
+                            className="rounded-2xl border border-violet-200/20 bg-black/25 px-4 py-3"
+                          >
+                            <p className="text-xs text-amber-100/75">
+                              {index + 1}. {tarotPositions(tarotSpread, lang)[index]}
+                            </p>
+                            <p className="mt-1 font-semibold text-white">
+                              {tarotCardName(card, lang)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
+                      {tarotResult.interpretation
+                        .split(/\n{2,}/)
+                        .map((paragraph) => paragraph.trim())
+                        .filter(Boolean)
+                        .map((paragraph, index) => (
+                          <p
+                            key={index}
+                            className="mb-4 leading-8 text-white/84 last:mb-0"
+                          >
+                            {paragraph}
+                          </p>
+                        ))}
+                    </div>
+                    {tarotMessage ? (
+                      <div className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">
+                        {tarotMessage}
+                      </div>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={resetTarot}
+                      className="rounded-2xl bg-gradient-to-b from-violet-300 to-violet-500 px-5 py-3 text-sm font-bold text-black"
+                    >
+                      {tarot.newReading}
+                    </button>
+                  </div>
+                ) : null}
               </div>
             </section>
           )}

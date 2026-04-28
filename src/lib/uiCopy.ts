@@ -96,6 +96,17 @@ export const tarotCopy: Record<
     shuffling: string;
     generating: string;
     emailSent: string;
+    subTeaser: string;
+    notifyMe: string;
+    oneToken: string;
+    enterEmail: string;
+    generateReading: string;
+    back: string;
+    newReading: string;
+    noTokens: string;
+    paymentCancelled: string;
+    paymentSuccess: string;
+    networkError: string;
   }
 > = {
   en: {
@@ -114,7 +125,18 @@ export const tarotCopy: Record<
     topicHealth: "Health",
     shuffling: "Shuffling the cards...",
     generating: "Reading the cards...",
-    emailSent: "Your reading has been sent to your email.",
+    emailSent: "Your reading has been sent to {email}.",
+    subTeaser: "Soon: a tarot subscription with regular spreads and deeper monthly guidance.",
+    notifyMe: "Notify me",
+    oneToken: "1 token",
+    enterEmail: "Enter your email",
+    generateReading: "Generate reading",
+    back: "← Back",
+    newReading: "New reading",
+    noTokens: "You don’t have any tarot tokens left. Buy 3 tokens to continue.",
+    paymentCancelled: "Payment was cancelled. No tokens were added.",
+    paymentSuccess: "Payment successful. Your tarot tokens are ready.",
+    networkError: "Something went wrong. Try again in a moment.",
   },
   pl: {
     pageTitle: "Rozkład Tarota",
@@ -132,7 +154,18 @@ export const tarotCopy: Record<
     topicHealth: "Zdrowie",
     shuffling: "Tasowanie kart...",
     generating: "Czytanie kart...",
-    emailSent: "Twój rozkład został wysłany na maila.",
+    emailSent: "Twój rozkład został wysłany na {email}.",
+    subTeaser: "Wkrótce: subskrypcja tarota z regularnymi rozkładami i głębszym prowadzeniem miesięcznym.",
+    notifyMe: "Powiadom mnie",
+    oneToken: "1 token",
+    enterEmail: "Podaj e-mail",
+    generateReading: "Generuj rozkład",
+    back: "← Wróć",
+    newReading: "Nowy rozkład",
+    noTokens: "Nie masz już tokenów tarota. Kup 3 tokeny, aby kontynuować.",
+    paymentCancelled: "Płatność została anulowana. Tokeny nie zostały dodane.",
+    paymentSuccess: "Płatność zakończona. Twoje tokeny tarota są gotowe.",
+    networkError: "Coś poszło nie tak. Spróbuj ponownie za chwilę.",
   },
   es: {
     pageTitle: "Lectura de Tarot",
@@ -150,7 +183,18 @@ export const tarotCopy: Record<
     topicHealth: "Salud",
     shuffling: "Barajando las cartas...",
     generating: "Leyendo las cartas...",
-    emailSent: "Tu tirada ha sido enviada a tu email.",
+    emailSent: "Tu tirada ha sido enviada a {email}.",
+    subTeaser: "Próximamente: una suscripción de tarot con tiradas regulares y una guía mensual más profunda.",
+    notifyMe: "Avisadme",
+    oneToken: "1 ficha",
+    enterEmail: "Introduce tu correo",
+    generateReading: "Generar tirada",
+    back: "← Volver",
+    newReading: "Nueva tirada",
+    noTokens: "No te quedan fichas de tarot. Compra 3 fichas para continuar.",
+    paymentCancelled: "El pago fue cancelado. No se añadieron fichas.",
+    paymentSuccess: "Pago realizado. Tus fichas de tarot están listas.",
+    networkError: "Algo salió mal. Inténtalo de nuevo en un momento.",
   },
 };
 
