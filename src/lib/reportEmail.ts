@@ -61,14 +61,14 @@ function tarotCardEmoji(card: TarotCard): string {
 
 function tarotTopicLabel(topic: TarotTopic, lang: AppLang): string {
   if (topic === "love") {
-    if (lang === "pl") return "Miłość";
-    if (lang === "es") return "Amor";
-    return "Love";
+    if (lang === "pl") return "Miłość i relacje";
+    if (lang === "es") return "Amor y relaciones";
+    return "Love & Relationships";
   }
   if (topic === "finance_career") {
-    if (lang === "pl") return "Finanse i Kariera";
-    if (lang === "es") return "Finanzas y Carrera";
-    return "Finance & Career";
+    if (lang === "pl") return "Kariera i finanse";
+    if (lang === "es") return "Carrera y finanzas";
+    return "Career & Finance";
   }
   if (lang === "pl") return "Zdrowie";
   if (lang === "es") return "Salud";
@@ -76,6 +76,11 @@ function tarotTopicLabel(topic: TarotTopic, lang: AppLang): string {
 }
 
 function tarotPositions(spreadType: SpreadType, lang: AppLang): string[] {
+  if (spreadType === "daily_card") {
+    if (lang === "pl") return ["Karta dnia"];
+    if (lang === "es") return ["Carta del Día"];
+    return ["Card of the Day"];
+  }
   if (spreadType === "celtic_cross") return celticCrossPositions[lang];
   if (lang === "pl") return ["Przeszłość", "Teraźniejszość", "Przyszłość"];
   if (lang === "es") return ["Pasado", "Presente", "Futuro"];
@@ -88,6 +93,19 @@ function tarotCardsHtml(
   lang: AppLang,
 ): string {
   const positions = tarotPositions(spreadType, lang);
+  if (spreadType === "daily_card") {
+    const card = cards[0];
+    if (!card) return "";
+    return `
+      <div style="display:block;margin:22px 0 26px;text-align:center;">
+        <div style="display:inline-block;width:260px;max-width:100%;vertical-align:top;border:1px solid rgba(201,168,76,0.42);border-radius:22px;background:#241744;padding:22px 16px;">
+          <div style="font-size:34px;line-height:1;margin-bottom:12px;">${tarotCardEmoji(card)}</div>
+          <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#c9a84c;margin-bottom:10px;">${escapeHtml(positions[0] ?? "")}</div>
+          <div style="font-size:19px;font-weight:700;color:#fff7dd;">${escapeHtml(tarotCardName(card, lang))}</div>
+        </div>
+      </div>
+    `;
+  }
   if (spreadType === "three_card") {
     return `
       <div style="display:block;margin:22px 0 26px;text-align:center;">
@@ -234,23 +252,31 @@ export async function sendTarotEmail(opts: {
   const copy = tarotCopy[opts.lang];
   const title = tarotEmailTitle(opts.lang);
   const spreadName =
-    opts.spreadType === "three_card" ? copy.threeCard : copy.celticCross;
+    opts.spreadType === "daily_card"
+      ? copy.dailyCard
+      : opts.spreadType === "three_card"
+        ? copy.threeCard
+        : copy.celticCross;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim() || "https://cosmotips.vercel.app";
   const positions = tarotPositions(opts.spreadType, opts.lang);
+  const spreadContext =
+    opts.spreadType === "daily_card"
+      ? spreadName
+      : `${spreadName} · ${tarotTopicLabel(opts.topic, opts.lang)}`;
   const cardsText = opts.cards
     .map(
       (card, index) =>
         `${positions[index] ?? index + 1}: ${tarotCardName(card, opts.lang)}`,
     )
     .join("\n");
-  const text = `${title}\n${spreadName} · ${tarotTopicLabel(opts.topic, opts.lang)}\n\n${cardsText}\n\n${opts.interpretation}\n\nCosmoTips — ${baseUrl}`;
+  const text = `${title}\n${spreadContext}\n\n${cardsText}\n\n${opts.interpretation}\n\nCosmoTips — ${baseUrl}`;
   const html = `
     <div style="margin:0;padding:0;background:#1a1033;color:#f7f0ff;font-family:Arial,Helvetica,sans-serif;">
       <div style="max-width:720px;margin:0 auto;padding:34px 20px;">
         <div style="border:1px solid rgba(201,168,76,0.34);border-radius:26px;background:linear-gradient(180deg,#241744 0%,#1a1033 100%);padding:30px;box-shadow:0 18px 60px rgba(0,0,0,0.35);">
           <div style="font-size:13px;letter-spacing:0.18em;text-transform:uppercase;color:#c9a84c;font-weight:700;">CosmoTips</div>
           <h1 style="margin:10px 0 8px;color:#fff7dd;font-size:30px;line-height:1.18;">${escapeHtml(title)}</h1>
-          <p style="margin:0 0 18px;color:#d8cdeb;font-size:15px;line-height:1.6;">${escapeHtml(spreadName)} · ${escapeHtml(tarotTopicLabel(opts.topic, opts.lang))}</p>
+          <p style="margin:0 0 18px;color:#d8cdeb;font-size:15px;line-height:1.6;">${escapeHtml(spreadContext)}</p>
           ${tarotCardsHtml(opts.cards, opts.spreadType, opts.lang)}
           <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,0.7),transparent);margin:6px 0 24px;"></div>
           <div>${tarotInterpretationHtml(opts.interpretation)}</div>

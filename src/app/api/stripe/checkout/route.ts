@@ -85,7 +85,7 @@ export async function POST(req: Request) {
           currency: "eur",
           unit_amount: 500,
           product_data: {
-            name: "Personalized Horoscope Report",
+            name: "CosmoTips report token",
             description:
               reportType === "personality"
                 ? "Personality Description"

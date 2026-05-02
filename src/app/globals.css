@@ -100,6 +100,15 @@ body::before {
     @apply box-border min-h-[2.25rem] w-full rounded-xl border border-violet-200/70 bg-white py-1.5 pr-3 pl-10 text-sm leading-normal text-gray-900 outline-none transition-[border-color,background-color,box-shadow] duration-150 placeholder:text-gray-400;
   }
 
+  select.cosmic-birth-field {
+    @apply pr-10;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%23111827' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 24px center;
+    background-size: 1rem;
+  }
+
   .cosmic-birth-field:hover:not(:focus):not(:focus-visible) {
     @apply border-violet-300/80 bg-zinc-50;
   }

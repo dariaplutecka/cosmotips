@@ -297,6 +297,11 @@ function tarotCardName(card: TarotCard, lang: AppLang): string {
 }
 
 function tarotPositions(spreadType: SpreadType, lang: AppLang): string[] {
+  if (spreadType === "daily_card") {
+    if (lang === "pl") return ["Karta dnia"];
+    if (lang === "es") return ["Carta del Día"];
+    return ["Card of the Day"];
+  }
   if (spreadType === "celtic_cross") return celticCrossPositions[lang];
   if (lang === "pl") return ["Przeszłość", "Teraźniejszość", "Przyszłość"];
   if (lang === "es") return ["Pasado", "Presente", "Futuro"];
@@ -305,14 +310,14 @@ function tarotPositions(spreadType: SpreadType, lang: AppLang): string[] {
 
 function tarotTopicLabel(topic: TarotTopic, lang: AppLang): string {
   if (topic === "love") {
-    if (lang === "pl") return "Miłość";
-    if (lang === "es") return "Amor";
-    return "Love";
+    if (lang === "pl") return "Miłość i relacje";
+    if (lang === "es") return "Amor y relaciones";
+    return "Love & Relationships";
   }
   if (topic === "finance_career") {
-    if (lang === "pl") return "Finanse i Kariera";
-    if (lang === "es") return "Finanzas y Carrera";
-    return "Finance & Career";
+    if (lang === "pl") return "Kariera i finanse";
+    if (lang === "es") return "Carrera y finanzas";
+    return "Career & Finance";
   }
   if (lang === "pl") return "Zdrowie";
   if (lang === "es") return "Salud";
@@ -334,6 +339,8 @@ export async function generateTarotPdfBuffer(opts: {
     new URLResolver(virtualfs),
   );
   const positions = tarotPositions(opts.spreadType, opts.lang);
+  const spreadContext =
+    opts.spreadType === "daily_card" ? "" : tarotTopicLabel(opts.topic, opts.lang);
   const cardContent: Content[] = opts.cards.map((card, index) => ({
     text: `${positions[index] ?? index + 1}: ${tarotCardName(card, opts.lang)}`,
     fontSize: 11,
@@ -358,7 +365,7 @@ export async function generateTarotPdfBuffer(opts: {
     content: [
       { text: opts.title, fontSize: 18, bold: true, margin: [0, 0, 0, 6] },
       {
-        text: tarotTopicLabel(opts.topic, opts.lang),
+        text: spreadContext,
         fontSize: 11,
         color: "#7a5a10",
         margin: [0, 0, 0, 14],

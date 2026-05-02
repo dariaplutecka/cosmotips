@@ -6,16 +6,28 @@ import { drawCards } from "@/lib/tarotDeck";
 import { sendTarotEmail } from "@/lib/reportEmail";
 import {
   buildCelticCrossPrompt,
+  buildDailyCardPrompt,
   buildThreeCardPrompt,
 } from "@/lib/tarotPrompt";
+import { calculateNumerologyTarotCard } from "@/lib/tarotNumerology";
 import {
   deductTarotToken,
   getTarotBalance,
 } from "@/lib/tarotTokenStore";
+import {
+  currentDailyTarotDate,
+  drawDailyCard,
+  getCachedDailyInterpretation,
+  setCachedDailyInterpretation,
+} from "@/lib/tarotDailyStore";
+import { getAuthSession } from "@/lib/authSession";
 
 const TarotGeneratePayloadSchema = z.object({
-  email: CheckoutPayloadSchema.shape.email,
-  spreadType: z.enum(["three_card", "celtic_cross"]),
+  email: CheckoutPayloadSchema.shape.email.optional(),
+  guestId: z.string().trim().min(8).max(120).optional(),
+  name: z.string().trim().min(1).max(80),
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  spreadType: z.enum(["daily_card", "three_card", "celtic_cross"]),
   topic: z.enum(["love", "finance_career", "health"]).default("love"),
   lang: AppLangSchema.default("en"),
 });
@@ -27,40 +39,112 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid input." }, { status: 400 });
   }
 
-  const { email, spreadType, topic, lang } = parsed.data;
+  const session = await getAuthSession();
+  const { guestId, name, birthDate, spreadType, topic, lang } = parsed.data;
+  const email = session?.email ?? parsed.data.email;
+  const dailyDate = currentDailyTarotDate();
 
-  const balance = await getTarotBalance(email);
-  if (balance <= 0) {
-    return NextResponse.json({ error: "no_tokens" }, { status: 402 });
+  let shouldDeductToken = true;
+  let dailyCardClaimed = false;
+  try {
+    if (spreadType === "daily_card") {
+      dailyCardClaimed = true;
+      shouldDeductToken = false;
+    } else {
+      if (!email) {
+        return NextResponse.json({ error: "Invalid input." }, { status: 400 });
+      }
+      const balance = await getTarotBalance(email);
+      if (balance <= 0) {
+        return NextResponse.json({ error: "no_tokens" }, { status: 402 });
+      }
+    }
+  } catch (err) {
+    console.error("[tarot/generate] token store unavailable:", err);
+    return NextResponse.json(
+      { error: "token_store_unavailable" },
+      { status: 503 },
+    );
+  }
+  const cardCount = spreadType === "three_card" ? 3 : 10;
+  const dailyIdentifier = guestId || email || "anonymous";
+  const cards =
+    spreadType === "daily_card" ? [drawDailyCard(dailyIdentifier, dailyDate)] : drawCards(cardCount);
+  const prompt =
+    spreadType === "daily_card"
+      ? buildDailyCardPrompt(cards, lang)
+      : spreadType === "three_card"
+        ? buildThreeCardPrompt(cards, topic, lang, {
+            name,
+            birthDate,
+            numerologyCard: calculateNumerologyTarotCard(birthDate, lang),
+          })
+        : buildCelticCrossPrompt(cards, topic, lang, {
+            name,
+            birthDate,
+            numerologyCard: calculateNumerologyTarotCard(birthDate, lang),
+          });
+
+  const cachedDailyInterpretation =
+    spreadType === "daily_card"
+      ? await getCachedDailyInterpretation(cards[0], lang, dailyDate)
+      : null;
+  if (cachedDailyInterpretation) {
+    return NextResponse.json({
+      cards,
+      interpretation: cachedDailyInterpretation,
+      dailyCardClaimed,
+    });
   }
 
-  const cardCount = spreadType === "three_card" ? 3 : 10;
-  const cards = drawCards(cardCount);
-  const prompt =
-    spreadType === "three_card"
-      ? buildThreeCardPrompt(cards, lang)
-      : buildCelticCrossPrompt(cards, topic, lang);
-
-  const openai = getOpenAI();
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o",
-    temperature: 0.85,
-    messages: [{ role: "user", content: prompt }],
-  });
-  const interpretation = completion.choices[0]?.message.content ?? "";
-  if (!interpretation.trim()) {
+  let completion;
+  try {
+    const openai = getOpenAI();
+    completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      temperature: 0.85,
+      messages: [{ role: "user", content: prompt }],
+    });
+  } catch (err) {
+    console.error("[tarot/generate] OpenAI generation failed:", err);
     return NextResponse.json(
-      { error: "No content returned from AI." },
+      { error: "ai_generation_failed" },
       { status: 502 },
     );
   }
-
-  const success = await deductTarotToken(email);
-  if (!success) {
-    return NextResponse.json({ error: "no_tokens" }, { status: 402 });
+  const interpretation = completion.choices[0]?.message.content ?? "";
+  if (!interpretation.trim()) {
+    return NextResponse.json(
+      { error: "ai_generation_failed" },
+      { status: 502 },
+    );
+  }
+  if (spreadType === "daily_card") {
+    await setCachedDailyInterpretation(cards[0], lang, interpretation, dailyDate);
   }
 
-  await sendTarotEmail({ email, cards, interpretation, spreadType, topic, lang });
+  if (shouldDeductToken) {
+    if (!email) {
+      return NextResponse.json({ error: "Invalid input." }, { status: 400 });
+    }
+    let success: boolean;
+    try {
+      success = await deductTarotToken(email);
+    } catch (err) {
+      console.error("[tarot/generate] token deduction failed:", err);
+      return NextResponse.json(
+        { error: "token_store_unavailable" },
+        { status: 503 },
+      );
+    }
+    if (!success) {
+      return NextResponse.json({ error: "no_tokens" }, { status: 402 });
+    }
+  }
 
-  return NextResponse.json({ cards, interpretation });
+  if (email) {
+    await sendTarotEmail({ email, cards, interpretation, spreadType, topic, lang });
+  }
+
+  return NextResponse.json({ cards, interpretation, dailyCardClaimed });
 }

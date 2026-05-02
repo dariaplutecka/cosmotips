@@ -85,11 +85,20 @@ export const tarotCopy: Record<
     buyTokens: string;
     tokensLeft: string;
     chooseSpread: string;
+    checkoutEmail: string;
+    name: string;
+    namePlaceholder: string;
+    birthDate: string;
+    dailyCard: string;
+    dailyCardDesc: string;
+    dailyCardBadge: string;
+    dailyCardCost: string;
     threeCard: string;
     threeCardDesc: string;
     celticCross: string;
     celticCrossDesc: string;
     chooseTopic: string;
+    continue: string;
     topicLove: string;
     topicFinance: string;
     topicHealth: string;
@@ -107,94 +116,147 @@ export const tarotCopy: Record<
     paymentCancelled: string;
     paymentSuccess: string;
     networkError: string;
+    tokenStoreUnavailable: string;
+    aiGenerationFailed: string;
+    dailyCardUsed: string;
+    termsRequired: string;
+    missingProfile: string;
   }
 > = {
   en: {
     pageTitle: "Tarot Reading",
-    pageSubtitle: "3 tokens for $5 — one token per reading",
-    buyTokens: "Buy 3 tokens — $5",
+    pageSubtitle: "Card of the Day is free. Paid tarot readings cost €5.",
+    buyTokens: "Pay €5",
     tokensLeft: "Tokens left: {n}",
-    chooseSpread: "Choose your spread",
+    chooseSpread: "Choose a spread type",
+    checkoutEmail: "Email for token purchase",
+    name: "Name",
+    namePlaceholder: "Your name",
+    birthDate: "Date of birth",
+    dailyCard: "Card of the Day",
+    dailyCardDesc: "One guiding card for today",
+    dailyCardBadge: "Free",
+    dailyCardCost: "Free once a day",
     threeCard: "Three-Card Spread",
     threeCardDesc: "Past · Present · Future",
     celticCross: "Celtic Cross",
     celticCrossDesc: "Deep 10-card reading on a topic",
-    chooseTopic: "Choose a topic",
-    topicLove: "Love",
-    topicFinance: "Finance & Career",
+    chooseTopic: "Choose an area to analyze",
+    continue: "Continue",
+    topicLove: "Love & Relationships",
+    topicFinance: "Career & Finance",
     topicHealth: "Health",
     shuffling: "Shuffling the cards...",
     generating: "Reading the cards...",
     emailSent: "Your reading has been sent to {email}.",
     subTeaser: "Soon: a tarot subscription with regular spreads and deeper monthly guidance.",
     notifyMe: "Notify me",
-    oneToken: "1 token",
+    oneToken: "€5",
     enterEmail: "Enter your email",
     generateReading: "Generate reading",
     back: "← Back",
     newReading: "New reading",
-    noTokens: "You don’t have any tarot tokens left. Buy 3 tokens to continue.",
-    paymentCancelled: "Payment was cancelled. No tokens were added.",
-    paymentSuccess: "Payment successful. Your tarot tokens are ready.",
+    noTokens: "To generate this tarot reading, pay €5.",
+    paymentCancelled: "Payment was cancelled. Your reading was not charged.",
+    paymentSuccess: "Payment successful. You can now generate your reading.",
     networkError: "Something went wrong. Try again in a moment.",
+    tokenStoreUnavailable:
+      "Tarot tokens are not configured locally. Add Upstash Redis credentials and restart the dev server.",
+    aiGenerationFailed:
+      "The cards could not be interpreted right now. Try again in a moment.",
+    dailyCardUsed: "You have already drawn your free Card of the Day today. Come back tomorrow.",
+    termsRequired: "Accept the Terms of Service to continue.",
+    missingProfile: "Enter your name and date of birth to continue.",
   },
   pl: {
     pageTitle: "Rozkład Tarota",
-    pageSubtitle: "3 tokeny za $5 — jeden token za rozkład",
-    buyTokens: "Kup 3 tokeny — $5",
+    pageSubtitle: "Karta dnia jest darmowa. Płatne rozkłady kosztują 5 EUR.",
+    buyTokens: "Zapłać 5 EUR",
     tokensLeft: "Pozostałe tokeny: {n}",
-    chooseSpread: "Wybierz rozkład",
+    chooseSpread: "Wybierz typ rozkładu",
+    checkoutEmail: "E-mail do zakupu tokena",
+    name: "Imię",
+    namePlaceholder: "Twoje imię",
+    birthDate: "Data urodzenia",
+    dailyCard: "Karta dnia",
+    dailyCardDesc: "Jedna karta przewodnia na dzisiaj",
+    dailyCardBadge: "Darmowe",
+    dailyCardCost: "Za darmo raz dziennie",
     threeCard: "Rozkład 3 Kart",
     threeCardDesc: "Przeszłość · Teraźniejszość · Przyszłość",
     celticCross: "Krzyż Celtycki",
     celticCrossDesc: "Głęboki rozkład 10 kart na wybrany temat",
-    chooseTopic: "Wybierz temat",
-    topicLove: "Miłość",
-    topicFinance: "Finanse i Kariera",
+    chooseTopic: "Wybierz obszar analizy",
+    continue: "Dalej",
+    topicLove: "Miłość i relacje",
+    topicFinance: "Kariera i finanse",
     topicHealth: "Zdrowie",
     shuffling: "Tasowanie kart...",
     generating: "Czytanie kart...",
     emailSent: "Twój rozkład został wysłany na {email}.",
     subTeaser: "Wkrótce: subskrypcja tarota z regularnymi rozkładami i głębszym prowadzeniem miesięcznym.",
     notifyMe: "Powiadom mnie",
-    oneToken: "1 token",
+    oneToken: "5 EUR",
     enterEmail: "Podaj e-mail",
     generateReading: "Generuj rozkład",
     back: "← Wróć",
     newReading: "Nowy rozkład",
-    noTokens: "Nie masz już tokenów tarota. Kup 3 tokeny, aby kontynuować.",
-    paymentCancelled: "Płatność została anulowana. Tokeny nie zostały dodane.",
-    paymentSuccess: "Płatność zakończona. Twoje tokeny tarota są gotowe.",
+    noTokens: "Aby wygenerować ten rozkład tarota, opłać go za 5 EUR.",
+    paymentCancelled: "Płatność została anulowana. Rozkład nie został opłacony.",
+    paymentSuccess: "Płatność zakończona. Możesz teraz wygenerować rozkład.",
     networkError: "Coś poszło nie tak. Spróbuj ponownie za chwilę.",
+    tokenStoreUnavailable:
+      "Tokeny tarota nie są skonfigurowane lokalnie. Dodaj dane Upstash Redis i uruchom ponownie dev server.",
+    aiGenerationFailed:
+      "Nie udało się teraz zinterpretować kart. Spróbuj ponownie za chwilę.",
+    dailyCardUsed: "Karta dnia została już dziś wylosowana. Wróć jutro po kolejną.",
+    termsRequired: "Zaakceptuj regulamin, aby kontynuować.",
+    missingProfile: "Podaj imię i datę urodzenia, aby kontynuować.",
   },
   es: {
     pageTitle: "Lectura de Tarot",
-    pageSubtitle: "3 fichas por $5 — una ficha por tirada",
-    buyTokens: "Comprar 3 fichas — $5",
+    pageSubtitle: "La Carta del Día es gratis. Las tiradas de pago cuestan 5 EUR.",
+    buyTokens: "Pagar 5 EUR",
     tokensLeft: "Fichas restantes: {n}",
-    chooseSpread: "Elige tu tirada",
+    chooseSpread: "Elige el tipo de tirada",
+    checkoutEmail: "Correo para comprar la ficha",
+    name: "Nombre",
+    namePlaceholder: "Tu nombre",
+    birthDate: "Fecha de nacimiento",
+    dailyCard: "Carta del Día",
+    dailyCardDesc: "Una carta guía para hoy",
+    dailyCardBadge: "Gratis",
+    dailyCardCost: "Gratis una vez al día",
     threeCard: "Tirada de 3 Cartas",
     threeCardDesc: "Pasado · Presente · Futuro",
     celticCross: "Cruz Celta",
     celticCrossDesc: "Tirada profunda de 10 cartas sobre un tema",
-    chooseTopic: "Elige un tema",
-    topicLove: "Amor",
-    topicFinance: "Finanzas y Carrera",
+    chooseTopic: "Elige un área de análisis",
+    continue: "Continuar",
+    topicLove: "Amor y relaciones",
+    topicFinance: "Carrera y finanzas",
     topicHealth: "Salud",
     shuffling: "Barajando las cartas...",
     generating: "Leyendo las cartas...",
     emailSent: "Tu tirada ha sido enviada a {email}.",
     subTeaser: "Próximamente: una suscripción de tarot con tiradas regulares y una guía mensual más profunda.",
     notifyMe: "Avisadme",
-    oneToken: "1 ficha",
+    oneToken: "5 EUR",
     enterEmail: "Introduce tu correo",
     generateReading: "Generar tirada",
     back: "← Volver",
     newReading: "Nueva tirada",
-    noTokens: "No te quedan fichas de tarot. Compra 3 fichas para continuar.",
-    paymentCancelled: "El pago fue cancelado. No se añadieron fichas.",
-    paymentSuccess: "Pago realizado. Tus fichas de tarot están listas.",
+    noTokens: "Para generar esta tirada de tarot, paga 5 EUR.",
+    paymentCancelled: "El pago fue cancelado. La tirada no fue cobrada.",
+    paymentSuccess: "Pago realizado. Ya puedes generar tu tirada.",
     networkError: "Algo salió mal. Inténtalo de nuevo en un momento.",
+    tokenStoreUnavailable:
+      "Las fichas de tarot no están configuradas localmente. Añade las credenciales de Upstash Redis y reinicia el servidor.",
+    aiGenerationFailed:
+      "No se pudieron interpretar las cartas ahora. Inténtalo de nuevo en un momento.",
+    dailyCardUsed: "Ya has sacado tu Carta del Día gratis hoy. Vuelve mañana.",
+    termsRequired: "Acepta los términos de servicio para continuar.",
+    missingProfile: "Introduce tu nombre y fecha de nacimiento para continuar.",
   },
 };
 
@@ -552,7 +614,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     termsAcceptBefore: "I have read and accept the ",
     termsAcceptLink: "Terms of Service",
     termsAcceptAfter: ".",
-    priceLine: "Full reports: €5 each · Instant delivery · Stripe",
+    priceLine: "Reports: 1 token = €5 · Instant delivery · Stripe",
     footer:
       "Astrology is for reflection and entertainment. You’re always in control of your choices.",
     footerArticlesTitle: "Articles",
@@ -626,7 +688,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     termsAcceptBefore: "Akceptuję ",
     termsAcceptLink: "Terms of Service",
     termsAcceptAfter: " (regulamin).",
-    priceLine: "Pełne raporty: 5 EUR · Od razu · Stripe",
+    priceLine: "Raporty: 1 token = 5 EUR · Od razu · Stripe",
     footer:
       "Astrologia służy refleksji i rozrywce. Zawsze decydujesz o swoich wyborach.",
     footerArticlesTitle: "Artykuły",
@@ -700,7 +762,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     termsAcceptBefore: "He leído y acepto los ",
     termsAcceptLink: "Términos de servicio (Terms of Service)",
     termsAcceptAfter: ".",
-    priceLine: "Informes completos: 5 EUR · Al instante · Stripe",
+    priceLine: "Informes: 1 ficha = 5 EUR · Al instante · Stripe",
     footer:
       "La astrología es para reflexionar y entretener. Tú decides siempre.",
     footerArticlesTitle: "Artículos",

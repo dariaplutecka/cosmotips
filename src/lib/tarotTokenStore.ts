@@ -3,6 +3,13 @@ import { Redis } from "@upstash/redis";
 let redis: Redis | undefined;
 let missingEnvWarned = false;
 
+function shouldBypassTarotTokensForDev(): boolean {
+  return (
+    process.env.NODE_ENV !== "production" &&
+    process.env.STRIPE_SKIP_PAYMENT_FOR_DEV === "true"
+  );
+}
+
 function getRedisClient(): Redis {
   if (redis) return redis;
 
@@ -25,6 +32,7 @@ function getRedisClient(): Redis {
 const key = (email: string) => `tarot:tokens:${email.toLowerCase().trim()}`;
 
 export async function getTarotBalance(email: string): Promise<number> {
+  if (shouldBypassTarotTokensForDev()) return 2;
   const val = await getRedisClient().get<number>(key(email));
   return val ?? 0;
 }
@@ -33,11 +41,13 @@ export async function addTarotTokens(
   email: string,
   amount: number,
 ): Promise<number> {
+  if (shouldBypassTarotTokensForDev()) return amount;
   return await getRedisClient().incrby(key(email), amount);
 }
 
 // Returns true when a token was deducted, false when the balance is empty.
 export async function deductTarotToken(email: string): Promise<boolean> {
+  if (shouldBypassTarotTokensForDev()) return true;
   const result = await getRedisClient().eval<[], number>(
     `
 local current = tonumber(redis.call("GET", KEYS[1]) or "0")

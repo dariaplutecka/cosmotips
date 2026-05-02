@@ -156,8 +156,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const parsedTokens = parseInt(metadata.tokensToAdd ?? "3", 10);
-    const tokensToAdd = Number.isFinite(parsedTokens) ? parsedTokens : 3;
+    const parsedTokens = parseInt(metadata.tokensToAdd ?? "1", 10);
+    const tokensToAdd = Number.isFinite(parsedTokens) ? parsedTokens : 1;
 
     try {
       const sessionKey = `tarot:session:${sessionId}`;

@@ -1,6 +1,6 @@
 import type { AppLang } from "@/lib/reportSchema";
 
-export type SpreadType = "three_card" | "celtic_cross";
+export type SpreadType = "daily_card" | "three_card" | "celtic_cross";
 export type TarotTopic = "love" | "finance_career" | "health";
 
 export interface TarotCard {
@@ -9,10 +9,36 @@ export interface TarotCard {
   namePl: string;
   nameEs: string;
   arcana: "major" | "minor";
+  imageUrl: string;
   reversed: boolean;
 }
 
-export const tarotDeck: Omit<TarotCard, "reversed">[] = [
+const tarotCardImageBaseUrl = "https://cdn.jsdelivr.net/npm/tarot-card-img@0.1.0";
+
+function tarotImagePath(id: number): string {
+  if (id <= 21) return `major/${id}m.jpg`;
+
+  const suits = [
+    { start: 22, dir: "wands", suffix: "w" },
+    { start: 36, dir: "cups", suffix: "c" },
+    { start: 50, dir: "swords", suffix: "s" },
+    { start: 64, dir: "pentacles", suffix: "p" },
+  ] as const;
+  const suit = suits.find(({ start }) => id >= start && id < start + 14);
+  if (!suit) return "major/0m.jpg";
+
+  const rank = id - suit.start + 1;
+  const courtRank: Record<number, string> = {
+    11: "p",
+    12: "n",
+    13: "q",
+    14: "k",
+  };
+  const fileRank = courtRank[rank] ?? String(rank);
+  return `${suit.dir}/${fileRank}${suit.suffix}.jpg`;
+}
+
+const rawTarotDeck: Omit<TarotCard, "imageUrl" | "reversed">[] = [
   // Major Arcana (0-21)
   { id: 0, name: "The Fool", namePl: "Głupiec", nameEs: "El Loco", arcana: "major" },
   { id: 1, name: "The Magician", namePl: "Mag", nameEs: "El Mago", arcana: "major" },
@@ -97,6 +123,11 @@ export const tarotDeck: Omit<TarotCard, "reversed">[] = [
   { id: 76, name: "Queen of Pentacles", namePl: "Królowa Pentakli", nameEs: "Reina de Oros", arcana: "minor" },
   { id: 77, name: "King of Pentacles", namePl: "Król Pentakli", nameEs: "Rey de Oros", arcana: "minor" },
 ];
+
+export const tarotDeck: Omit<TarotCard, "reversed">[] = rawTarotDeck.map((card) => ({
+  ...card,
+  imageUrl: `${tarotCardImageBaseUrl}/${tarotImagePath(card.id)}`,
+}));
 
 export function drawCards(n: number): TarotCard[] {
   const shuffled = [...tarotDeck].sort(() => Math.random() - 0.5);
