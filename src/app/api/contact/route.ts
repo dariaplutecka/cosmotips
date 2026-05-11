@@ -1,6 +1,8 @@
 import { Resend } from "resend";
 import { z } from "zod";
 import { formatResendSendError } from "@/lib/resendFormatError";
+import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/requestIp";
 
 export const runtime = "nodejs";
 
@@ -20,6 +22,11 @@ function escapeHtml(s: string): string {
 }
 
 export async function POST(req: Request) {
+  const rateLimit = await checkRateLimit(`contact:${getClientIp(req)}`);
+  if (!rateLimit.success) {
+    return Response.json({ ok: false, error: "rate_limited" }, { status: 429 });
+  }
+
   let json: unknown;
   try {
     json = await req.json();

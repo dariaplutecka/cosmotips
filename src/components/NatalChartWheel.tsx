@@ -79,7 +79,7 @@ function signArcPath(
   innerRadius: number,
   outerRadius: number,
 ) {
-  let startAngle = d3Angle(endLon, ascDeg);
+  const startAngle = d3Angle(endLon, ascDeg);
   let endAngle = d3Angle(startLon, ascDeg);
   while (endAngle < startAngle) endAngle += Math.PI * 2;
   return (

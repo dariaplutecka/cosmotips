@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AppLang } from "@/lib/reportSchema";
 
 const LANGS: Array<{ code: AppLang; flag: string; abbr: string }> = [
@@ -18,6 +18,7 @@ type Props = {
   logoAriaLabel: string;
   /** Strona główna: zmiana języka bez przeładowania. Podstrony: pomijamy — linki `?lang=` */
   onLangChange?: (code: AppLang) => void;
+  onLogoClick?: () => void;
 };
 
 type AuthUser = {
@@ -25,6 +26,11 @@ type AuthUser = {
   name?: string;
   image?: string;
   provider: "email" | "google";
+};
+
+type SubscriptionStatus = {
+  authenticated: boolean;
+  pro: boolean;
 };
 
 function authText(lang: AppLang) {
@@ -37,6 +43,9 @@ function authText(lang: AppLang) {
       google: "Kontynuuj z Google",
       sent: "Sprawdź skrzynkę. Wysłaliśmy link do logowania.",
       error: "Nie udało się zalogować. Spróbuj ponownie.",
+      emailInvalid: "Podaj poprawny adres e-mail.",
+      pro: "Pro",
+      manage: "Zarządzaj subskrypcją",
     };
   }
   if (lang === "es") {
@@ -48,6 +57,9 @@ function authText(lang: AppLang) {
       google: "Continuar con Google",
       sent: "Revisa tu correo. Te enviamos un enlace de acceso.",
       error: "No se pudo iniciar sesión. Inténtalo de nuevo.",
+      emailInvalid: "Introduce un correo válido.",
+      pro: "Pro",
+      manage: "Gestionar suscripción",
     };
   }
   return {
@@ -58,6 +70,9 @@ function authText(lang: AppLang) {
     google: "Continue with Google",
     sent: "Check your email. We sent you a sign-in link.",
     error: "Could not sign in. Try again.",
+    emailInvalid: "Enter a valid email address.",
+    pro: "Pro",
+    manage: "Manage subscription",
   };
 }
 
@@ -66,28 +81,64 @@ export function CosmotipsTopBar({
   langLabel,
   logoAriaLabel,
   onLangChange,
+  onLogoClick,
 }: Props) {
   const pathname = usePathname() || "/";
   const homeHref = `/?lang=${lang}`;
   const copy = authText(lang);
+  const authBtnRef = useRef<HTMLButtonElement>(null);
+  const authPanelRef = useRef<HTMLDivElement>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [authEmail, setAuthEmail] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
 
   async function refreshSession() {
     const res = await fetch("/api/auth/session");
     const data = (await res.json().catch(() => null)) as { user?: AuthUser | null } | null;
     setUser(data?.user ?? null);
+    const subRes = await fetch("/api/subscription/status");
+    const subData = (await subRes.json().catch(() => null)) as SubscriptionStatus | null;
+    setSubscription(subData);
   }
 
   useEffect(() => {
     void refreshSession();
   }, []);
 
+  useEffect(() => {
+    if (!authOpen) return;
+    function onPointerDown(ev: MouseEvent | PointerEvent) {
+      const node = ev.target as Node | null;
+      if (!node) return;
+      if (authBtnRef.current?.contains(node)) return;
+      if (authPanelRef.current?.contains(node)) return;
+      setAuthOpen(false);
+    }
+    function onKeyDown(ev: KeyboardEvent) {
+      if (ev.key === "Escape") setAuthOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [authOpen]);
+
   async function sendMagicLink() {
+    const clean = authEmail.trim();
+    const emailLooksValid =
+      clean.includes("@") && clean.includes(".") && clean.indexOf("@") < clean.lastIndexOf(".");
+    if (!emailLooksValid) {
+      setAuthError(copy.emailInvalid);
+      setAuthMessage(null);
+      return;
+    }
     setAuthLoading(true);
     setAuthMessage(null);
     setAuthError(null);
@@ -95,7 +146,7 @@ export function CosmotipsTopBar({
       const res = await fetch("/api/auth/magic-link", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: authEmail, lang }),
+        body: JSON.stringify({ email: clean, lang }),
       });
       if (!res.ok) throw new Error("magic_link_failed");
       setAuthMessage(copy.sent);
@@ -109,13 +160,29 @@ export function CosmotipsTopBar({
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
+    setSubscription(null);
     setAuthOpen(false);
+  }
+
+  async function openCustomerPortal() {
+    setPortalLoading(true);
+    setAuthError(null);
+    try {
+      const res = await fetch("/api/stripe/customer-portal", { method: "POST" });
+      const data = (await res.json().catch(() => null)) as { url?: string; error?: string } | null;
+      if (!res.ok || !data?.url) throw new Error(data?.error ?? copy.error);
+      window.location.assign(data.url);
+    } catch {
+      setAuthError(copy.error);
+      setPortalLoading(false);
+    }
   }
 
   return (
     <div className="mb-6 flex items-center justify-between gap-3 sm:mb-8 sm:gap-4">
       <Link
         href={homeHref}
+        onClick={onLogoClick}
         className="inline-flex shrink-0 items-center rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/55"
         aria-label={logoAriaLabel}
       >
@@ -184,19 +251,51 @@ export function CosmotipsTopBar({
         </div>
 
         <button
+          id="cosmotips-auth-button"
+          ref={authBtnRef}
           type="button"
+          aria-expanded={authOpen}
+          aria-controls="cosmotips-auth-panel"
+          aria-haspopup="dialog"
           onClick={() => setAuthOpen((current) => !current)}
           className="rounded-full border border-violet-200/30 bg-violet-400/15 px-3 py-2 text-xs font-bold text-white shadow-lg shadow-black/20 transition hover:bg-violet-400/25"
         >
-          {user ? user.email.split("@")[0] : copy.signIn}
+          {user ? (
+            <span className="inline-flex items-center gap-2">
+              {user.email.split("@")[0]}
+              {subscription?.pro ? (
+                <span className="rounded-full bg-amber-300 px-1.5 py-0.5 text-[0.6rem] font-black uppercase text-black">
+                  {copy.pro}
+                </span>
+              ) : null}
+            </span>
+          ) : (
+            copy.signIn
+          )}
         </button>
 
         {authOpen ? (
-          <div className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-3xl border border-white/12 bg-[#130b25]/95 p-4 text-white shadow-2xl shadow-black/40 backdrop-blur">
+          <div
+            id="cosmotips-auth-panel"
+            ref={authPanelRef}
+            role="dialog"
+            aria-label={copy.signIn}
+            className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-3xl border border-white/12 bg-[#130b25]/95 p-4 text-white shadow-2xl shadow-black/40 backdrop-blur"
+          >
             {user ? (
               <div className="space-y-3">
                 <p className="text-xs text-white/55">{user.provider}</p>
                 <p className="text-sm font-semibold">{user.email}</p>
+                {subscription?.pro ? (
+                  <button
+                    type="button"
+                    onClick={() => void openCustomerPortal()}
+                    disabled={portalLoading}
+                    className="w-full rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-2 text-sm font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {portalLoading ? "..." : copy.manage}
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => void logout()}

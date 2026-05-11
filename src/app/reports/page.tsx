@@ -6,7 +6,8 @@ import { useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { CosmotipsTopBar } from "@/components/CosmotipsTopBar";
 import type { AppLang } from "@/lib/reportSchema";
-import { homeCopy } from "@/lib/uiCopy";
+import type { ReportTypeId } from "@/lib/uiCopy";
+import { homeCopy, savedReportsPageCopy, zodiacDisplayName } from "@/lib/uiCopy";
 
 type SavedReport = {
   id: string;
@@ -15,7 +16,7 @@ type SavedReport = {
   dob: string;
   tob: string;
   pob: string;
-  reportType: "natal_basic" | "personality" | "weekly" | "monthly";
+  reportType: ReportTypeId;
   report: string;
 };
 
@@ -34,11 +35,8 @@ const zodiacSigns = [
   { name: "Sagittarius", symbol: "♐", start: [11, 22], end: [12, 21] },
 ] as const;
 
-function reportTypeLabel(t: SavedReport["reportType"], lang: AppLang) {
-  if (t === "natal_basic") return homeCopy[lang].reports.natal_basic.title;
-  if (t === "weekly") return "Weekly Forecast";
-  if (t === "monthly") return "Monthly Forecast";
-  return "Personality Description";
+function reportTypeLabel(t: SavedReport["reportType"], lang: AppLang): string {
+  return homeCopy[lang].reports[t].title;
 }
 
 function getZodiac(dob: string) {
@@ -66,6 +64,7 @@ function ReportsPageContent() {
   const lang: AppLang =
     raw === "pl" || raw === "es" ? raw : "en";
   const hc = homeCopy[lang];
+  const rc = savedReportsPageCopy[lang];
 
   const [reports] = useState<SavedReport[]>(() => {
     try {
@@ -98,24 +97,24 @@ function ReportsPageContent() {
         />
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h1 className="cosmotips-headline text-3xl font-semibold tracking-tight">
-              Saved reports
+            <h1 className="cosmotips-heading-2">
+              {rc.pageTitle}
             </h1>
             <p className="mt-2 text-sm text-white/60">
-              Stored locally in your browser (up to 25).
+              {rc.subtitle}
             </p>
           </div>
           <Link
             href={`/?lang=${lang}`}
             className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-b from-violet-300 to-violet-500 px-4 py-2 text-sm font-semibold text-black shadow-lg shadow-violet-500/20 transition"
           >
-            Generate new
+            {rc.generateNew}
           </Link>
         </div>
 
         {reports.length === 0 ? (
           <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6 text-white/70 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur">
-            No saved reports yet. Generate one to see it here.
+            {rc.emptyHint}
           </div>
         ) : (
           <div className="mt-8 grid gap-6 lg:grid-cols-[320px_1fr]">
@@ -139,7 +138,7 @@ function ReportsPageContent() {
                         {reportTypeLabel(r.reportType, lang)}
                       </div>
                       <div className="mt-1 text-xs text-white/60">
-                        {new Date(r.createdAt).toLocaleString()}
+                        {new Date(r.createdAt).toLocaleString(lang === "en" ? "en-GB" : lang === "pl" ? "pl-PL" : "es-ES")}
                       </div>
                       <div className="mt-2 text-xs text-white/50">
                         {r.dob} · {r.tob}
@@ -156,7 +155,7 @@ function ReportsPageContent() {
             <section className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur sm:p-7">
               {selected ? (
                 <>
-                  <h2 className="text-2xl font-semibold tracking-tight text-white">
+                  <h2 className="cosmotips-heading-2">
                     {reportTypeLabel(selected.reportType, lang)}
                   </h2>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-white/60">
@@ -172,7 +171,7 @@ function ReportsPageContent() {
                     {zodiac ? (
                       <span className="inline-flex items-center gap-2 rounded-full border border-violet-300/30 bg-violet-400/10 px-3 py-1 text-xs text-violet-100">
                         <span className="text-base leading-none">{zodiac.symbol}</span>
-                        {zodiac.name}
+                        {zodiacDisplayName(lang, zodiac.name)}
                       </span>
                     ) : null}
                   </div>
@@ -181,17 +180,17 @@ function ReportsPageContent() {
                       <ReactMarkdown
                         components={{
                           h1: ({ children }) => (
-                            <h1 className="cosmotips-headline mb-5 text-3xl font-semibold tracking-tight">
+                            <h1 className="cosmotips-heading-2 mb-5">
                               {children}
                             </h1>
                           ),
                           h2: ({ children }) => (
-                            <h2 className="mt-7 mb-3 text-2xl font-semibold text-violet-100">
+                            <h2 className="cosmotips-heading-3 mt-7 mb-3 text-violet-100">
                               {children}
                             </h2>
                           ),
                           h3: ({ children }) => (
-                            <h3 className="mt-6 mb-2 text-xl font-semibold text-violet-100">
+                            <h3 className="cosmotips-heading-3 mt-6 mb-2 text-violet-100">
                               {children}
                             </h3>
                           ),
@@ -217,7 +216,7 @@ function ReportsPageContent() {
                   </div>
                 </>
               ) : (
-                <div className="text-white/70">Select a report.</div>
+                <div className="text-white/70">{rc.selectReport}</div>
               )}
             </section>
           </div>

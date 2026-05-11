@@ -44,24 +44,24 @@ function TermsContent() {
           logoAriaLabel={hc.navLogoHomeAria}
         />
         <article className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur sm:p-8">
-          <h1 className="cosmotips-headline font-heading text-3xl font-semibold tracking-tight sm:text-[2rem]">
+          <h1 className="cosmotips-headline cosmotips-heading-2">
             {c.title}
           </h1>
           <div className="mt-6 max-w-none space-y-4 text-base leading-7 text-white/80 [&_a]:text-violet-200 [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:text-violet-100">
             <ReactMarkdown
               components={{
                 h1: ({ children }) => (
-                  <h2 className="cosmotips-headline mt-10 mb-4 text-2xl font-semibold tracking-tight text-white first:mt-0">
+                  <h2 className="cosmotips-headline cosmotips-heading-2 mt-10 mb-4 first:mt-0">
                     {children}
                   </h2>
                 ),
                 h2: ({ children }) => (
-                  <h2 className="cosmotips-headline mt-10 mb-3 text-xl font-semibold tracking-tight text-violet-100">
+                  <h2 className="cosmotips-heading-3 mt-10 mb-3 text-violet-100">
                     {children}
                   </h2>
                 ),
                 h3: ({ children }) => (
-                  <h3 className="mt-6 mb-2 text-lg font-semibold text-violet-100/95">
+                  <h3 className="cosmotips-heading-3 mt-6 mb-2 text-violet-100/95">
                     {children}
                   </h3>
                 ),

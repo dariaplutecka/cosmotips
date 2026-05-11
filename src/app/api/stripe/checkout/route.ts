@@ -4,11 +4,31 @@ import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { CheckoutPayloadSchema } from "@/lib/reportSchema";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { getAuthSession } from "@/lib/authSession";
+import {
+  hasUsedProPersonalityPortrait,
+  isProSubscriber,
+  markProPersonalityPortraitUsed,
+} from "@/lib/subscriptionStore";
+import { storeFreeReportPayload } from "@/lib/freeReportStore";
 
 function getClientIp(req: Request) {
   const forwardedFor = req.headers.get("x-forwarded-for");
   if (forwardedFor) return forwardedFor.split(",")[0]?.trim() || "unknown";
   return req.headers.get("x-real-ip")?.trim() || "unknown";
+}
+
+function reportPrice(reportType: "natal_basic" | "personality" | "weekly" | "monthly") {
+  if (reportType === "personality") return 700;
+  if (reportType === "monthly") return 900;
+  return 500;
+}
+
+function reportDescription(reportType: "natal_basic" | "personality" | "weekly" | "monthly") {
+  if (reportType === "personality") return "Personality portrait";
+  if (reportType === "weekly") return "7-day forecast from purchase date";
+  if (reportType === "monthly") return "30-day forecast from purchase date";
+  return "Report";
 }
 
 export async function POST(req: Request) {
@@ -44,18 +64,41 @@ export async function POST(req: Request) {
 
   if (reportType === "natal_basic") {
     const sessionId = `fnb_${randomUUID()}`;
+    await storeFreeReportPayload(sessionId, parsed.data);
     const params = new URLSearchParams({
       session_id: sessionId,
       fnb: "1",
-      email,
-      dob,
-      tob,
-      pob,
-      reportType,
       lang,
-      birthTimeUnknown: birthTimeUnknownParam,
     });
     return NextResponse.json({ url: `${origin}/success?${params.toString()}` });
+  }
+
+  const authSession = await getAuthSession();
+  const proSubscriber =
+    authSession?.email === email.trim().toLowerCase() && (await isProSubscriber(email));
+  if (
+    proSubscriber &&
+    reportType === "personality" &&
+    !(await hasUsedProPersonalityPortrait(email))
+  ) {
+    const claimed = await markProPersonalityPortraitUsed(email);
+    if (!claimed) {
+      // If another request used the included portrait first, fall through to paid checkout.
+    } else {
+      const sessionId = `pro_personality_${randomUUID()}`;
+      const params = new URLSearchParams({
+        session_id: sessionId,
+        pro: "1",
+        email,
+        dob,
+        tob,
+        pob,
+        reportType,
+        lang,
+        birthTimeUnknown: birthTimeUnknownParam,
+      });
+      return NextResponse.json({ url: `${origin}/success?${params.toString()}` });
+    }
   }
 
   if (skipPaymentForDev) {
@@ -83,17 +126,10 @@ export async function POST(req: Request) {
       {
         price_data: {
           currency: "eur",
-          unit_amount: 500,
+          unit_amount: reportPrice(reportType),
           product_data: {
-            name: "CosmoTips report token",
-            description:
-              reportType === "personality"
-                ? "Personality Description"
-                : reportType === "weekly"
-                  ? "7-day forecast from purchase date"
-                  : reportType === "monthly"
-                    ? "30-day forecast from purchase date"
-                    : "Report",
+            name: "CosmoTips report",
+            description: reportDescription(reportType),
           },
         },
         quantity: 1,

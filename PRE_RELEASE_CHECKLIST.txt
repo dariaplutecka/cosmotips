@@ -1,0 +1,95 @@
+CosmoTips — checklist przed releasem na produkcję
+================================================
+(Ostatnia aktualizacja: przygotowanie do wdrożenia; dopisz datę po deployu.)
+
+A) Zmienne środowiskowe (Vercel → Settings → Environment Variables)
+--------------------------------------------------------------------
+Ustaw dla środowiska Production (i ewentualnie Preview z osobnymi wartościami test).
+
+Wymagane przez kod (zbieżne z .env.example):
+
+  NEXT_PUBLIC_BASE_URL     — pełny URL prod, np. https://twoja-domena.pl (bez końcowego /)
+  OPENAI_API_KEY           — klucz OpenAI
+
+  STRIPE_MODE              — ustaw "live" na produkcji
+  STRIPE_SECRET_KEY_TEST   — zostaw dla testów lokalnych / Preview (sk_test_…)
+  STRIPE_SECRET_KEY_LIVE   — prod: sk_live_…
+  STRIPE_WEBHOOK_SECRET    — sekret z endpointu webhook LIVE w Stripe (whsec_…)
+
+  STRIPE_PRO_MONTHLY_PRICE_ID   — Price ID subskrypcji miesięcznej Pro
+  STRIPE_PRO_YEARLY_PRICE_ID    — Price ID subskrypcji rocznej Pro
+
+  STRIPE_SKIP_PAYMENT_FOR_DEV   — musi być "false" lub nieustawione na prod
+
+  AUTH_SECRET              — np. openssl rand -base64 32 (tajne, stabilne)
+  GOOGLE_CLIENT_ID         — OAuth Google (typ Web)
+  GOOGLE_CLIENT_SECRET
+
+  CRON_SECRET              — losowy ciąg; Vercel wyśle Authorization: Bearer <CRON_SECRET>
+                             przy wywołaniach cron z vercel.json (musisz ustawić to samo w env)
+
+  RESEND_API_KEY
+  REPORT_EMAIL_FROM        — nadawca ze zweryfikowanej domeny w Resend (prod)
+  CONTACT_INBOX_EMAIL      — odbiorca wiadomości z formularza kontaktowego (opcjonalne; jest fallback w kodzie)
+
+  UPSTASH_REDIS_REST_URL
+  UPSTASH_REDIS_REST_TOKEN
+
+Uwaga: kwoty raportów jednorazowych i paczek tarota są w kodzie (Checkout price_data w EUR),
+       nie w osobnych zmiennych STRIPE_* — po zmianie cen sprawdź pliki API Stripe checkout.
+
+
+B) Stripe (Dashboard)
+---------------------
+[ ] Przełączenie na tryb Live: ceny Pro (miesiąc/rok), produkty zgodne z metadanymi webhooków.
+[ ] Webhook endpoint: URL prod + /api/stripe/webhook, zdarzenia potrzebne przez aplikację
+    (m.in. checkout.session.completed, invoice.paid, customer.subscription.* — jak w kodzie).
+[ ] Osobny webhook secret dla LIVE (inny niż test / stripe listen lokalnie).
+[ ] Stripe Customer Portal włączony dla subskrypcji (anulowanie, faktury, karta).
+[ ] Testowa ścieżka na prod (mała kwota / test card tylko w trybie test — dla live użyj prawdziwej
+    karty w kontrolowanym teście lub staging z STRIPE_MODE=test).
+
+
+C) Google Cloud Console (OAuth)
+-------------------------------
+[ ] Authorized JavaScript origins: https://<NEXT_PUBLIC_BASE_URL host>
+[ ] Authorized redirect URIs: https://<host>/api/auth/google/callback
+[ ] Zgodność z prod domeną (localhost osobno na dev).
+
+
+D) Resend
+---------
+[ ] Domena zweryfikowana, REPORT_EMAIL_FROM z tej domeny.
+[ ] Test wysyłki (magic link, raport PDF na maila, kontakt).
+
+
+E) Vercel
+---------
+[ ] Wszystkie zmienne z sekcji A dla Production.
+[ ] Cron: vercel.json ma ścieżki /api/cron/pro-weekly i pro-monthly — CRON_SECRET musi być ustawiony,
+     inaczej endpoint zwróci 401.
+[ ] Po deployu: sprawdź w Logs pierwsze odpalenie crona (poniedziałek / 1. dnia miesiąca) lub
+     ręcznie wywołaj cron z nagłówkiem Authorization: Bearer <CRON_SECRET> (nie udostępniaj secretu).
+
+
+F) Smoke test na produkcji (krótka lista)
+-----------------------------------------
+[ ] Strona główna, zmiana języka PL/EN/ES.
+[ ] Horoskop: darmowy podgląd (natal_basic) raz / płatny raport testowy.
+[ ] Tarot: karta dnia; rozkład płatny (tokeny).
+[ ] Logowanie: magic link; Google.
+[ ] Subskrypcja Pro (checkout → success → status / tokeny / portret jeśli dotyczy).
+[ ] Customer Portal z poziomu UI (Pro).
+[ ] Formularz kontaktu.
+[ ] Strona /success po płatności (generowanie raportu, PDF z przeglądarki).
+[ ] Po deployu subskrypcji: webhook w Stripe → lista wywołań bez błędów 4xx/5xx.
+
+
+G) Opcjonalnie (nie blokuje startu)
+-----------------------------------
+[ ] robots.txt / sitemap dla SEO.
+[ ] Monitoring błędów (Sentry itd.) zamiast tylko logów Vercel.
+[ ] Ograniczenie logów z emailami w stripe webhook (RODO).
+
+================================================
+Gotowe do releasu: zaznacz powyższe checkboxy w kopii tego pliku lub w narzędziu projektowym.

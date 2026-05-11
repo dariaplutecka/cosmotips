@@ -151,9 +151,30 @@ body::before {
   }
 }
 
-/* Headlines — Montserrat (see layout.tsx --font-montserrat) */
+/* Typography scale: one body face (Lato) and three reusable heading levels. */
 .font-heading {
   font-family: var(--font-heading);
+}
+
+.cosmotips-heading-1,
+.cosmotips-heading-2,
+.cosmotips-heading-3 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: #ffffff;
+}
+
+.cosmotips-heading-1 {
+  @apply text-2xl leading-tight sm:text-3xl md:text-4xl;
+}
+
+.cosmotips-heading-2 {
+  @apply text-xl leading-tight sm:text-2xl;
+}
+
+.cosmotips-heading-3 {
+  @apply text-base leading-snug sm:text-lg;
 }
 
 /* Primary headlines — gradient aligned with logo gold / champagne */

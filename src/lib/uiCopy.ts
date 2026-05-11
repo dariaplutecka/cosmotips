@@ -110,6 +110,8 @@ export const tarotCopy: Record<
     oneToken: string;
     enterEmail: string;
     generateReading: string;
+    spreadAnalysisTitle: string;
+    dailyCardAnalysisTitle: string;
     back: string;
     newReading: string;
     noTokens: string;
@@ -121,6 +123,11 @@ export const tarotCopy: Record<
     dailyCardUsed: string;
     termsRequired: string;
     missingProfile: string;
+    tokenPackageLabel: string;
+    tokenPackageOption1: string;
+    tokenPackageOption3: string;
+    arcanaMajor: string;
+    arcanaMinor: string;
   }
 > = {
   en: {
@@ -154,6 +161,8 @@ export const tarotCopy: Record<
     oneToken: "€5",
     enterEmail: "Enter your email",
     generateReading: "Generate reading",
+    spreadAnalysisTitle: "Spread Analysis",
+    dailyCardAnalysisTitle: "Card of the Day Analysis",
     back: "← Back",
     newReading: "New reading",
     noTokens: "To generate this tarot reading, pay €5.",
@@ -167,6 +176,11 @@ export const tarotCopy: Record<
     dailyCardUsed: "You have already drawn your free Card of the Day today. Come back tomorrow.",
     termsRequired: "Accept the Terms of Service to continue.",
     missingProfile: "Enter your name and date of birth to continue.",
+    tokenPackageLabel: "Tarot token package",
+    tokenPackageOption1: "1 token — €5",
+    tokenPackageOption3: "3 tokens — €10",
+    arcanaMajor: "Major Arcana",
+    arcanaMinor: "Minor Arcana",
   },
   pl: {
     pageTitle: "Rozkład Tarota",
@@ -199,6 +213,8 @@ export const tarotCopy: Record<
     oneToken: "5 EUR",
     enterEmail: "Podaj e-mail",
     generateReading: "Generuj rozkład",
+    spreadAnalysisTitle: "Analiza rozkładu",
+    dailyCardAnalysisTitle: "Analiza karty dnia",
     back: "← Wróć",
     newReading: "Nowy rozkład",
     noTokens: "Aby wygenerować ten rozkład tarota, opłać go za 5 EUR.",
@@ -212,6 +228,11 @@ export const tarotCopy: Record<
     dailyCardUsed: "Karta dnia została już dziś wylosowana. Wróć jutro po kolejną.",
     termsRequired: "Zaakceptuj regulamin, aby kontynuować.",
     missingProfile: "Podaj imię i datę urodzenia, aby kontynuować.",
+    tokenPackageLabel: "Pakiet tokenów tarota",
+    tokenPackageOption1: "1 token — 5 EUR",
+    tokenPackageOption3: "3 tokeny — 10 EUR",
+    arcanaMajor: "Wielkie Arkana",
+    arcanaMinor: "Małe Arkana",
   },
   es: {
     pageTitle: "Lectura de Tarot",
@@ -244,6 +265,8 @@ export const tarotCopy: Record<
     oneToken: "5 EUR",
     enterEmail: "Introduce tu correo",
     generateReading: "Generar tirada",
+    spreadAnalysisTitle: "Análisis de la tirada",
+    dailyCardAnalysisTitle: "Análisis de la Carta del Día",
     back: "← Volver",
     newReading: "Nueva tirada",
     noTokens: "Para generar esta tirada de tarot, paga 5 EUR.",
@@ -257,6 +280,11 @@ export const tarotCopy: Record<
     dailyCardUsed: "Ya has sacado tu Carta del Día gratis hoy. Vuelve mañana.",
     termsRequired: "Acepta los términos de servicio para continuar.",
     missingProfile: "Introduce tu nombre y fecha de nacimiento para continuar.",
+    tokenPackageLabel: "Paquete de fichas de tarot",
+    tokenPackageOption1: "1 ficha — 5 EUR",
+    tokenPackageOption3: "3 fichas — 10 EUR",
+    arcanaMajor: "Arcanos Mayores",
+    arcanaMinor: "Arcanos Menores",
   },
 };
 
@@ -293,6 +321,106 @@ export const articlesPageCopy: Record<AppLang, ArticlesPageCopy> = {
       emptyArticleSlot,
       emptyArticleSlot,
     ],
+  },
+};
+
+export const zodiacSignNames: Record<
+  AppLang,
+  Record<
+    | "Capricorn"
+    | "Aquarius"
+    | "Pisces"
+    | "Aries"
+    | "Taurus"
+    | "Gemini"
+    | "Cancer"
+    | "Leo"
+    | "Virgo"
+    | "Libra"
+    | "Scorpio"
+    | "Sagittarius",
+    string
+  >
+> = {
+  en: {
+    Capricorn: "Capricorn",
+    Aquarius: "Aquarius",
+    Pisces: "Pisces",
+    Aries: "Aries",
+    Taurus: "Taurus",
+    Gemini: "Gemini",
+    Cancer: "Cancer",
+    Leo: "Leo",
+    Virgo: "Virgo",
+    Libra: "Libra",
+    Scorpio: "Scorpio",
+    Sagittarius: "Sagittarius",
+  },
+  pl: {
+    Capricorn: "Koziorożec",
+    Aquarius: "Wodnik",
+    Pisces: "Ryby",
+    Aries: "Baran",
+    Taurus: "Byk",
+    Gemini: "Bliźnięta",
+    Cancer: "Rak",
+    Leo: "Lew",
+    Virgo: "Panna",
+    Libra: "Waga",
+    Scorpio: "Skorpion",
+    Sagittarius: "Strzelec",
+  },
+  es: {
+    Capricorn: "Capricornio",
+    Aquarius: "Acuario",
+    Pisces: "Piscis",
+    Aries: "Aries",
+    Taurus: "Tauro",
+    Gemini: "Géminis",
+    Cancer: "Cáncer",
+    Leo: "Leo",
+    Virgo: "Virgo",
+    Libra: "Libra",
+    Scorpio: "Escorpio",
+    Sagittarius: "Sagitario",
+  },
+};
+
+export function zodiacDisplayName(lang: AppLang, englishSign: string): string {
+  const map = zodiacSignNames[lang];
+  if (englishSign in map) return map[englishSign as keyof typeof map];
+  return englishSign;
+}
+
+export type SavedReportsPageCopy = {
+  pageTitle: string;
+  subtitle: string;
+  generateNew: string;
+  emptyHint: string;
+  selectReport: string;
+};
+
+export const savedReportsPageCopy: Record<AppLang, SavedReportsPageCopy> = {
+  en: {
+    pageTitle: "Saved reports",
+    subtitle: "Stored locally in your browser (up to 25).",
+    generateNew: "Generate new",
+    emptyHint: "No saved reports yet. Generate one to see it here.",
+    selectReport: "Select a report.",
+  },
+  pl: {
+    pageTitle: "Zapisane raporty",
+    subtitle: "Przechowywane lokalnie w przeglądarce (do 25).",
+    generateNew: "Wygeneruj nowy",
+    emptyHint: "Nie masz jeszcze zapisanych raportów. Wygeneruj raport, aby zobaczyć go tutaj.",
+    selectReport: "Wybierz raport.",
+  },
+  es: {
+    pageTitle: "Informes guardados",
+    subtitle: "Guardados localmente en tu navegador (hasta 25).",
+    generateNew: "Generar nuevo",
+    emptyHint: "Aún no hay informes guardados. Genera uno para verlo aquí.",
+    selectReport: "Selecciona un informe.",
   },
 };
 
@@ -394,6 +522,7 @@ export type HomeCopy = {
   email: string;
   emailPlaceholder: string;
   reportSectionTitle: string;
+  dataStepTitle: string;
   reports: Record<
     ReportTypeId,
     { title: string; desc: string; freeBadge?: string }
@@ -410,6 +539,8 @@ export type HomeCopy = {
   footerArticlesTitle: string;
   /** Etykieta linku w stopce → /contact */
   footerContactTitle: string;
+  /** Etykieta linku w stopce → /reports (zapisane lokalnie) */
+  footerReportsTitle: string;
   /** Aria dla logo prowadzącego na stronę główną z formularzem */
   navLogoHomeAria: string;
   langLabel: string;
@@ -439,6 +570,12 @@ export const successUi: Record<
     chartLoading: string;
     chartError: string;
     reportTitle: Record<ReportTypeId, string>;
+    pdfPreparing: string;
+    pdfDownload: string;
+    pdfDownloadFailedAlert: string;
+    noReportFound: string;
+    missingSession: string;
+    generateFailedGeneric: string;
   }
 > = {
   en: {
@@ -467,6 +604,12 @@ export const successUi: Record<
       weekly: "📅 Weekly forecast",
       monthly: "Monthly forecast",
     },
+    pdfPreparing: "Preparing PDF…",
+    pdfDownload: "Download PDF",
+    pdfDownloadFailedAlert: "Could not download PDF. Try again later.",
+    noReportFound: "No report found.",
+    missingSession: "Missing session id from Stripe.",
+    generateFailedGeneric: "Something went wrong.",
   },
   pl: {
     pendingTitle: "Twój raport",
@@ -494,6 +637,13 @@ export const successUi: Record<
       weekly: "📅 Prognoza tygodniowa",
       monthly: "Prognoza miesięczna",
     },
+    pdfPreparing: "Przygotowuję PDF…",
+    pdfDownload: "Pobierz PDF",
+    pdfDownloadFailedAlert:
+      "Nie udało się pobrać PDF. Spróbuj ponownie później.",
+    noReportFound: "Nie znaleziono raportu.",
+    missingSession: "Brak identyfikatora sesji Stripe.",
+    generateFailedGeneric: "Coś poszło nie tak.",
   },
   es: {
     pendingTitle: "Tu informe",
@@ -521,6 +671,13 @@ export const successUi: Record<
       weekly: "📅 Pronóstico semanal",
       monthly: "Pronóstico mensual",
     },
+    pdfPreparing: "Preparando PDF…",
+    pdfDownload: "Descargar PDF",
+    pdfDownloadFailedAlert:
+      "No se pudo descargar el PDF. Inténtalo de nuevo más tarde.",
+    noReportFound: "No se encontró el informe.",
+    missingSession: "Falta el id de sesión de Stripe.",
+    generateFailedGeneric: "Algo salió mal.",
   },
 };
 
@@ -590,6 +747,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     email: "Email",
     emailPlaceholder: "you@example.com",
     reportSectionTitle: "Choose a report type",
+    dataStepTitle: "Complete your details",
     reports: {
       natal_basic: {
         title: "Basic natal chart",
@@ -619,6 +777,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       "Astrology is for reflection and entertainment. You’re always in control of your choices.",
     footerArticlesTitle: "Articles",
     footerContactTitle: "Contact",
+    footerReportsTitle: "Saved reports",
     navLogoHomeAria: "CosmoTips — home and order form",
     langLabel: "Report language",
     placeNoMatch: "No matches",
@@ -664,6 +823,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     email: "E-mail",
     emailPlaceholder: "twoj@email.pl",
     reportSectionTitle: "Wybierz typ raportu",
+    dataStepTitle: "Uzupełnij swoje dane",
     reports: {
       natal_basic: {
         title: "Podstawowy wykres natalny",
@@ -693,6 +853,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       "Astrologia służy refleksji i rozrywce. Zawsze decydujesz o swoich wyborach.",
     footerArticlesTitle: "Artykuły",
     footerContactTitle: "Kontakt",
+    footerReportsTitle: "Zapisane raporty",
     navLogoHomeAria: "CosmoTips — strona główna z formularzem zamówienia",
     langLabel: "Język raportu",
     placeNoMatch: "Brak dopasowań",
@@ -738,6 +899,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     email: "Correo electrónico",
     emailPlaceholder: "tu@ejemplo.com",
     reportSectionTitle: "Elige el tipo de informe",
+    dataStepTitle: "Completa tus datos",
     reports: {
       natal_basic: {
         title: "Carta natal básica",
@@ -767,6 +929,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       "La astrología es para reflexionar y entretener. Tú decides siempre.",
     footerArticlesTitle: "Artículos",
     footerContactTitle: "Contacto",
+    footerReportsTitle: "Informes guardados",
     navLogoHomeAria: "CosmoTips — inicio con el formulario de pedido",
     langLabel: "Idioma del informe",
     placeNoMatch: "Sin coincidencias",
@@ -774,6 +937,34 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       "El informe gratuito solo puede usarse una vez. Elige abajo la opción de informe completo.",
     freeBasicAlreadyUsedError:
       "La vista básica gratuita ya se usó en este dispositivo. Elige un tipo de informe de pago.",
+  },
+};
+
+export type CancelPageCopy = {
+  badge: string;
+  title: string;
+  body: string;
+  backHome: string;
+};
+
+export const cancelPageCopy: Record<AppLang, CancelPageCopy> = {
+  en: {
+    badge: "Checkout cancelled",
+    title: "No worries — you weren’t charged.",
+    body: "If you’d like to try again, go back to the form and generate your report when you’re ready.",
+    backHome: "Back home",
+  },
+  pl: {
+    badge: "Płatność anulowana",
+    title: "Bez obaw — nie pobraliśmy opłaty.",
+    body: "Możesz wrócić do formularza i wygenerować raport, gdy będziesz gotowa lub gotowy.",
+    backHome: "Strona główna",
+  },
+  es: {
+    badge: "Pago cancelado",
+    title: "Tranquilidad — no se ha cobrado nada.",
+    body: "Si quieres intentarlo de nuevo, vuelve al formulario y genera tu informe cuando estés lista o listo.",
+    backHome: "Inicio",
   },
 };
 

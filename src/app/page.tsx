@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   CheckoutPayloadSchema,
@@ -49,6 +49,8 @@ const DAILY_TAROT_STORAGE_PREFIX = "cosmotips:daily_tarot:";
 const TAROT_GUEST_ID_STORAGE_KEY = "cosmotips:tarot_guest_id";
 const TAROT_PENDING_CHECKOUT_STORAGE_KEY = "cosmotips:tarot_pending_checkout";
 const HOME_MODULE_STORAGE_KEY = "cosmotips:active_home_module";
+const USER_FORM_STORAGE_KEY = "cosmotips:user_form";
+const PRO_PENDING_SUBSCRIPTION_STORAGE_KEY = "cosmotips:pro_pending_subscription";
 
 const TOB_HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => i);
 const TOB_MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) => i);
@@ -66,6 +68,103 @@ type TarotResult = {
   cards: TarotCard[];
   interpretation: string;
 };
+
+type SubscriptionStatus = {
+  authenticated: boolean;
+  pro: boolean;
+  tarotBalance?: number;
+  personalityPortraitUsed?: boolean;
+};
+
+type ProInterval = "monthly" | "yearly";
+type TarotPackageSize = "1" | "3";
+type ProAuthModalView = "login" | "sent";
+type PendingProSubscription = {
+  interval: ProInterval;
+  name: string;
+  dob: string;
+  tob: string;
+  pob: string;
+  birthTimeUnknown: boolean;
+  lang: AppLang;
+  createdAt: number;
+};
+
+function proUiText(lang: AppLang) {
+  if (lang === "pl") {
+    return {
+      title: "Subskrypcja Pro",
+      price: "12 EUR / miesiąc albo 99 EUR / rok",
+      benefits: [
+        "Cotygodniowa prognoza astrologiczna wysyłana w każdy poniedziałek na maila",
+        "Portret osobowościowy",
+        "6 tokenów na tarota odnawialnych co miesiąc",
+      ],
+      monthly: "Pro miesięcznie",
+      yearly: "Pro rocznie",
+      subscriptionSuccess: "Subskrypcja Pro została aktywowana.",
+      subscriptionCancelled: "Subskrypcja nie została dokończona.",
+      authInvalid: "Link logowania jest nieważny albo wygasł. Spróbuj ponownie.",
+      authError: "Nie udało się zalogować. Spróbuj ponownie.",
+      modalTitle: "Zaloguj się aby subskrybować",
+      modalEmailPlaceholder: "Twój e-mail",
+      modalMagicLink: "Wyślij link logowania",
+      modalGoogle: "Kontynuuj z Google",
+      modalSentTitle: "Sprawdź swoją skrzynkę",
+      modalSentBody: "Wysłaliśmy link logowania. Po kliknięciu wrócisz tutaj i wznowimy subskrypcję.",
+      modalBack: "Wróć",
+      modalResend: "Wyślij ponownie",
+    };
+  }
+  if (lang === "es") {
+    return {
+      title: "Suscripción Pro",
+      price: "12 EUR / mes o 99 EUR / año",
+      benefits: [
+        "Pronóstico astrológico semanal enviado cada lunes por email",
+        "Retrato de personalidad",
+        "6 fichas de tarot renovables cada mes",
+      ],
+      monthly: "Pro mensual",
+      yearly: "Pro anual",
+      subscriptionSuccess: "La suscripción Pro ha sido activada.",
+      subscriptionCancelled: "La suscripción no se completó.",
+      authInvalid: "El enlace de acceso no es válido o ha caducado. Inténtalo de nuevo.",
+      authError: "No se pudo iniciar sesión. Inténtalo de nuevo.",
+      modalTitle: "Inicia sesión para suscribirte",
+      modalEmailPlaceholder: "Tu correo",
+      modalMagicLink: "Enviar enlace de acceso",
+      modalGoogle: "Continuar con Google",
+      modalSentTitle: "Revisa tu correo",
+      modalSentBody: "Te enviamos un enlace de acceso. Al abrirlo volverás aquí y retomaremos la suscripción.",
+      modalBack: "Volver",
+      modalResend: "Enviar de nuevo",
+    };
+  }
+  return {
+    title: "Pro subscription",
+    price: "€12 / month or €99 / year",
+    benefits: [
+      "Weekly astrology forecast sent by email every Monday",
+      "Personality portrait",
+      "6 tarot tokens renewed every month",
+    ],
+    monthly: "Pro monthly",
+    yearly: "Pro yearly",
+    subscriptionSuccess: "Pro subscription has been activated.",
+    subscriptionCancelled: "Subscription was not completed.",
+    authInvalid: "The sign-in link is invalid or expired. Try again.",
+    authError: "Could not sign in. Try again.",
+    modalTitle: "Sign in to subscribe",
+    modalEmailPlaceholder: "Your email",
+    modalMagicLink: "Send sign-in link",
+    modalGoogle: "Continue with Google",
+    modalSentTitle: "Check your inbox",
+    modalSentBody: "We sent a sign-in link. After you open it, you will return here and we will resume your subscription.",
+    modalBack: "Back",
+    modalResend: "Resend",
+  };
+}
 
 function tarotCardName(card: TarotCard, lang: AppLang): string {
   if (lang === "pl") return card.reversed ? `${card.namePl} ↓` : card.namePl;
@@ -93,16 +192,16 @@ function tarotPositions(spreadType: SpreadType, lang: AppLang): string[] {
 }
 
 const celticCrossLayoutClasses = [
-  "md:col-start-3 md:row-start-3",
-  "md:col-start-3 md:row-start-3 md:rotate-90",
   "md:col-start-3 md:row-start-2",
-  "md:col-start-3 md:row-start-4",
-  "md:col-start-2 md:row-start-3",
-  "md:col-start-4 md:row-start-3",
-  "md:col-start-5 md:row-start-5",
+  "md:col-start-3 md:row-start-2 md:rotate-90",
+  "md:col-start-3 md:row-start-3",
+  "md:col-start-2 md:row-start-2",
+  "md:col-start-3 md:row-start-2",
+  "md:col-start-4 md:row-start-2",
   "md:col-start-5 md:row-start-4",
   "md:col-start-5 md:row-start-3",
   "md:col-start-5 md:row-start-2",
+  "md:col-start-5 md:row-start-1",
 ];
 
 function tarotSpreadName(spreadType: SpreadType, lang: AppLang): string {
@@ -158,11 +257,25 @@ function HomePageContent() {
   const [tarotMessage, setTarotMessage] = useState<string | null>(null);
   const [tarotError, setTarotError] = useState<string | null>(null);
   const [tarotCheckoutLoading, setTarotCheckoutLoading] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(
+    null,
+  );
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [subscriptionInterval, setSubscriptionInterval] =
+    useState<ProInterval>("monthly");
+  const [tarotPackageSize, setTarotPackageSize] = useState<TarotPackageSize>("1");
+  const [proAuthModalOpen, setProAuthModalOpen] = useState(false);
+  const [proAuthModalView, setProAuthModalView] = useState<ProAuthModalView>("login");
+  const [proAuthEmail, setProAuthEmail] = useState("");
+  const [proAuthLoading, setProAuthLoading] = useState(false);
+  const [proAuthError, setProAuthError] = useState<string | null>(null);
 
   const copy = homeCopy[lang];
   const tarot = tarotCopy[lang];
+  const proCopy = proUiText(lang);
   const activePitch =
     activeModule === "tarot" ? copy.tarotPitchParagraphs : copy.toolPitchParagraphs;
+  const userFormHydratedRef = useRef(false);
 
   function selectHomeModule(module: HomeModule) {
     setActiveModule(module);
@@ -173,12 +286,79 @@ function HomePageContent() {
     }
   }
 
+  async function refreshSubscriptionStatus() {
+    try {
+      const res = await fetch("/api/subscription/status");
+      const data = (await res.json().catch(() => null)) as SubscriptionStatus | null;
+      setSubscriptionStatus(data);
+      return data;
+    } catch {
+      setSubscriptionStatus(null);
+      return null;
+    }
+  }
+
+  function storePendingProSubscription(interval: ProInterval) {
+    try {
+      const pending: PendingProSubscription = {
+        interval,
+        name: name.trim(),
+        dob,
+        tob,
+        pob,
+        birthTimeUnknown,
+        lang,
+        createdAt: Date.now(),
+      };
+      localStorage.setItem(
+        PRO_PENDING_SUBSCRIPTION_STORAGE_KEY,
+        JSON.stringify(pending),
+      );
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function closeProAuthModal() {
+    setProAuthModalOpen(false);
+    setProAuthModalView("login");
+    setProAuthError(null);
+  }
+
   useEffect(() => {
     try {
       if (typeof window === "undefined") return;
       if (localStorage.getItem(NATAL_SAMPLE_STORAGE_KEY) === "1") {
         setFreeBasicUsed(true);
       }
+      const storedForm = localStorage.getItem(USER_FORM_STORAGE_KEY);
+      if (!userFormHydratedRef.current && storedForm) {
+        const parsed = JSON.parse(storedForm) as Partial<{
+          name: string;
+          dobYear: string;
+          dobMonth: string;
+          dobDay: string;
+          tobHour: string;
+          tobMinute: string;
+          birthTimeUnknown: boolean;
+          pob: string;
+          email: string;
+        }>;
+        if (parsed.name) setName(parsed.name);
+        if (parsed.dobYear) setDobYear(parsed.dobYear);
+        if (parsed.dobMonth) setDobMonth(parsed.dobMonth);
+        if (parsed.dobDay) setDobDay(parsed.dobDay);
+        if (parsed.tobHour) setTobHour(parsed.tobHour);
+        if (parsed.tobMinute) setTobMinute(parsed.tobMinute);
+        if (typeof parsed.birthTimeUnknown === "boolean") {
+          setBirthTimeUnknown(parsed.birthTimeUnknown);
+        }
+        if (parsed.pob) setPob(parsed.pob);
+        if (parsed.email) setEmail(parsed.email);
+      }
+      window.setTimeout(() => {
+        userFormHydratedRef.current = true;
+      }, 0);
       const storedModule = localStorage.getItem(HOME_MODULE_STORAGE_KEY);
       const requestedTab = searchParams.get("tab");
       const payment = searchParams.get("payment");
@@ -191,8 +371,71 @@ function HomePageContent() {
       }
     } catch {
       /* ignore */
+      userFormHydratedRef.current = true;
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    void refreshSubscriptionStatus();
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (searchParams.get("auth") !== "success") return;
+    const rawPending = localStorage.getItem(PRO_PENDING_SUBSCRIPTION_STORAGE_KEY);
+    if (!rawPending) return;
+
+    try {
+      const pending = JSON.parse(rawPending) as PendingProSubscription;
+      const pendingIsFresh = Date.now() - (pending.createdAt ?? 0) < 1000 * 60 * 60;
+      if (
+        (pending.interval === "monthly" || pending.interval === "yearly") &&
+        pendingIsFresh
+      ) {
+        closeProAuthModal();
+        localStorage.removeItem(PRO_PENDING_SUBSCRIPTION_STORAGE_KEY);
+        if (pending.name) setName(pending.name);
+        if (pending.dob) {
+          const [year, month, day] = pending.dob.split("-");
+          setDobYear(year ?? "");
+          setDobMonth(month ?? "");
+          setDobDay(day ?? "");
+        }
+        if (pending.tob) {
+          const [hour, minute] = pending.tob.split(":");
+          setTobHour(hour ?? "");
+          setTobMinute(minute ?? "");
+        }
+        setBirthTimeUnknown(pending.birthTimeUnknown);
+        if (pending.pob) setPob(pending.pob);
+        void startProSubscription(pending.interval, { profile: pending });
+      }
+    } catch {
+      localStorage.removeItem(PRO_PENDING_SUBSCRIPTION_STORAGE_KEY);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    try {
+      if (typeof window === "undefined") return;
+      if (!userFormHydratedRef.current) return;
+      localStorage.setItem(
+        USER_FORM_STORAGE_KEY,
+        JSON.stringify({
+          name,
+          dobYear,
+          dobMonth,
+          dobDay,
+          tobHour,
+          tobMinute,
+          birthTimeUnknown,
+          pob,
+          email,
+        }),
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [name, dobYear, dobMonth, dobDay, tobHour, tobMinute, birthTimeUnknown, pob, email]);
 
   useEffect(() => {
     const q = searchParams.get("lang");
@@ -227,6 +470,8 @@ function HomePageContent() {
   useEffect(() => {
     const tab = searchParams.get("tab");
     const payment = searchParams.get("payment");
+    const subscription = searchParams.get("subscription");
+    const auth = searchParams.get("auth");
     const paymentEmail = searchParams.get("email") ?? "";
 
     if (
@@ -292,6 +537,22 @@ function HomePageContent() {
     } else if (payment === "cancelled") {
       setTarotMessage(tarotCopy[lang].paymentCancelled);
       setTarotState("idle");
+    }
+    if (subscription === "success") {
+      setError(null);
+      setTarotError(null);
+      if (activeModule === "tarot") setTarotMessage(proCopy.subscriptionSuccess);
+      else setError(proCopy.subscriptionSuccess);
+      void refreshSubscriptionStatus();
+    } else if (subscription === "cancelled") {
+      const message = proCopy.subscriptionCancelled;
+      if (activeModule === "tarot") setTarotError(message);
+      else setError(message);
+    }
+    if (auth === "invalid" || auth === "error") {
+      const message = auth === "invalid" ? proCopy.authInvalid : proCopy.authError;
+      if (activeModule === "tarot") setTarotError(message);
+      else setError(message);
     }
   }, [lang, searchParams]);
 
@@ -517,7 +778,7 @@ function HomePageContent() {
       const res = await fetch("/api/tarot/checkout", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: cleanEmail, lang }),
+        body: JSON.stringify({ email: cleanEmail, lang, packageSize: tarotPackageSize }),
       });
       const data = (await res.json().catch(() => null)) as
         | { url?: string; error?: string }
@@ -529,6 +790,122 @@ function HomePageContent() {
     } catch (err) {
       setTarotError(err instanceof Error ? err.message : tarot.networkError);
       setTarotCheckoutLoading(false);
+    }
+  }
+
+  async function startProSubscription(
+    interval = subscriptionInterval,
+    opts?: { profile?: PendingProSubscription },
+  ) {
+    setError(null);
+    setTarotError(null);
+    const checkoutName = opts?.profile?.name ?? name.trim();
+    const checkoutDob = opts?.profile?.dob ?? dob;
+    const checkoutTob = opts?.profile?.tob ?? tob;
+    const checkoutPob = opts?.profile?.pob ?? pob;
+    const checkoutBirthTimeUnknown = opts?.profile?.birthTimeUnknown ?? birthTimeUnknown;
+    const checkoutLang = opts?.profile?.lang ?? lang;
+    let currentSubscriptionStatus = subscriptionStatus;
+    try {
+      const statusRes = await fetch("/api/subscription/status");
+      currentSubscriptionStatus = (await statusRes.json().catch(() => null)) as
+        | SubscriptionStatus
+        | null;
+      setSubscriptionStatus(currentSubscriptionStatus);
+    } catch {
+      currentSubscriptionStatus = subscriptionStatus;
+    }
+    if (!currentSubscriptionStatus?.authenticated) {
+      storePendingProSubscription(interval);
+      setProAuthEmail(email.trim());
+      setProAuthModalView("login");
+      setProAuthError(null);
+      setProAuthModalOpen(true);
+      return;
+    }
+    if (!checkoutName || !checkoutDob || !checkoutTob || !checkoutPob) {
+      const message =
+        lang === "pl"
+          ? "Podaj imię, datę, godzinę i miejsce urodzenia, aby uruchomić Pro."
+          : lang === "es"
+            ? "Introduce tu nombre, fecha, hora y lugar de nacimiento para activar Pro."
+            : "Enter your name, birth date, birth time, and birth place to start Pro.";
+      if (activeModule === "tarot") setTarotError(message);
+      else setError(message);
+      return;
+    }
+    if (!termsAccepted) {
+      if (activeModule === "tarot") setTarotError(tarot.termsRequired);
+      else setError(tarot.termsRequired);
+      return;
+    }
+    setSubscriptionLoading(true);
+    try {
+      const res = await fetch("/api/stripe/subscription/checkout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: checkoutName,
+          dob: checkoutDob,
+          tob: checkoutTob,
+          pob: checkoutPob,
+          birthTimeUnknown: checkoutBirthTimeUnknown,
+          lang: checkoutLang,
+          interval,
+        }),
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { url?: string; error?: string }
+        | null;
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.error ?? tarot.networkError);
+      }
+      window.location.assign(data.url);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : tarot.networkError;
+      if (activeModule === "tarot") setTarotError(message);
+      else setError(message);
+      setSubscriptionLoading(false);
+    }
+  }
+
+  function startGoogleProAuth() {
+    storePendingProSubscription(subscriptionInterval);
+    window.location.assign(`/api/auth/google/start?lang=${lang}`);
+  }
+
+  async function submitProMagicLink(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+    setProAuthError(null);
+    const cleanEmail = proAuthEmail.trim();
+    if (!cleanEmail || !cleanEmail.includes("@")) {
+      setProAuthError(
+        lang === "pl"
+          ? "Podaj poprawny adres e-mail."
+          : lang === "es"
+            ? "Introduce un correo válido."
+            : "Enter a valid email address.",
+      );
+      return;
+    }
+    setProAuthLoading(true);
+    storePendingProSubscription(subscriptionInterval);
+    try {
+      const res = await fetch("/api/auth/magic-link", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, lang }),
+      });
+      const data = (await res.json().catch(() => null)) as { error?: string } | null;
+      if (!res.ok) {
+        throw new Error(data?.error ?? tarot.networkError);
+      }
+      setEmail(cleanEmail);
+      setProAuthModalView("sent");
+    } catch (err) {
+      setProAuthError(err instanceof Error ? err.message : tarot.networkError);
+    } finally {
+      setProAuthLoading(false);
     }
   }
 
@@ -578,8 +955,7 @@ function HomePageContent() {
         throw new Error(tarot.dailyCardUsed);
       }
       if (res.status === 402 || data?.error === "no_tokens") {
-        setTarotState("idle");
-        await buyTarotReading(email);
+        setTarotState("no_tokens");
         return;
       }
       if (!res.ok || !data?.cards || !data.interpretation) {
@@ -616,6 +992,29 @@ function HomePageContent() {
     setTarotMessage(null);
   }
 
+  function returnToHomeView() {
+    setActiveModule("tarot");
+    resetTarot();
+    setError(null);
+    setLoading(false);
+    setTarotCheckoutLoading(false);
+    try {
+      localStorage.setItem(HOME_MODULE_STORAGE_KEY, "tarot");
+    } catch {
+      /* ignore */
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  const isTarotReportView =
+    activeModule === "tarot" &&
+    (tarotState === "shuffling" ||
+      tarotState === "generating" ||
+      tarotState === "no_tokens" ||
+      (tarotState === "result" && Boolean(tarotResult)));
+  const tarotReportTitle =
+    tarotSpread === "daily_card" ? tarot.dailyCardAnalysisTitle : tarot.spreadAnalysisTitle;
+
   return (
     <div className="min-h-dvh">
       <div className="mx-auto max-w-6xl px-4 pb-10 pt-6 sm:px-5 sm:pb-14 sm:pt-8">
@@ -624,8 +1023,10 @@ function HomePageContent() {
           langLabel={copy.langLabel}
           logoAriaLabel={copy.navLogoHomeAria}
           onLangChange={setLang}
+          onLogoClick={returnToHomeView}
         />
 
+        {!isTarotReportView ? (
         <header className="relative isolate mb-5 flex w-full min-h-0 items-center overflow-hidden py-2 sm:mb-6 sm:py-3">
           {/* Natal wheel as background — does not affect layout flow */}
           <div
@@ -649,7 +1050,7 @@ function HomePageContent() {
           <div className="relative z-10 w-full">
             <div className="w-full rounded-2xl border border-white/12 bg-[#070412]/42 px-4 pt-3 pb-3 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.55)] backdrop-blur-md sm:rounded-3xl sm:px-7 sm:pt-4 sm:pb-4 md:px-9 md:pt-5 md:pb-4">
               <div className="text-center">
-                <h1 className="font-heading text-balance text-2xl font-medium leading-snug tracking-tight sm:text-3xl md:text-4xl md:leading-[1.15]">
+                <h1 className="cosmotips-heading-1 text-balance font-medium md:leading-[1.15]">
                   <span className="cosmotips-headline block">{copy.heroTitle}</span>
                   <span className="cosmotips-headline-lead mt-1.5 block text-base font-normal leading-snug tracking-normal sm:mt-2 sm:text-lg md:text-xl md:leading-snug">
                     {copy.heroLead}
@@ -659,10 +1060,17 @@ function HomePageContent() {
             </div>
           </div>
         </header>
+        ) : null}
 
-        <main className="mx-auto mt-0 flex max-w-6xl flex-col">
-            <section className="order-2 mt-5 rounded-3xl border border-white/10 bg-white/5 p-4 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur sm:mt-6 sm:p-7">
+        <main className={isTarotReportView ? "mx-auto mt-8 max-w-5xl" : "mx-auto mt-0 grid max-w-6xl gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)] lg:items-start"}>
+            {!isTarotReportView ? (
+            <section className="order-2 rounded-3xl border border-violet-400/45 bg-gradient-to-b from-violet-500/[0.18] via-violet-950/30 to-violet-950/50 p-5 shadow-[0_0_0_1px_rgba(196,181,253,0.2),0_16px_48px_-12px_rgba(0,0,0,0.55)] ring-1 ring-violet-300/25 backdrop-blur sm:p-6 lg:order-2">
             <form onSubmit={onSubmit} className="space-y-4">
+              <div className="w-full">
+                <h2 className="cosmotips-heading-3">
+                  2. {copy.dataStepTitle}
+                </h2>
+              </div>
               <div className="mx-auto w-full max-w-2xl space-y-3">
                 <div>
                   <span className="text-xs font-medium text-white/70">
@@ -904,49 +1312,51 @@ function HomePageContent() {
                   </>
                 ) : null}
 
-                <div>
-                  <span className="text-xs font-medium text-white/70">
-                    {copy.email}
-                  </span>
-                  <div className="relative mt-1.5">
-                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-600">
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M4 6h16v12H4V6Z"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="m4 7 8 6 8-6"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
+                {activeModule === "natal" || tarotSpread !== "daily_card" ? (
+                  <div>
+                    <span className="text-xs font-medium text-white/70">
+                      {copy.email}
                     </span>
-                    <input
-                      type="email"
-                      name="email"
-                      autoComplete="email"
-                      inputMode="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder={copy.emailPlaceholder}
-                      className="cosmic-birth-field"
-                    />
+                    <div className="relative mt-1.5">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-600">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M4 6h16v12H4V6Z"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="m4 7 8 6 8-6"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                      <input
+                        type="email"
+                        name="email"
+                        autoComplete="email"
+                        inputMode="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder={copy.emailPlaceholder}
+                        className="cosmic-birth-field"
+                      />
+                    </div>
                   </div>
-                </div>
+                ) : null}
               </div>
 
               {activeModule === "tarot" && tarotSpread !== "daily_card" ? (
@@ -962,6 +1372,22 @@ function HomePageContent() {
                     <option value="love">{tarot.topicLove}</option>
                     <option value="finance_career">{tarot.topicFinance}</option>
                     <option value="health">{tarot.topicHealth}</option>
+                  </select>
+                </div>
+              ) : null}
+
+              {activeModule === "tarot" && tarotSpread !== "daily_card" ? (
+                <div className="mx-auto mt-4 w-full max-w-2xl">
+                  <label className="block text-xs font-medium text-white/70">
+                    {tarot.tokenPackageLabel}
+                  </label>
+                  <select
+                    value={tarotPackageSize}
+                    onChange={(e) => setTarotPackageSize(e.target.value as TarotPackageSize)}
+                    className="cosmic-birth-field mt-1.5"
+                  >
+                    <option value="1">{tarot.tokenPackageOption1}</option>
+                    <option value="3">{tarot.tokenPackageOption3}</option>
                   </select>
                 </div>
               ) : null}
@@ -1000,7 +1426,7 @@ function HomePageContent() {
                   <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="inline-flex w-full max-w-xs items-center justify-center gap-2 self-end rounded-2xl bg-gradient-to-b from-violet-300 to-violet-500 px-6 py-3 text-sm font-semibold text-black shadow-lg shadow-violet-500/20 transition hover:from-violet-200 hover:to-violet-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:max-w-none sm:shrink-0 sm:self-auto"
+                    className="inline-flex w-full max-w-xs items-center justify-center gap-2 self-end rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-6 py-3 text-sm font-semibold text-black shadow-lg shadow-amber-950/20 transition hover:from-amber-100 hover:to-amber-300 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:max-w-none sm:shrink-0 sm:self-auto"
                   >
                     {loading ? (
                       <>
@@ -1015,7 +1441,7 @@ function HomePageContent() {
                   <button
                     type="submit"
                     disabled={!termsAccepted || tarotCheckoutLoading}
-                    className="inline-flex w-full max-w-xs items-center justify-center rounded-2xl bg-gradient-to-b from-violet-300 to-violet-500 px-6 py-3 text-sm font-bold text-black shadow-lg shadow-violet-950/25 transition disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:max-w-none sm:shrink-0"
+                    className="inline-flex w-full max-w-xs items-center justify-center rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-6 py-3 text-sm font-bold text-black shadow-lg shadow-amber-950/20 transition hover:from-amber-100 hover:to-amber-300 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:max-w-none sm:shrink-0"
                   >
                     {tarotCheckoutLoading ? tarot.generating : tarot.generateReading}
                   </button>
@@ -1024,8 +1450,10 @@ function HomePageContent() {
 
             </form>
             </section>
+            ) : null}
 
-            <section className="order-1 overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur">
+            {!isTarotReportView ? (
+            <section className="order-0 overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur lg:col-span-2">
               <div className="border-b border-white/10 bg-black/18 p-4 sm:p-6">
                 <div className="mx-auto flex w-full max-w-2xl rounded-2xl border border-white/10 bg-white/[0.04] p-1 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset]">
                   {(["natal", "tarot"] as const).map((module) => {
@@ -1038,8 +1466,8 @@ function HomePageContent() {
                         className={[
                           "flex-1 rounded-xl px-3 py-2.5 text-center text-sm font-semibold transition sm:px-4",
                           selected
-                            ? "bg-violet-300 text-black shadow-lg shadow-violet-950/20"
-                            : "text-white/68 hover:bg-white/[0.06] hover:text-white",
+                            ? "bg-gradient-to-b from-amber-200 to-amber-400 text-black shadow-lg shadow-amber-950/20"
+                            : "text-amber-100/80 hover:bg-amber-300/10 hover:text-amber-50",
                         ].join(" ")}
                         aria-pressed={selected}
                       >
@@ -1062,16 +1490,19 @@ function HomePageContent() {
                   </div>
                 </div>
               </div>
+            </section>
+            ) : null}
 
+            <section className="order-1 lg:order-1">
               {activeModule === "natal" ? (
-                <div className="p-4 sm:p-7">
+                <div>
               <div>
               <div className="mx-auto w-full max-w-4xl rounded-2xl border border-violet-400/45 bg-gradient-to-b from-violet-500/[0.18] via-violet-950/30 to-violet-950/50 p-5 shadow-[0_0_0_1px_rgba(196,181,253,0.2),0_16px_48px_-12px_rgba(0,0,0,0.55)] ring-1 ring-violet-300/25 sm:p-6">
-                <h2 className="text-base font-semibold tracking-tight text-white sm:text-lg">
-                  {copy.reportSectionTitle}
+                <h2 className="cosmotips-heading-3">
+                  1. {copy.reportSectionTitle}
                 </h2>
 
-                <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4 lg:items-stretch">
+                <div className="mt-4 grid gap-2.5 sm:grid-cols-2 sm:items-stretch">
                   {reportCardIds.map((id) => {
                     const selected = reportType === id;
                     const c = copy.reports[id];
@@ -1123,6 +1554,47 @@ function HomePageContent() {
                     );
                   })}
                 </div>
+                <div className="mt-5 rounded-2xl border border-amber-300/35 bg-amber-400/10 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-amber-50">
+                        {proCopy.title}: {proCopy.price}
+                      </p>
+                      <ul className="mt-3 space-y-1.5 text-sm font-medium leading-6 text-white/82">
+                        {proCopy.benefits.map((benefit) => (
+                          <li key={benefit} className="flex gap-2">
+                            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-200" />
+                            <span>{benefit}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-start">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSubscriptionInterval("monthly");
+                          void startProSubscription("monthly");
+                        }}
+                        disabled={subscriptionLoading}
+                        className="rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-2 text-xs font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {proCopy.monthly}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSubscriptionInterval("yearly");
+                          void startProSubscription("yearly");
+                        }}
+                        disabled={subscriptionLoading}
+                        className="rounded-2xl border border-amber-200/35 px-4 py-2 text-xs font-bold text-amber-50 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {proCopy.yearly}
+                      </button>
+                    </div>
+                  </div>
+                </div>
                 {freeBasicUsed ? (
                   <p className="mt-3 text-pretty text-xs leading-relaxed text-amber-100/75">
                     {copy.freeBasicUsedHint}
@@ -1139,10 +1611,10 @@ function HomePageContent() {
                   ) : null}
                 </div>
               ) : (
-                <div className="p-5 sm:p-7">
+                <div>
               <div className="mx-auto max-w-4xl">
 
-                {tarotMessage ? (
+                {tarotMessage && !isTarotReportView ? (
                   <div className="mt-5 rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">
                     {tarotMessage}
                   </div>
@@ -1156,10 +1628,10 @@ function HomePageContent() {
                 {tarotState === "idle" ? (
                   <>
                     <div className="mx-auto w-full max-w-4xl rounded-2xl border border-violet-400/45 bg-gradient-to-b from-violet-500/[0.18] via-violet-950/30 to-violet-950/50 p-5 shadow-[0_0_0_1px_rgba(196,181,253,0.2),0_16px_48px_-12px_rgba(0,0,0,0.55)] ring-1 ring-violet-300/25 sm:p-6">
-                      <h2 className="text-base font-semibold tracking-tight text-white sm:text-lg">
-                        {tarot.chooseSpread}
+                      <h2 className="cosmotips-heading-3">
+                        1. {tarot.chooseSpread}
                       </h2>
-                    <div className="mt-4 grid gap-2.5 sm:grid-cols-3 sm:items-stretch">
+                    <div className="mt-4 grid gap-2.5 sm:grid-cols-2 sm:items-stretch xl:grid-cols-3">
                       {([
                         {
                           id: "daily_card" as const,
@@ -1231,12 +1703,61 @@ function HomePageContent() {
                         );
                       })}
                     </div>
+                    <div className="mt-5 rounded-2xl border border-amber-300/35 bg-amber-400/10 p-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-amber-50">
+                            {proCopy.title}: {proCopy.price}
+                          </p>
+                          <ul className="mt-3 space-y-1.5 text-sm font-medium leading-6 text-white/82">
+                            {proCopy.benefits.map((benefit) => (
+                              <li key={benefit} className="flex gap-2">
+                                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-200" />
+                                <span>{benefit}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-start">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSubscriptionInterval("monthly");
+                              void startProSubscription("monthly");
+                            }}
+                            disabled={subscriptionLoading}
+                            className="rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-2 text-xs font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {proCopy.monthly}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSubscriptionInterval("yearly");
+                              void startProSubscription("yearly");
+                            }}
+                            disabled={subscriptionLoading}
+                            className="rounded-2xl border border-amber-200/35 px-4 py-2 text-xs font-bold text-amber-50 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {proCopy.yearly}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                     </div>
                   </>
                 ) : null}
 
+                {isTarotReportView ? (
+                  <div className="rounded-2xl border border-violet-400/45 bg-gradient-to-b from-violet-500/[0.18] via-violet-950/30 to-violet-950/50 p-5 text-center shadow-[0_0_0_1px_rgba(196,181,253,0.2),0_16px_48px_-12px_rgba(0,0,0,0.55)] ring-1 ring-violet-300/25 sm:p-6">
+                    <h1 className="cosmotips-heading-3">
+                      {tarotReportTitle}
+                    </h1>
+                  </div>
+                ) : null}
+
                 {tarotState === "shuffling" ? (
-                  <div className="mt-8 flex flex-col items-center justify-center py-10 text-center">
+                  <div className="mt-6 flex flex-col items-center justify-center py-10 text-center">
                     <style jsx>{`
                       @keyframes tarotShuffle {
                         0% { transform: translateX(-34px) rotate(-8deg); }
@@ -1263,7 +1784,7 @@ function HomePageContent() {
                 ) : null}
 
                 {tarotState === "generating" ? (
-                  <div className="mt-8 flex items-center justify-center gap-3 py-10 text-white/75">
+                  <div className="mt-6 flex items-center justify-center gap-3 py-10 text-white/75">
                     <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-violet-200" />
                     {tarot.generating}
                   </div>
@@ -1272,6 +1793,16 @@ function HomePageContent() {
                 {tarotState === "no_tokens" ? (
                   <div className="mt-7 rounded-3xl border border-amber-300/25 bg-amber-400/10 p-5 text-center">
                     <p className="text-sm leading-6 text-amber-50">{tarot.noTokens}</p>
+                    <div className="mx-auto mt-4 max-w-xs">
+                      <select
+                        value={tarotPackageSize}
+                        onChange={(e) => setTarotPackageSize(e.target.value as TarotPackageSize)}
+                        className="cosmic-birth-field text-left"
+                      >
+                        <option value="1">{tarot.tokenPackageOption1}</option>
+                        <option value="3">{tarot.tokenPackageOption3}</option>
+                      </select>
+                    </div>
                     <button
                       type="button"
                       onClick={() => void buyTarotReading()}
@@ -1280,11 +1811,18 @@ function HomePageContent() {
                     >
                       {tarotCheckoutLoading ? tarot.generating : tarot.buyTokens}
                     </button>
+                    <button
+                      type="button"
+                      onClick={resetTarot}
+                      className="mt-3 block w-full text-center text-sm font-semibold text-white/65 underline-offset-4 transition hover:text-white"
+                    >
+                      {tarot.back}
+                    </button>
                   </div>
                 ) : null}
 
                 {tarotState === "result" && tarotResult ? (
-                  <div className="mt-7 space-y-6">
+                  <div className="mt-6 space-y-6">
                     {tarotSpread === "daily_card" ? (
                       <div className="mx-auto max-w-sm">
                         {tarotResult.cards.map((card, index) => (
@@ -1294,10 +1832,7 @@ function HomePageContent() {
                           >
                             <div className="absolute inset-4 rounded-[1.55rem] border border-amber-100/20" />
                             <div className="absolute left-1/2 top-20 h-32 w-32 -translate-x-1/2 rounded-full border border-amber-200/25 bg-amber-200/10 blur-sm" />
-                            <div className="relative flex min-h-72 flex-col items-center justify-between gap-7 rounded-[1.55rem] bg-black/18 px-4 py-5">
-                              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-100/85">
-                                {tarotPositions(tarotSpread, lang)[index]}
-                              </p>
+                            <div className="relative flex min-h-72 flex-col items-center justify-center gap-7 rounded-[1.55rem] bg-black/18 px-4 py-5">
                               <img
                                 src={card.imageUrl}
                                 alt={tarotCardName(card, lang)}
@@ -1308,7 +1843,7 @@ function HomePageContent() {
                                   {tarotCardName(card, lang)}
                                 </p>
                                 <p className="mt-2 text-[0.65rem] font-bold uppercase tracking-[0.22em] text-white/45">
-                                  {card.arcana === "major" ? "Major Arcana" : "Minor Arcana"}
+                                  {card.arcana === "major" ? tarot.arcanaMajor : tarot.arcanaMinor}
                                 </p>
                               </div>
                             </div>
@@ -1338,7 +1873,7 @@ function HomePageContent() {
                                   {tarotCardName(card, lang)}
                                 </p>
                                 <p className="mt-2 text-[0.65rem] font-bold uppercase tracking-[0.22em] text-white/45">
-                                  {card.arcana === "major" ? "Major Arcana" : "Minor Arcana"}
+                                  {card.arcana === "major" ? tarot.arcanaMajor : tarot.arcanaMinor}
                                 </p>
                               </div>
                             </div>
@@ -1346,14 +1881,14 @@ function HomePageContent() {
                         ))}
                       </div>
                     ) : (
-                      <div className="rounded-[2rem] border border-violet-200/15 bg-black/20 p-4 sm:p-6">
-                        <div className="grid gap-3 md:grid-cols-5 md:grid-rows-5">
+                      <div className="rounded-[2rem] border border-violet-200/15 bg-black/20 p-4 pt-4 sm:p-6 sm:pt-5">
+                        <div className="mx-auto grid max-w-4xl content-start justify-center gap-3 md:grid-cols-5 md:grid-rows-4">
                         {tarotResult.cards.map((card, index) => (
                           <div
                             key={`${card.id}-${index}`}
-                              className={`min-h-32 rounded-2xl border border-amber-200/25 bg-gradient-to-br from-violet-300/18 to-violet-950/75 p-3 text-center shadow-xl shadow-black/25 ${celticCrossLayoutClasses[index] ?? ""}`}
+                              className={`flex min-h-36 flex-col items-center rounded-2xl border border-amber-200/25 bg-gradient-to-br from-violet-300/18 to-violet-950/75 p-3 text-center shadow-xl shadow-black/25 ${celticCrossLayoutClasses[index] ?? ""}`}
                           >
-                              <p className="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-amber-100/75">
+                              <p className="min-h-8 text-[0.65rem] font-bold uppercase leading-4 tracking-[0.14em] text-amber-100/75">
                                 {index + 1}. {tarotPositions(tarotSpread, lang)[index]}
                             </p>
                               <img
@@ -1361,7 +1896,7 @@ function HomePageContent() {
                                 alt={tarotCardName(card, lang)}
                                 className={`mx-auto mt-3 h-20 w-14 rounded-md border border-amber-100/25 object-cover shadow-lg shadow-black/35 ${card.reversed ? "rotate-180" : ""}`}
                               />
-                              <p className="mt-5 text-sm font-semibold leading-snug text-white">
+                              <p className="mt-4 text-sm font-semibold leading-snug text-white">
                               {tarotCardName(card, lang)}
                             </p>
                           </div>
@@ -1391,7 +1926,7 @@ function HomePageContent() {
                     <button
                       type="button"
                       onClick={resetTarot}
-                      className="rounded-2xl bg-gradient-to-b from-violet-300 to-violet-500 px-5 py-3 text-sm font-bold text-black"
+                      className="rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-5 py-3 text-sm font-bold text-black shadow-lg shadow-amber-950/20 transition hover:from-amber-100 hover:to-amber-300"
                     >
                       {tarot.newReading}
                     </button>
@@ -1403,8 +1938,90 @@ function HomePageContent() {
             </section>
         </main>
 
-        <HomeFooter copy={copy} lang={lang} />
+        {!isTarotReportView ? <HomeFooter copy={copy} lang={lang} /> : null}
       </div>
+      {proAuthModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm">
+          <div className="relative w-full max-w-md rounded-[2rem] border border-white/12 bg-[#17112f] p-6 shadow-2xl shadow-black/40">
+            <button
+              type="button"
+              onClick={closeProAuthModal}
+              aria-label="Close"
+              className="absolute right-4 top-4 rounded-full border border-white/10 px-3 py-1 text-lg leading-none text-white/70 transition hover:bg-white/10 hover:text-white"
+            >
+              &times;
+            </button>
+            {proAuthModalView === "login" ? (
+              <div className="space-y-5">
+                <div className="pr-8">
+                  <p className="text-xs font-bold uppercase tracking-[0.3em] text-amber-200/80">
+                    Pro
+                  </p>
+                  <h2 className="cosmotips-heading-3 mt-2">
+                    {proCopy.modalTitle}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={startGoogleProAuth}
+                  className="w-full rounded-2xl border border-white/12 bg-white px-4 py-3 text-sm font-bold text-black transition hover:bg-amber-50"
+                >
+                  {proCopy.modalGoogle}
+                </button>
+                <form className="space-y-3" onSubmit={submitProMagicLink}>
+                  <input
+                    type="email"
+                    value={proAuthEmail}
+                    onChange={(event) => setProAuthEmail(event.target.value)}
+                    placeholder={proCopy.modalEmailPlaceholder}
+                    className="w-full rounded-2xl border border-white/12 bg-white/[0.08] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/45 focus:border-amber-200"
+                  />
+                  <button
+                    type="submit"
+                    disabled={proAuthLoading}
+                    className="w-full rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-3 text-sm font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {proAuthLoading ? "..." : proCopy.modalMagicLink}
+                  </button>
+                </form>
+                {proAuthError ? (
+                  <p className="rounded-2xl border border-red-300/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                    {proAuthError}
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <div className="space-y-5 pr-8">
+                <p className="text-xs font-bold uppercase tracking-[0.3em] text-amber-200/80">
+                  Pro
+                </p>
+                <h2 className="cosmotips-heading-3">{proCopy.modalSentTitle}</h2>
+                <p className="text-sm leading-6 text-white/72">{proCopy.modalSentBody}</p>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProAuthModalView("login");
+                      setProAuthError(null);
+                    }}
+                    className="rounded-2xl border border-white/12 px-4 py-3 text-sm font-bold text-white transition hover:bg-white/10"
+                  >
+                    {proCopy.modalBack}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void submitProMagicLink()}
+                    disabled={proAuthLoading}
+                    className="rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-3 text-sm font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {proAuthLoading ? "..." : proCopy.modalResend}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

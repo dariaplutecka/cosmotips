@@ -3,6 +3,8 @@ import { z } from "zod";
 import { createAuthToken, storeMagicLinkToken } from "@/lib/authStore";
 import { sendMagicLinkEmail } from "@/lib/authEmail";
 import { AppLangSchema, CheckoutPayloadSchema } from "@/lib/reportSchema";
+import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/requestIp";
 
 const MagicLinkPayloadSchema = z.object({
   email: CheckoutPayloadSchema.shape.email,
@@ -16,6 +18,11 @@ function getBaseUrl(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = await checkRateLimit(`auth:${getClientIp(request)}`);
+  if (!rateLimit.success) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = MagicLinkPayloadSchema.safeParse(body);
   if (!parsed.success) {

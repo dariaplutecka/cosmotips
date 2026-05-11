@@ -84,7 +84,7 @@ function ContactContent() {
           logoAriaLabel={hc.navLogoHomeAria}
         />
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="cosmotips-headline font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h1 className="cosmotips-headline cosmotips-heading-2">
             {c.pageTitle}
           </h1>
           <Link

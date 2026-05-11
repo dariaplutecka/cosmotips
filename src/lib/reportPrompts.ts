@@ -83,6 +83,7 @@ function editorialQualityInstructions(lang: AppLang): string[] {
   if (lang === "pl") {
     return [
       `JAKOŚĆ JĘZYKA: Pisz jak bardzo dobry polski autor i redaktor, nie jak automatyczne tłumaczenie. Tekst ma brzmieć naturalnie, płynnie i elegancko po polsku.`,
+      `PERSPEKTYWA: Pisz jako astrolog w pierwszej osobie i zwracaj się bezpośrednio do czytelnika. Używaj naturalnych konstrukcji typu „Widzę w Twoim życiu…”, „Stoisz przed…”, „Twoja przeszłość pokazuje…”. Nie opisuj osoby z dystansu w trzeciej osobie.`,
       `Unikaj kalek z angielskiego, niezgrabnych konstrukcji i sztywnego tonu. Nie używaj form typu „możesz doświadczać energii” co drugi akapit; zamiast tego pisz konkretnie, obrazowo i z wyczuciem.`,
       `Różnicuj długość zdań. Łącz interpretację astrologiczną z żywym, literackim językiem, ale bez patosu, przesady i ezoterycznego żargonu.`,
       `Dbaj o poprawną polszczyznę: właściwy szyk zdania, interpunkcję, odmianę, naturalne kolokacje i spójne przejścia między akapitami.`,
@@ -93,6 +94,7 @@ function editorialQualityInstructions(lang: AppLang): string[] {
   if (lang === "es") {
     return [
       `CALIDAD DEL LENGUAJE: Escribe como una persona nativa con gran capacidad literaria y editorial en español, no como una traducción automática.`,
+      `PERSPECTIVA: escribe como astróloga/o en primera persona y dirígete directamente a la persona lectora. Usa formulaciones naturales como “Veo en tu vida…”, “Estás ante…”, “Tu pasado muestra…”. No describas a la persona desde la distancia en tercera persona.`,
       `Evita calcos del inglés, frases rígidas y tono genérico de IA. El texto debe sonar natural, fluido, elegante y emocionalmente preciso.`,
       `Varía la longitud de las frases. Une la interpretación astrológica con un estilo cuidado y evocador, sin caer en exageración, dramatismo ni jerga esotérica vacía.`,
       `Cuida la gramática, la puntuación, las concordancias, las colocaciones naturales y las transiciones entre párrafos.`,
@@ -102,6 +104,7 @@ function editorialQualityInstructions(lang: AppLang): string[] {
   }
   return [
     `Language quality: write polished, natural, human prose with varied sentence rhythm and no generic filler.`,
+    `Perspective: write as the astrologer in first person and address the reader directly. Use natural phrasing such as “I see in your life…”, “You stand before…”, “Your past shows…”. Do not describe the person from a detached third-person perspective.`,
   ];
 }
 
@@ -251,10 +254,10 @@ function premiumPersonalityOutline(
         : `LANGUAGE QUALITY: the text should read as if written by an excellent native English writer. Keep a premium, psychological, reflective, insightful, natural tone with no banalities or horoscope clichés.`,
     ``,
     lang === "pl"
-      ? `ZASADY TREŚCI: pisz w drugiej osobie. Nie używaj wypunktowań ani list numerowanych w finalnym raporcie. Każda sekcja ma mieć 2–4 akapity. Pomiędzy sekcjami zachowaj płynność i logiczne przejścia. Nie stosuj deterministycznych stwierdzeń; mów o wzorcach, tendencjach, napięciach, potencjałach i dynamikach wewnętrznych.`
+      ? `ZASADY TREŚCI: pisz jako astrolog w pierwszej osobie i zwracaj się bezpośrednio do czytelnika w drugiej osobie. Nie używaj wypunktowań ani list numerowanych w finalnym raporcie. Każda sekcja ma mieć 2–4 akapity. Pomiędzy sekcjami zachowaj płynność i logiczne przejścia. Nie stosuj deterministycznych stwierdzeń; mów o wzorcach, tendencjach, napięciach, potencjałach i dynamikach wewnętrznych.`
       : lang === "es"
-        ? `REGLAS DE CONTENIDO: escribe en segunda persona. No uses viñetas ni listas numeradas en el informe final. Cada sección debe tener 2–4 párrafos. Mantén transiciones fluidas y lógicas entre secciones. Evita afirmaciones deterministas; habla de patrones, tendencias, tensiones, potenciales y dinámicas internas.`
-        : `CONTENT RULES: write in the second person. Do not use bullet points or numbered lists in the final report. Each section should contain 2–4 paragraphs. Keep transitions fluid and logical. Avoid deterministic claims; describe patterns, tendencies, tensions, potentials, and inner dynamics.`,
+        ? `REGLAS DE CONTENIDO: escribe como astróloga/o en primera persona y dirígete directamente a la persona lectora en segunda persona. No uses viñetas ni listas numeradas en el informe final. Cada sección debe tener 2–4 párrafos. Mantén transiciones fluidas y lógicas entre secciones. Evita afirmaciones deterministas; habla de patrones, tendencias, tensiones, potenciales y dinámicas internas.`
+        : `CONTENT RULES: write as the astrologer in first person and address the reader directly in second person. Do not use bullet points or numbered lists in the final report. Each section should contain 2–4 paragraphs. Keep transitions fluid and logical. Avoid deterministic claims; describe patterns, tendencies, tensions, potentials, and inner dynamics.`,
     ``,
     `Dane techniczne i ograniczenia interpretacji (użyj jako fundamentu, nie twórz z nich osobnej sekcji):`,
     ...cc.map((l) => `- ${l}`),
@@ -330,7 +333,7 @@ function plPersonalityOutline(
     `To jest raport osobowościowy. NIE zaczynaj od tytułu H1 ani od technicznej sekcji „Wykres Natalny”. Zacznij od portretu — bez nagłówka.`,
     ``,
     `NAJWAŻNIEJSZE ZASADY FORMATU:`,
-    `- Cały tekst musi być w drugiej osobie: „Ty”, „Twoja”, „masz”, „nosisz w sobie”. Nigdy nie pisz o osobie w trzeciej osobie.`,
+    `- Cały tekst pisz jako astrolog w pierwszej osobie i zwracaj się do osoby czytającej w drugiej osobie: „Widzę w Tobie…”, „Twoja mapa pokazuje…”, „masz”, „nosisz w sobie”. Nigdy nie pisz o osobie w trzeciej osobie.`,
     `- Nie używaj żadnych list punktowanych ani numerowanych w finalnym raporcie. Wszystko ma być prozą w akapitach.`,
     `- Nie zaczynaj sekcji od formuł „Merkury wskazuje na…”, „Wenus oznacza…”, „Mars pokazuje…”. Planety i znaki mają być wplecione naturalnie w opis.`,
     `- Zachowaj wszystkie fakty astrologiczne z JSON: znaki, planety, aspekty i Ascendent. Nie zmieniaj interpretacji, tylko nadaj jej lepszą strukturę i język.`,
@@ -494,7 +497,7 @@ function enPersonalityOutline(
     `This is a personality report. Do NOT start with an H1 title or a technical “Natal chart” section. Start with the portrait — no heading.`,
     ``,
     `MOST IMPORTANT FORMAT RULES:`,
-    `- Write entirely in the second person: “you”, “your”, “you carry”, “you tend to”. Never describe the person in third person.`,
+    `- Write as the astrologer in first person while addressing the reader in second person: “I see in you…”, “your chart shows…”, “you carry”, “you tend to”. Never describe the person in third person.`,
     `- Do not use bullet points or numbered lists anywhere in the final report. Everything must be prose in paragraphs.`,
     `- Do not start sections with formulas like “Mercury in Aries indicates…” or “Venus means…”. Planets and signs should be woven naturally into the description.`,
     `- Preserve every astrological fact from the JSON: signs, planets, aspects, and Ascendant. Do not change the interpretation — only restructure and improve the writing.`,
@@ -654,7 +657,7 @@ function esPersonalityOutline(
     `Este es un informe de personalidad. NO empieces con un título H1 ni con una sección técnica de “Carta natal”. Empieza con el retrato — sin encabezado.`,
     ``,
     `REGLAS DE FORMATO MÁS IMPORTANTES:`,
-    `- Escribe siempre en segunda persona: “tú”, “tu”, “llevas”, “tienes”, “sueles”. Nunca describas a la persona en tercera persona.`,
+    `- Escribe como astróloga/o en primera persona mientras te diriges a la persona en segunda persona: “Veo en ti…”, “tu carta muestra…”, “llevas”, “tienes”, “sueles”. Nunca describas a la persona en tercera persona.`,
     `- No uses viñetas ni listas numeradas en el informe final. Todo debe estar escrito en prosa, en párrafos.`,
     `- No empieces secciones con fórmulas como “Mercurio en Aries indica…” o “Venus significa…”. Los planetas y signos deben integrarse de forma natural en la descripción.`,
     `- Conserva todos los hechos astrológicos del JSON: signos, planetas, aspectos y Ascendente. No cambies la interpretación; solo mejora la estructura y la escritura.`,

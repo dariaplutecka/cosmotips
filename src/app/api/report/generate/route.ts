@@ -13,6 +13,9 @@ import { sendReportPdfEmail } from "@/lib/reportEmail";
 import { getReport, setReport } from "@/lib/reportCache";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { successUi } from "@/lib/uiCopy";
+import { getAuthSession } from "@/lib/authSession";
+import { isProSubscriber } from "@/lib/subscriptionStore";
+import { consumeFreeReportPayload } from "@/lib/freeReportStore";
 
 /** pdfmake + vfs_fonts need Node (not Edge). */
 export const runtime = "nodejs";
@@ -76,6 +79,8 @@ export async function GET(req: Request) {
 
   const freeNatalBasic =
     searchParams.get("fnb") === "1" && sessionId.startsWith("fnb_");
+  const proPersonality =
+    searchParams.get("pro") === "1" && sessionId.startsWith("pro_personality_");
 
   let email = "";
   let dob = "";
@@ -94,6 +99,21 @@ export async function GET(req: Request) {
     langRaw = searchParams.get("lang") ?? "en";
     birthTimeUnknown = searchParams.get("birthTimeUnknown") === "1";
   } else if (freeNatalBasic) {
+    const payload = await consumeFreeReportPayload(sessionId);
+    if (!payload || payload.reportType !== "natal_basic") {
+      return NextResponse.json(
+        { error: "Invalid or expired free natal session." },
+        { status: 403 },
+      );
+    }
+    email = payload.email;
+    dob = payload.dob;
+    tob = payload.tob;
+    pob = payload.pob;
+    reportTypeRaw = payload.reportType;
+    langRaw = payload.lang;
+    birthTimeUnknown = payload.birthTimeUnknown;
+  } else if (proPersonality) {
     email = searchParams.get("email") ?? "";
     dob = searchParams.get("dob") ?? "";
     tob = searchParams.get("tob") ?? "";
@@ -101,10 +121,16 @@ export async function GET(req: Request) {
     reportTypeRaw = searchParams.get("reportType") ?? "";
     langRaw = searchParams.get("lang") ?? "en";
     birthTimeUnknown = searchParams.get("birthTimeUnknown") === "1";
-    if (reportTypeRaw !== "natal_basic") {
+    const session = await getAuthSession();
+    if (
+      !session?.email ||
+      session.email !== email.trim().toLowerCase() ||
+      reportTypeRaw !== "personality" ||
+      !(await isProSubscriber(email))
+    ) {
       return NextResponse.json(
-        { error: "Invalid free natal session." },
-        { status: 400 },
+        { error: "Invalid Pro personality session." },
+        { status: 403 },
       );
     }
   } else {

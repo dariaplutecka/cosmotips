@@ -31,9 +31,9 @@ function ArticlesContent() {
           logoAriaLabel={hc.navLogoHomeAria}
         />
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="cosmotips-headline font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h1 className="cosmotips-heading-2">
             {c.pageTitle}
-          </h2>
+          </h1>
           <Link
             href={`/?lang=${lang}`}
             className="inline-flex shrink-0 items-center justify-center self-start rounded-2xl bg-gradient-to-b from-violet-300 to-violet-500 px-4 py-2 text-sm font-semibold text-black shadow-lg shadow-violet-500/20 transition hover:from-violet-200 hover:to-violet-500 sm:self-auto"
@@ -45,14 +45,14 @@ function ArticlesContent() {
         <article
           className={`${cardShell} relative overflow-x-clip overflow-y-visible p-6 pb-10 sm:p-9 sm:pb-12 md:p-12 md:pb-14 lg:px-14 lg:pb-16`}
         >
-          <h1 className="font-heading text-xl font-semibold tracking-tight text-white sm:text-2xl md:text-[1.7rem] lg:text-[1.85rem]">
+          <h2 className="cosmotips-heading-3">
             {article.title}
-          </h1>
+          </h2>
           <div className="mt-8 w-full max-w-none border-t border-white/10 pt-8 text-pretty text-base leading-[1.75] text-white/85 sm:text-lg sm:leading-[1.8] md:text-[1.0625rem] md:leading-[1.82]">
             <ReactMarkdown
               components={{
                 h2: ({ children }) => (
-                  <h2 className="mt-8 mb-3 font-heading text-xl font-semibold tracking-tight text-violet-100 sm:text-2xl">
+                  <h2 className="cosmotips-heading-3 mt-8 mb-3 text-violet-100">
                     {children}
                   </h2>
                 ),

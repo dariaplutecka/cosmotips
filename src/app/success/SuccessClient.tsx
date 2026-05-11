@@ -8,7 +8,7 @@ import { CosmotipsTopBar } from "@/components/CosmotipsTopBar";
 import { NatalChartWheel } from "@/components/NatalChartWheel";
 import type { AppLang } from "@/lib/reportSchema";
 import type { NatalChartPayload } from "@/lib/natalChart";
-import { homeCopy, successUi } from "@/lib/uiCopy";
+import { homeCopy, successUi, zodiacDisplayName } from "@/lib/uiCopy";
 
 type Meta = {
   email: string;
@@ -86,6 +86,8 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
   const sessionId = sp.get("session_id") ?? "";
   const devMode = sp.get("dev") === "1" || sessionId.startsWith("dev_");
   const freeNatalMode = sp.get("fnb") === "1" && sessionId.startsWith("fnb_");
+  const proPersonalityMode =
+    sp.get("pro") === "1" && sessionId.startsWith("pro_personality_");
   const devEmail = sp.get("email") ?? "";
   const devDob = sp.get("dob") ?? "";
   const devTob = sp.get("tob") ?? "";
@@ -114,7 +116,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
   const uiLang: AppLang =
     meta?.lang ??
     queryLang ??
-    (devMode || freeNatalMode ? devLang : initialLang);
+    (devMode || freeNatalMode || proPersonalityMode ? devLang : initialLang);
   const su = successUi[uiLang];
 
   const title = useMemo(() => {
@@ -148,15 +150,15 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
       URL.revokeObjectURL(href);
     } catch (err) {
       console.error("[success] PDF download failed:", err);
-      window.alert("Could not download PDF. Try again later.");
+      window.alert(successUi[uiLang].pdfDownloadFailedAlert);
     } finally {
       setPdfDownloading(false);
     }
-  }, [meta?.reportType, report, title]);
+  }, [meta?.reportType, report, title, uiLang]);
 
   const fetchReport = useCallback(async () => {
     if (!sessionId) {
-      setError("Missing session id from Stripe.");
+      setError(successUi[uiLang].missingSession);
       setLoading(false);
       return;
     }
@@ -176,6 +178,8 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
         if (devBirthTimeUnknown) params.set("birthTimeUnknown", "1");
       } else if (freeNatalMode) {
         params.set("fnb", "1");
+      } else if (proPersonalityMode) {
+        params.set("pro", "1");
         params.set("email", devEmail);
         params.set("dob", devDob);
         params.set("tob", devTob);
@@ -193,8 +197,9 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
         data && "error" in data && typeof data.error === "string"
           ? data.error
           : null;
-      if (!res.ok) throw new Error(serverError ?? "Failed to generate.");
-      if (!data || "error" in data) throw new Error(serverError ?? "Failed.");
+      if (!res.ok) throw new Error(serverError ?? successUi[uiLang].generateFailedGeneric);
+      if (!data || "error" in data)
+        throw new Error(serverError ?? successUi[uiLang].generateFailedGeneric);
 
       setReport(data.report);
       setMeta({
@@ -221,13 +226,16 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
         // ignore localStorage issues
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(
+        err instanceof Error ? err.message : successUi[uiLang].generateFailedGeneric,
+      );
       setLoading(false);
     }
   }, [
     sessionId,
     devMode,
     freeNatalMode,
+    proPersonalityMode,
     devEmail,
     devDob,
     devTob,
@@ -235,6 +243,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
     devReportType,
     devLang,
     devBirthTimeUnknown,
+    uiLang,
   ]);
 
   useEffect(() => {
@@ -299,7 +308,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
         />
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h1 className="cosmotips-headline text-3xl font-semibold tracking-tight sm:text-4xl">
+            <h1 className="cosmotips-headline cosmotips-heading-2">
               {title}
             </h1>
             {meta ? (
@@ -312,7 +321,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
                 {zodiac ? (
                   <span className="inline-flex items-center gap-2 rounded-full border border-violet-300/30 bg-violet-400/10 px-3 py-1 text-xs text-violet-100">
                     <span className="text-base leading-none">{zodiac.symbol}</span>
-                    {zodiac.name}
+                    {zodiacDisplayName(uiLang, zodiac.name)}
                   </span>
                 ) : null}
               </div>
@@ -416,17 +425,17 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
               <ReactMarkdown
                 components={{
                   h1: ({ children }) => (
-                    <h1 className="cosmotips-headline mb-5 text-3xl font-semibold tracking-tight">
+                    <h1 className="cosmotips-headline cosmotips-heading-2 mb-5">
                       {children}
                     </h1>
                   ),
                   h2: ({ children }) => (
-                    <h2 className="mt-7 mb-3 text-2xl font-semibold text-violet-100">
+                    <h2 className="cosmotips-heading-3 mt-7 mb-3 text-violet-100">
                       {children}
                     </h2>
                   ),
                   h3: ({ children }) => (
-                    <h3 className="mt-6 mb-2 text-xl font-semibold text-violet-100">
+                    <h3 className="cosmotips-heading-3 mt-6 mb-2 text-violet-100">
                       {children}
                     </h3>
                   ),
@@ -460,12 +469,12 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
                   className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-b from-violet-300 to-violet-500 px-4 py-2 text-sm font-semibold text-black shadow-lg shadow-violet-500/20 transition disabled:opacity-60"
                   disabled={pdfDownloading}
                 >
-                  {pdfDownloading ? "Preparing PDF…" : "Download PDF"}
+                  {pdfDownloading ? su.pdfPreparing : su.pdfDownload}
                 </button>
               </div>
             </article>
           ) : (
-            <div className="text-white/70">No report found.</div>
+            <div className="text-white/70">{su.noReportFound}</div>
           )}
         </div>
 

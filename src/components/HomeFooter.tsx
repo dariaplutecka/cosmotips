@@ -28,6 +28,12 @@ export function HomeFooter({ copy, lang }: Props) {
         >
           {copy.footerContactTitle}
         </Link>
+        <Link
+          href={`/reports?${q}`}
+          className="font-medium text-violet-200 underline decoration-violet-400/45 underline-offset-4 transition hover:text-violet-100"
+        >
+          {copy.footerReportsTitle}
+        </Link>
       </nav>
       <p className="mx-auto mt-6 max-w-2xl text-xs leading-relaxed text-white/45">
         {copy.footer}

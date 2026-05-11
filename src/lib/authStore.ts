@@ -59,10 +59,17 @@ export async function consumeMagicLinkToken(
 ): Promise<MagicLinkRecord | null> {
   const redisClient = getRedisClient();
   const key = magicLinkKey(hashToken(token));
-  const record = await redisClient.get<MagicLinkRecord>(key);
-  if (!record) return null;
-  await redisClient.del(key);
-  return record;
+  const script = `
+local value = redis.call("GET", KEYS[1])
+if not value then
+  return nil
+end
+redis.call("DEL", KEYS[1])
+return value
+`;
+  const raw = await redisClient.eval<[], string | null>(script, [key], []);
+  if (!raw) return null;
+  return JSON.parse(raw) as MagicLinkRecord;
 }
 
 export async function storeGoogleState(state: string): Promise<void> {
@@ -74,8 +81,14 @@ export async function storeGoogleState(state: string): Promise<void> {
 export async function consumeGoogleState(state: string): Promise<boolean> {
   const redisClient = getRedisClient();
   const key = googleStateKey(hashToken(state));
-  const exists = await redisClient.get<string>(key);
-  if (!exists) return false;
-  await redisClient.del(key);
-  return true;
+  const script = `
+local value = redis.call("GET", KEYS[1])
+if not value then
+  return 0
+end
+redis.call("DEL", KEYS[1])
+return 1
+`;
+  const consumed = await redisClient.eval<[], number>(script, [key], []);
+  return consumed === 1;
 }

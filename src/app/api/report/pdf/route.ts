@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { generateReportPdfBuffer } from "@/lib/reportPdf";
+import { checkRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/requestIp";
 
 /** pdfmake + vfs_fonts need Node (not Edge). */
 export const runtime = "nodejs";
@@ -19,6 +21,11 @@ function safePdfFilename(filename: string | undefined) {
 }
 
 export async function POST(req: Request) {
+  const rateLimit = await checkRateLimit(`pdf:${getClientIp(req)}`);
+  if (!rateLimit.success) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => null);
   const parsed = PdfPayloadSchema.safeParse(body);
   if (!parsed.success) {

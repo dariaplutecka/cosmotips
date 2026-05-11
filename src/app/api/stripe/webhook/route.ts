@@ -15,6 +15,14 @@ import { sendReportPdfEmail } from "@/lib/reportEmail";
 import { getReport, setReport } from "@/lib/reportCache";
 import { successUi } from "@/lib/uiCopy";
 import { addTarotTokens } from "@/lib/tarotTokenStore";
+import { claimIdempotencyKey, proWebhookEventKey } from "@/lib/proDeliveryStore";
+import {
+  getEmailByStripeCustomerId,
+  getEmailByStripeSubscriptionId,
+  setProSubscription,
+  type ProBillingInterval,
+  type ProSubscriptionStatus,
+} from "@/lib/subscriptionStore";
 
 /** pdfmake + Stripe webhook verification need Node (not Edge). */
 export const runtime = "nodejs";
@@ -63,6 +71,87 @@ function extractText(resp: unknown): string {
   }
 
   return "";
+}
+
+function objectValue<T = unknown>(value: unknown, key: string): T | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  return (value as Record<string, T>)[key];
+}
+
+function objectId(value: unknown): string | null {
+  if (typeof value === "string") return value;
+  return objectValue<string>(value, "id") ?? null;
+}
+
+function metadataValue(value: unknown, key: string): string | undefined {
+  const metadata = objectValue<Record<string, string | undefined>>(value, "metadata");
+  return metadata?.[key];
+}
+
+function customerEmail(value: unknown): string | undefined {
+  const customer = objectValue<{ email?: string }>(value, "customer");
+  return customer?.email;
+}
+
+function subscriptionStatus(value: unknown): ProSubscriptionStatus {
+  return (
+    objectValue<string>(value, "status") as ProSubscriptionStatus | undefined
+  ) ?? "incomplete";
+}
+
+function subscriptionPeriodEnd(value: unknown): number {
+  return objectValue<number>(value, "current_period_end") ?? 0;
+}
+
+function billingIntervalFromMetadata(value: unknown): ProBillingInterval {
+  const interval = metadataValue(value, "billingInterval");
+  return interval === "yearly" ? "yearly" : "monthly";
+}
+
+function isProSubscriptionObject(value: unknown): boolean {
+  return metadataValue(value, "product") === "pro_subscription";
+}
+
+async function resolveSubscriptionEmail(opts: {
+  email?: string | null;
+  customerId?: string | null;
+  subscriptionId?: string | null;
+}): Promise<string | null> {
+  if (opts.email) return opts.email;
+  if (opts.subscriptionId) {
+    const bySubscription = await getEmailByStripeSubscriptionId(opts.subscriptionId);
+    if (bySubscription) return bySubscription;
+  }
+  if (opts.customerId) {
+    const byCustomer = await getEmailByStripeCustomerId(opts.customerId);
+    if (byCustomer) return byCustomer;
+  }
+  return null;
+}
+
+async function persistSubscriptionFromStripeObject(value: unknown) {
+  const customerId = objectId(objectValue(value, "customer"));
+  const subscriptionId = objectId(value);
+  const email = await resolveSubscriptionEmail({
+    email: metadataValue(value, "email"),
+    customerId,
+    subscriptionId,
+  });
+  if (!email || !customerId || !subscriptionId) {
+    throw new Error("Missing subscription email, customer, or subscription id.");
+  }
+  if (!isProSubscriptionObject(value)) {
+    throw new Error("Stripe subscription is not a Pro subscription.");
+  }
+  await setProSubscription({
+    email,
+    stripeCustomerId: customerId,
+    stripeSubscriptionId: subscriptionId,
+    status: subscriptionStatus(value),
+    billingInterval: billingIntervalFromMetadata(value),
+    currentPeriodEnd: subscriptionPeriodEnd(value),
+    cancelAtPeriodEnd: Boolean(objectValue(value, "cancel_at_period_end")),
+  });
 }
 
 async function generateReportFromCheckoutData(opts: {
@@ -139,6 +228,63 @@ export async function POST(req: Request) {
     );
   }
 
+  if (
+    event.type === "customer.subscription.updated" ||
+    event.type === "customer.subscription.deleted"
+  ) {
+    try {
+      await persistSubscriptionFromStripeObject(event.data.object);
+      return NextResponse.json({ received: true });
+    } catch (err) {
+      console.error("[stripe/webhook] subscription update failed:", err);
+      return NextResponse.json(
+        { error: "Subscription update failed." },
+        { status: 500 },
+      );
+    }
+  }
+
+  if (event.type === "invoice.paid") {
+    try {
+      const invoice = event.data.object;
+      const customerId = objectId(objectValue(invoice, "customer"));
+      const subscriptionId = objectId(objectValue(invoice, "subscription"));
+      if (!subscriptionId) throw new Error("Missing subscription id for invoice.");
+      const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+      if (!isProSubscriptionObject(stripeSubscription)) {
+        return NextResponse.json({ received: true, ignored: true });
+      }
+      let email = await resolveSubscriptionEmail({
+        email:
+          metadataValue(invoice, "email") ??
+          metadataValue(stripeSubscription, "email") ??
+          customerEmail(invoice),
+        customerId,
+        subscriptionId,
+      });
+      if (!email) {
+        await persistSubscriptionFromStripeObject(stripeSubscription);
+        email = await resolveSubscriptionEmail({
+          email: metadataValue(stripeSubscription, "email"),
+          customerId: objectId(objectValue(stripeSubscription, "customer")),
+          subscriptionId,
+        });
+      }
+      if (!email) throw new Error("Unable to resolve subscription email for invoice.");
+      if (!(await claimIdempotencyKey(proWebhookEventKey(event.id), 60 * 60 * 24 * 30))) {
+        return NextResponse.json({ received: true, duplicate: true });
+      }
+      await addTarotTokens(email, 6);
+      return NextResponse.json({ received: true });
+    } catch (err) {
+      console.error("[stripe/webhook] subscription invoice fulfillment failed:", err);
+      return NextResponse.json(
+        { error: "Subscription invoice fulfillment failed." },
+        { status: 500 },
+      );
+    }
+  }
+
   if (event.type !== "checkout.session.completed") {
     return NextResponse.json({ received: true });
   }
@@ -146,6 +292,44 @@ export async function POST(req: Request) {
   const session = event.data.object;
   const sessionId = session.id;
   const metadata = session.metadata;
+
+  if (metadata?.product === "pro_subscription") {
+    try {
+      if (!(await claimIdempotencyKey(proWebhookEventKey(event.id), 60 * 60 * 24 * 30))) {
+        return NextResponse.json({ received: true, duplicate: true });
+      }
+      const subscriptionId = objectId(session.subscription);
+      const customerId = objectId(session.customer);
+      if (!subscriptionId || !customerId) {
+        throw new Error("Missing subscription or customer id.");
+      }
+      const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+      const email =
+        metadata.email ??
+        session.customer_details?.email ??
+        session.customer_email ??
+        metadataValue(stripeSubscription, "email");
+      if (!email) throw new Error("Missing Pro subscription email.");
+      await setProSubscription({
+        email,
+        stripeCustomerId: customerId,
+        stripeSubscriptionId: subscriptionId,
+        status: subscriptionStatus(stripeSubscription),
+        billingInterval: billingIntervalFromMetadata(stripeSubscription),
+        currentPeriodEnd: subscriptionPeriodEnd(stripeSubscription),
+        cancelAtPeriodEnd: Boolean(
+          objectValue(stripeSubscription, "cancel_at_period_end"),
+        ),
+      });
+      return NextResponse.json({ received: true });
+    } catch (err) {
+      console.error("[stripe/webhook] pro subscription activation failed:", err);
+      return NextResponse.json(
+        { error: "Pro subscription activation failed." },
+        { status: 500 },
+      );
+    }
+  }
 
   if (metadata?.product === "tarot_tokens") {
     const email = metadata.email;
@@ -160,13 +344,12 @@ export async function POST(req: Request) {
     const tokensToAdd = Number.isFinite(parsedTokens) ? parsedTokens : 1;
 
     try {
-      const sessionKey = `tarot:session:${sessionId}`;
-      const redis = getWebhookRedisClient();
-      const alreadyProcessed = await redis.get(sessionKey);
-      if (alreadyProcessed) return NextResponse.json({ received: true });
+      getWebhookRedisClient();
+      if (!(await claimIdempotencyKey(`tarot:webhook:${event.id}`, 60 * 60 * 24 * 30))) {
+        return NextResponse.json({ received: true, duplicate: true });
+      }
 
       await addTarotTokens(email, tokensToAdd);
-      await redis.set(sessionKey, "1", { ex: 86400 * 7 });
       console.log(`[tarot] Added ${tokensToAdd} tokens for ${email}`);
       return NextResponse.json({ received: true });
     } catch (err) {
