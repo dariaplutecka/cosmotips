@@ -1,3 +1,5 @@
+import { svgCoords } from "@/lib/svgCoords";
+
 /** Decorative natal-wheel — use variant="background" behind hero text (no layout space). */
 export function NatalChartHeroIllustration({
   className = "",
@@ -45,17 +47,17 @@ export function NatalChartHeroIllustration({
         {signs.map((sym, i) => {
           const a0 = ((i * 30 - 90) * Math.PI) / 180;
           const a1 = (((i + 1) * 30 - 90) * Math.PI) / 180;
-          const x1 = cx + rInner * Math.cos(a0);
-          const y1 = cy + rInner * Math.sin(a0);
-          const x2 = cx + rOuter * Math.cos(a0);
-          const y2 = cy + rOuter * Math.sin(a0);
-          const x3 = cx + rOuter * Math.cos(a1);
-          const y3 = cy + rOuter * Math.sin(a1);
-          const x4 = cx + rInner * Math.cos(a1);
-          const y4 = cy + rInner * Math.sin(a1);
+          const x1 = svgCoords(cx + rInner * Math.cos(a0));
+          const y1 = svgCoords(cy + rInner * Math.sin(a0));
+          const x2 = svgCoords(cx + rOuter * Math.cos(a0));
+          const y2 = svgCoords(cy + rOuter * Math.sin(a0));
+          const x3 = svgCoords(cx + rOuter * Math.cos(a1));
+          const y3 = svgCoords(cy + rOuter * Math.sin(a1));
+          const x4 = svgCoords(cx + rInner * Math.cos(a1));
+          const y4 = svgCoords(cy + rInner * Math.sin(a1));
           const mid = ((i + 0.5) * 30 - 90) * (Math.PI / 180);
-          const lx = cx + ((rInner + rOuter) / 2) * Math.cos(mid);
-          const ly = cy + ((rInner + rOuter) / 2) * Math.sin(mid);
+          const lx = svgCoords(cx + ((rInner + rOuter) / 2) * Math.cos(mid));
+          const ly = svgCoords(cy + ((rInner + rOuter) / 2) * Math.sin(mid));
           return (
             <g key={sym}>
               <path

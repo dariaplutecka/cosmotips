@@ -1,0 +1,139 @@
+================================================================================
+CosmoTips — checklista przed produkcją (Vercel / środowisko „live”)
+================================================================================
+Bez poniższych zmiennych i ustawień zewnętrznych logowanie, linki magiczne,
+płatności Stripe, webhooki, e‑maile z raportami i limity zapytań nie będą
+działać poprawnie w produkcji.
+
+Źródło listy zmiennych: plik .env.example w repozytorium.
+
+--------------------------------------------------------------------------------
+1. Vercel — zmienne środowiskowe (Settings → Environment Variables)
+--------------------------------------------------------------------------------
+Ustaw dla środowiska „Production” (i ewentualnie „Preview”, jeśli testujesz
+PR-y). Po każdej większej zmianie: Redeploy.
+
+Obowiązkowe do sensownego działania aplikacji:
+
+  NEXT_PUBLIC_BASE_URL
+    Pełny publiczny URL produkcji, np. https://cosmotips.eu
+    BEZ końcowego ukośnika. Musi się zgadzać z domeną w Vercel.
+    Używane: przekierowania Stripe, linki magiczne w mailu, Google OAuth.
+
+  AUTH_SECRET
+    Losowy długi sekret (np. openssl rand -hex 32).
+    W produkcji aplikacja rzuci błąd, jeśli go nie ma — sesje nie zadziałają.
+
+  UPSTASH_REDIS_REST_URL  +  UPSTASH_REDIS_REST_TOKEN
+    Konto Upstash Redis (REST API). Bez tego:
+    — tokeny magic link i Google OAuth state nie są zapisywane (logowanie),
+    — limitowanie działa w trybie „pozwól wszystko” (bez Redis),
+    — subskrypcje / tokeny tarot / idempotency webhooków itd. zależą od Redis.
+    Utwórz bazę, skopiuj URL i token z konsoli Upstash.
+
+  OPENAI_API_KEY
+    Klucz z platform.openai — generacja treści raportów i tarota.
+
+  RESEND_API_KEY
+    Klucz API Resend — wysyłka maili (magic link, raporty PDF, kontakt).
+
+  REPORT_EMAIL_FROM
+    Adres „From” zgodny z weryfikacją domeny w Resend, np.
+    CosmoTips <raporty@twoja-domena.pl>
+
+  OPCJONALNIE: CONTACT_INBOX_EMAIL
+    Skrzynka na powiadomienia z formularza kontaktowego (jeśli pusta, kod
+    ma domyślny fallback — sprawdź w src/app/api/contact/route.ts).
+
+  STRIPE_MODE=live
+    Dopiero po skonfigurowaniu płatności „na żywo” (patrz pkt 3).
+
+  STRIPE_SECRET_KEY_LIVE
+    Tajny klucz z Stripe Dashboard (tryb Live).
+
+  STRIPE_WEBHOOK_SECRET
+    Signing secret z endpointu webhooka LIVE wskazującego na produkcję
+    (osobny od trybu test).
+
+  STRIPE_PRO_MONTHLY_PRICE_ID  +  STRIPE_PRO_YEARLY_PRICE_ID
+    ID cen (Price ID) produktu subskrypcji Pro w Stripe Live.
+
+  CRON_SECRET
+    Losowy sekret; ten sam musi „wiedzieć” Vercel przy wywoływaniu cronów
+    (Authorization: Bearer …). Bez tego GET /api/cron/* zwróci 401.
+
+Nigdy w produkcji nie ustawiaj:
+  STRIPE_SKIP_PAYMENT_FOR_DEV=true
+(bez tego testowo można omijać Checkout tylko w dev.)
+
+--------------------------------------------------------------------------------
+2. Google OAuth (jeśli używasz logowania Google)
+--------------------------------------------------------------------------------
+W Google Cloud Console (Credentials → OAuth 2.0):
+
+  Authorized JavaScript origins:
+    https://TWOJA-DOMENA
+
+  Authorized redirect URIs:
+    https://TWOJA-DOMENA/api/auth/google/callback
+
+Zmienne:
+  GOOGLE_CLIENT_ID
+  GOOGLE_CLIENT_SECRET
+
+--------------------------------------------------------------------------------
+3. Stripe — produkcja
+--------------------------------------------------------------------------------
+  • Tryb Live, włączone metody płatności (karty itd.).
+  • Webhook endpoint URL:
+      https://TWOJA-DOMENA/api/stripe/webhook
+    Zdarzenia: zgodne z tym, co obsługuje src/app/api/stripe/webhook/route.ts
+    (zwykle m.in. checkout.session.completed, invoice.paid, subskrypcje — po
+    deployu sprawdź logi przy pierwszej transakcji testowej).
+
+  • Skopiuj signing secret webhooka do STRIPE_WEBHOOK_SECRET (Live).
+
+  • W Stripe Customer Portal (jeśli używasz) ustaw adres powrotu zgodny z
+    NEXT_PUBLIC_BASE_URL.
+
+--------------------------------------------------------------------------------
+4. Resend — domena i DNS
+--------------------------------------------------------------------------------
+Zweryfikuj domenę wysyłki w Resend (SPF/DKIM wg ich instrukcji). Bez tego maile
+mogą iść ze spamem lub w ogóle nie być dostarczane.
+
+--------------------------------------------------------------------------------
+5. Crony (raporty Pro co tydzień / miesiąc)
+--------------------------------------------------------------------------------
+W projekcie jest vercel.json z harmonogramami na:
+  /api/cron/pro-weekly
+  /api/cron/pro-monthly
+
+Po deployu na Vercel crony są aktywowane automatycznie. Ustaw CRON_SECRET
+w zmiennych środowiska — Vercel dołącza nagłówek Authorization przy wywołaniu.
+
+--------------------------------------------------------------------------------
+6. Po wdrożeniu — krótki test ręczny
+--------------------------------------------------------------------------------
+  [ ] Strona główna ładuje się na produkcyjnej domenie.
+  [ ] Wysłanie magic linka → mail → kliknięcie → sesja (zalogowany stan).
+  [ ] (Opcjonalnie) Logowanie Google.
+  [ ] Testowy checkout raportu (najpierw w Stripe test, potem live z małą kwotą).
+  [ ] W Stripe → Webhooks: ostatnie wywołania bez błędów 4xx/5xx.
+  [ ] Logi funkcji Vercel przy błędach (Runtime Logs).
+
+--------------------------------------------------------------------------------
+7. Typowe przyczyny „nic nie działa na produkcji”
+--------------------------------------------------------------------------------
+  • Brak lub zły NEXT_PUBLIC_BASE_URL (linki w mailach prowadzą na zły host).
+  • Brak AUTH_SECRET na produkcji.
+  • Brak Upstash — błąd przy zapisie tokena magic link / Google state.
+  • Brak RESEND_API_KEY lub nieweryfikowany REPORT_EMAIL_FROM.
+  • STRIPE_MODE=test na produkcji przy kluczach live (lub odwrotnie).
+  • Webhook Stripe wskazuje na stary URL lub zły signing secret.
+  • Zmienne ustawione tylko w Preview, a nie w Production.
+
+================================================================================
+Koniec checklisty. Po uzupełnieniu wszystkiego zrób Redeploy i test z końca
+do końca (logowanie → zakup / raport → e‑mail).
+================================================================================

@@ -1055,7 +1055,7 @@ function HomePageContent() {
         />
 
         {!isTarotReportView ? (
-        <header className="relative isolate mb-5 flex w-full min-h-0 items-center overflow-hidden py-2 sm:mb-6 sm:py-3">
+        <header className="relative isolate mb-5 flex w-full min-h-0 items-center overflow-hidden rounded-3xl py-2 sm:mb-6 sm:rounded-[1.75rem] sm:py-3">
           {/* Natal wheel as background — does not affect layout flow */}
           <div
             className="pointer-events-none absolute inset-0 flex items-center justify-center sm:justify-end"
@@ -1075,16 +1075,14 @@ function HomePageContent() {
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#070412]/28 to-transparent sm:from-[#070412]/18" />
 
-          <div className="relative z-10 w-full">
-            <div className="w-full rounded-2xl border border-white/12 bg-[#070412]/42 px-4 pt-3 pb-3 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.55)] backdrop-blur-md sm:rounded-3xl sm:px-7 sm:pt-4 sm:pb-4 md:px-9 md:pt-5 md:pb-4">
-              <div className="text-center">
-                <h1 className="cosmotips-heading-1 text-balance font-medium md:leading-[1.15]">
-                  <span className="cosmotips-headline block">{copy.heroTitle}</span>
-                  <span className="cosmotips-headline-lead mt-1.5 block text-base font-normal leading-snug tracking-normal sm:mt-2 sm:text-lg md:text-xl md:leading-snug">
-                    {copy.heroLead}
-                  </span>
-                </h1>
-              </div>
+          <div className="relative z-10 w-full px-1 py-1 sm:px-2 sm:py-2">
+            <div className="text-center">
+              <h1 className="cosmotips-heading-1 text-balance font-medium md:leading-[1.15]">
+                <span className="cosmotips-headline block">{copy.heroTitle}</span>
+                <span className="cosmotips-headline-lead mt-1.5 block text-base font-normal leading-snug tracking-normal sm:mt-2 sm:text-lg md:text-xl md:leading-snug">
+                  {copy.heroLead}
+                </span>
+              </h1>
             </div>
           </div>
         </header>
@@ -1123,9 +1121,6 @@ function HomePageContent() {
                     );
                   })}
                 </div>
-                <p className="mt-3 text-pretty text-center text-[0.72rem] font-medium leading-relaxed tracking-wide text-amber-100/70 sm:text-xs">
-                  {copy.moduleScopeHint}
-                </p>
 
                 <div className="cosmic-tool-pitch mx-auto mt-4 w-full max-w-none sm:mt-5" lang={lang}>
                   <div className="relative z-10 text-pretty text-sm leading-snug text-white/72 sm:leading-relaxed">

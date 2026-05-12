@@ -494,8 +494,6 @@ export type HomeCopy = {
     natal: string;
     tarot: string;
   };
-  /** Krótki podpis pod zakładkami: widać, że cały blok poniżej zależy od wyboru. */
-  moduleScopeHint: string;
   /** `aria-label` dla obszaru roboczego ze zakładkami (dostępność). */
   moduleWorkspaceLabel: string;
   tarotPanelTitle: string;
@@ -721,8 +719,6 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       natal: "Personal birth horoscope",
       tarot: "Tarot reading",
     },
-    moduleScopeHint:
-      "Everything below — report or spread, your details, and actions — follows this tab.",
     moduleWorkspaceLabel: "Horoscope and tarot tools",
     tarotPanelTitle: "Tarot reading",
     tarotPanelLead:
@@ -800,8 +796,6 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       natal: "Indywidualny horoskop urodzeniowy",
       tarot: "Rozkład tarota",
     },
-    moduleScopeHint:
-      "Wszystko poniżej — typ raportu lub rozkład, formularz i przyciski — dotyczy wybranej zakładki.",
     moduleWorkspaceLabel: "Narzędzia horoskopu i tarota",
     tarotPanelTitle: "Rozkład tarota",
     tarotPanelLead:
@@ -879,8 +873,6 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       natal: "Horóscopo natal personalizado",
       tarot: "Lectura de tarot",
     },
-    moduleScopeHint:
-      "Todo lo de abajo (tipo de informe o tirada, formulario y acciones) sigue esta pestaña.",
     moduleWorkspaceLabel: "Herramientas de carta natal y tarot",
     tarotPanelTitle: "Lectura de tarot",
     tarotPanelLead:

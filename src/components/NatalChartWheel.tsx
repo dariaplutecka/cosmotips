@@ -1,6 +1,7 @@
 "use client";
 
 import { arc } from "d3-shape";
+import { normalizeSvgPathD, svgCoords } from "@/lib/svgCoords";
 import type { AppLang } from "@/lib/reportSchema";
 import type { NatalBody, NatalChartPayload } from "@/lib/natalChart";
 
@@ -67,8 +68,8 @@ function wheelPoint(
 ): { x: number; y: number } {
   const theta = screenTheta(lonDeg, ascDeg);
   return {
-    x: cx + r * Math.cos(theta),
-    y: cy + r * Math.sin(theta),
+    x: svgCoords(cx + r * Math.cos(theta)),
+    y: svgCoords(cy + r * Math.sin(theta)),
   };
 }
 
@@ -82,13 +83,13 @@ function signArcPath(
   const startAngle = d3Angle(endLon, ascDeg);
   let endAngle = d3Angle(startLon, ascDeg);
   while (endAngle < startAngle) endAngle += Math.PI * 2;
-  return (
+  return normalizeSvgPathD(
     arc<void>()
       .innerRadius(innerRadius)
       .outerRadius(outerRadius)
       .startAngle(startAngle)
       .endAngle(endAngle)
-      .cornerRadius(2)() ?? undefined
+      .cornerRadius(2)() ?? undefined,
   );
 }
 
