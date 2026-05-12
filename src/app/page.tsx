@@ -1146,12 +1146,11 @@ function HomePageContent() {
               {activeModule === "natal" ? (
                 <div>
               <div>
-              <div className="mx-auto w-full max-w-4xl rounded-2xl bg-black/18 p-5 sm:p-6">
-                <h2 className="cosmotips-heading-3">
+              <h2 className="cosmotips-heading-3 mb-4 sm:mb-5">
                   1. {copy.reportSectionTitle}
-                </h2>
-
-                <div className="mt-4 grid gap-2.5 sm:grid-cols-2 sm:items-stretch">
+              </h2>
+              <div className="mx-auto w-full max-w-4xl rounded-2xl bg-black/18 p-5 sm:p-6">
+                <div className="grid gap-2.5 sm:grid-cols-2 sm:items-stretch">
                   {reportCardIds.map((id) => {
                     const selected = reportType === id;
                     const c = copy.reports[id];
@@ -1276,11 +1275,11 @@ function HomePageContent() {
 
                 {tarotState === "idle" ? (
                   <>
+                    <h2 className="cosmotips-heading-3 mb-4 sm:mb-5">
+                      1. {tarot.chooseSpread}
+                    </h2>
                     <div className="mx-auto w-full max-w-4xl rounded-2xl bg-black/18 p-5 sm:p-6">
-                      <h2 className="cosmotips-heading-3">
-                        1. {tarot.chooseSpread}
-                      </h2>
-                    <div className="mt-4 grid gap-2.5 sm:grid-cols-2 sm:items-stretch xl:grid-cols-3">
+                    <div className="grid gap-2.5 sm:grid-cols-2 sm:items-stretch xl:grid-cols-3">
                       {([
                         {
                           id: "daily_card" as const,
@@ -1568,7 +1567,7 @@ function HomePageContent() {
                 </div>
               )}
             {!isTarotReportView ? (
-            <div className="-mx-4 border-t border-violet-400/30 px-5 pb-6 pt-7 sm:-mx-6 sm:px-7 sm:pb-7 sm:pt-8">
+            <div className="-mx-4 border-t border-violet-400/30 px-4 pb-6 pt-7 sm:-mx-6 sm:px-6 sm:pb-7 sm:pt-8">
             <form onSubmit={onSubmit} className="space-y-4">
               <div className="w-full">
                 <h2 className="cosmotips-heading-3">
