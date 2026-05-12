@@ -1090,9 +1090,485 @@ function HomePageContent() {
         </header>
         ) : null}
 
-        <main className={isTarotReportView ? "mx-auto mt-8 max-w-5xl" : "mx-auto mt-0 grid max-w-6xl gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)] lg:items-start"}>
+        <main className={isTarotReportView ? "mx-auto mt-8 max-w-5xl" : "mx-auto mt-0 flex w-full max-w-6xl flex-col gap-0"}>
             {!isTarotReportView ? (
-            <section className="order-2 rounded-3xl border border-violet-400/45 bg-gradient-to-b from-violet-500/[0.18] via-violet-950/30 to-violet-950/50 p-5 shadow-[0_0_0_1px_rgba(196,181,253,0.2),0_16px_48px_-12px_rgba(0,0,0,0.55)] ring-1 ring-violet-300/25 backdrop-blur sm:p-6 lg:order-2">
+            <section
+              className="w-full overflow-hidden rounded-t-3xl border border-b-0 border-white/12 bg-gradient-to-b from-white/[0.07] to-black/25 shadow-[0_18px_50px_-20px_rgba(0,0,0,0.55)] ring-1 ring-amber-400/25 ring-b-0 backdrop-blur sm:rounded-t-[1.75rem]"
+            >
+              <div className="border-b border-white/10 bg-black/25 px-4 py-4 sm:px-6 sm:py-5">
+                <div
+                  className="flex w-full gap-1 rounded-2xl border border-white/12 bg-black/35 p-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] sm:gap-1.5 sm:p-2"
+                  role="tablist"
+                  aria-label={copy.moduleWorkspaceLabel}
+                >
+                  {(["natal", "tarot"] as const).map((module) => {
+                    const selected = activeModule === module;
+                    return (
+                      <button
+                        key={module}
+                        type="button"
+                        role="tab"
+                        onClick={() => selectHomeModule(module)}
+                        className={[
+                          "min-h-[2.75rem] flex-1 rounded-xl px-3 py-2.5 text-center text-sm font-semibold transition sm:min-h-[3rem] sm:px-5 sm:py-3.5 sm:text-[0.95rem]",
+                          selected
+                            ? "bg-gradient-to-b from-amber-200 to-amber-400 text-black shadow-lg shadow-amber-950/30 ring-1 ring-amber-100/40"
+                            : "text-amber-100/85 hover:bg-amber-300/12 hover:text-amber-50",
+                        ].join(" ")}
+                        aria-pressed={selected}
+                        aria-selected={selected}
+                      >
+                        {copy.moduleTabs[module]}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-pretty text-center text-[0.72rem] font-medium leading-relaxed tracking-wide text-amber-100/70 sm:text-xs">
+                  {copy.moduleScopeHint}
+                </p>
+
+                <div className="cosmic-tool-pitch mx-auto mt-4 w-full max-w-none sm:mt-5" lang={lang}>
+                  <div className="relative z-10 text-pretty text-sm leading-snug text-white/72 sm:leading-relaxed">
+                    {activePitch.map((para, i) => (
+                      <p key={i} className={i > 0 ? "mt-2 sm:mt-2.5" : undefined}>
+                        {para}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+            ) : null}
+
+            <section
+              className={`w-full ${!isTarotReportView ? "overflow-hidden rounded-b-3xl border-x border-b border-white/12 border-t-0 bg-gradient-to-b from-violet-950/45 via-violet-950/22 to-[#070412] px-4 pt-5 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.5)] ring-1 ring-violet-400/18 sm:px-6 sm:pt-6" : ""}`}
+            >
+              {activeModule === "natal" ? (
+                <div>
+              <div>
+              <div className="mx-auto w-full max-w-4xl rounded-2xl bg-black/18 p-5 sm:p-6">
+                <h2 className="cosmotips-heading-3">
+                  1. {copy.reportSectionTitle}
+                </h2>
+
+                <div className="mt-4 grid gap-2.5 sm:grid-cols-2 sm:items-stretch">
+                  {reportCardIds.map((id) => {
+                    const selected = reportType === id;
+                    const c = copy.reports[id];
+                    const locked = id === "natal_basic" && freeBasicUsed;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => {
+                          if (locked) return;
+                          setReportType(id);
+                        }}
+                        className={[
+                          "flex h-full min-h-0 flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                          locked
+                            ? "cursor-not-allowed border-white/10 bg-black/20 opacity-45"
+                            : selected
+                              ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
+                              : id === "natal_basic"
+                                ? "border-amber-300/35 bg-amber-950/20 hover:border-amber-200/45 hover:bg-amber-950/30"
+                                : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
+                        ].join(" ")}
+                      >
+                        <div className="flex min-h-0 flex-1 gap-3">
+                          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                            <div className="flex shrink-0 flex-wrap items-center gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
+                              <span>{c.title}</span>
+                              {c.freeBadge ? (
+                                <span className="rounded-full border border-amber-300/45 bg-amber-400/20 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-amber-100">
+                                  {c.freeBadge}
+                                </span>
+                              ) : null}
+                            </div>
+                            <p className="mt-1 min-h-0 flex-1 text-sm leading-6 text-white/75">
+                              {c.desc}
+                            </p>
+                          </div>
+                          <div
+                            className={[
+                              "mt-0.5 h-5 w-5 shrink-0 self-start rounded-full border",
+                              selected
+                                ? "border-violet-200/60 bg-violet-300"
+                                : "border-violet-300/35 bg-transparent",
+                            ].join(" ")}
+                            aria-hidden="true"
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-5 rounded-2xl border border-amber-300/35 bg-amber-400/10 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-amber-50">
+                        {proCopy.title}: {proCopy.price}
+                      </p>
+                      <ul className="mt-3 space-y-1.5 text-sm font-medium leading-6 text-white/82">
+                        {proCopy.benefits.map((benefit) => (
+                          <li key={benefit} className="flex gap-2">
+                            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-200" />
+                            <span>{benefit}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-start">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSubscriptionInterval("monthly");
+                          void startProSubscription("monthly");
+                        }}
+                        disabled={subscriptionLoading}
+                        className="rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-2 text-xs font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {proCopy.monthly}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSubscriptionInterval("yearly");
+                          void startProSubscription("yearly");
+                        }}
+                        disabled={subscriptionLoading}
+                        className="rounded-2xl border border-amber-200/35 px-4 py-2 text-xs font-bold text-amber-50 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {proCopy.yearly}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                {freeBasicUsed ? (
+                  <p className="mt-3 text-pretty text-xs leading-relaxed text-amber-100/75">
+                    {copy.freeBasicUsedHint}
+                  </p>
+                ) : null}
+              </div>
+
+              </div>
+
+                  {error ? (
+                    <div className="mt-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                      {error}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div>
+              <div className="mx-auto max-w-4xl">
+
+                {tarotMessage && !isTarotReportView ? (
+                  <div className="mt-5 rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">
+                    {tarotMessage}
+                  </div>
+                ) : null}
+                {tarotError ? (
+                  <div className="mt-5 rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                    {tarotError}
+                  </div>
+                ) : null}
+
+                {tarotState === "idle" ? (
+                  <>
+                    <div className="mx-auto w-full max-w-4xl rounded-2xl bg-black/18 p-5 sm:p-6">
+                      <h2 className="cosmotips-heading-3">
+                        1. {tarot.chooseSpread}
+                      </h2>
+                    <div className="mt-4 grid gap-2.5 sm:grid-cols-2 sm:items-stretch xl:grid-cols-3">
+                      {([
+                        {
+                          id: "daily_card" as const,
+                          title: tarot.dailyCard,
+                          desc: tarot.dailyCardDesc,
+                          meta: tarot.dailyCardCost,
+                          badge: tarot.dailyCardBadge,
+                        },
+                        {
+                          id: "three_card" as const,
+                          title: tarot.threeCard,
+                          desc: tarot.threeCardDesc,
+                          meta: tarot.oneToken,
+                          badge: null,
+                        },
+                        {
+                          id: "celtic_cross" as const,
+                          title: tarot.celticCross,
+                          desc: tarot.celticCrossDesc,
+                          meta: tarot.oneToken,
+                          badge: null,
+                        },
+                      ]).map((spread) => {
+                        const selected = tarotSpread === spread.id;
+                        return (
+                          <button
+                            key={spread.id}
+                            type="button"
+                            onClick={() => {
+                              setTarotError(null);
+                              setTarotMessage(null);
+                              setTarotSpread(spread.id);
+                            }}
+                            className={[
+                              "flex h-full min-h-[8.75rem] flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                              selected
+                                ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
+                                : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
+                            ].join(" ")}
+                          >
+                            <div className="flex min-h-0 flex-1 gap-3">
+                              <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                                <div className="flex min-h-[2.5rem] shrink-0 flex-wrap items-start gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
+                                  <span>{spread.title}</span>
+                                  {spread.badge ? (
+                                    <span className="rounded-full border border-amber-300/45 bg-amber-400/20 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-amber-100">
+                                      {spread.badge}
+                                    </span>
+                                  ) : null}
+                                </div>
+                                <p className="mt-1 min-h-0 flex-1 text-sm leading-6 text-white/75">
+                                  {spread.desc}
+                                </p>
+                                <p className="mt-3 text-xs font-bold uppercase tracking-wide text-amber-100/80">
+                                  {spread.meta}
+                                </p>
+                              </div>
+                              <div
+                                className={[
+                                  "mt-0.5 h-5 w-5 shrink-0 self-start rounded-full border",
+                                  selected
+                                    ? "border-violet-200/60 bg-violet-300"
+                                    : "border-violet-300/35 bg-transparent",
+                                ].join(" ")}
+                                aria-hidden="true"
+                              />
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-5 rounded-2xl border border-amber-300/35 bg-amber-400/10 p-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-amber-50">
+                            {proCopy.title}: {proCopy.price}
+                          </p>
+                          <ul className="mt-3 space-y-1.5 text-sm font-medium leading-6 text-white/82">
+                            {proCopy.benefits.map((benefit) => (
+                              <li key={benefit} className="flex gap-2">
+                                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-200" />
+                                <span>{benefit}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-start">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSubscriptionInterval("monthly");
+                              void startProSubscription("monthly");
+                            }}
+                            disabled={subscriptionLoading}
+                            className="rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-2 text-xs font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {proCopy.monthly}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSubscriptionInterval("yearly");
+                              void startProSubscription("yearly");
+                            }}
+                            disabled={subscriptionLoading}
+                            className="rounded-2xl border border-amber-200/35 px-4 py-2 text-xs font-bold text-amber-50 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {proCopy.yearly}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    </div>
+                  </>
+                ) : null}
+
+                {isTarotReportView ? (
+                  <div className="rounded-2xl border border-violet-400/45 bg-gradient-to-b from-violet-500/[0.18] via-violet-950/30 to-violet-950/50 p-5 text-center shadow-[0_0_0_1px_rgba(196,181,253,0.2),0_16px_48px_-12px_rgba(0,0,0,0.55)] ring-1 ring-violet-300/25 sm:p-6">
+                    <h1 className="cosmotips-heading-3">
+                      {tarotReportTitle}
+                    </h1>
+                  </div>
+                ) : null}
+
+                {tarotState === "shuffling" ? (
+                  <div className="mt-6 flex flex-col items-center justify-center py-10 text-center">
+                    <style jsx>{`
+                      @keyframes tarotShuffle {
+                        0% { transform: translateX(-34px) rotate(-8deg); }
+                        50% { transform: translateX(34px) rotate(8deg); }
+                        100% { transform: translateX(-34px) rotate(-8deg); }
+                      }
+                    `}</style>
+                    <div className="relative h-28 w-44">
+                      {[0, 1, 2].map((i) => (
+                        <div
+                          key={i}
+                          className="absolute left-1/2 top-2 h-24 w-16 -translate-x-1/2 rounded-xl border border-amber-200/35 bg-gradient-to-br from-violet-300/40 to-violet-950 shadow-xl"
+                          style={{
+                            animation: "tarotShuffle 0.8s ease-in-out infinite",
+                            animationDelay: `${i * 120}ms`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <p className="mt-4 text-sm font-semibold text-violet-100">
+                      {tarot.shuffling}
+                    </p>
+                  </div>
+                ) : null}
+
+                {tarotState === "generating" ? (
+                  <div className="mt-6 flex items-center justify-center gap-3 py-10 text-white/75">
+                    <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-violet-200" />
+                    {tarot.generating}
+                  </div>
+                ) : null}
+
+                {tarotState === "no_tokens" ? (
+                  <div className="mt-7 rounded-3xl border border-amber-300/25 bg-amber-400/10 p-5 text-center">
+                    <p className="text-sm leading-6 text-amber-50">{tarot.noTokens}</p>
+                    <button
+                      type="button"
+                      onClick={() => void buyTarotReading()}
+                      disabled={tarotCheckoutLoading || !termsAccepted}
+                      className="mt-4 rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-5 py-3 text-sm font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {tarotCheckoutLoading ? tarot.generating : tarot.buyTokens}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetTarot}
+                      className="mt-3 block w-full text-center text-sm font-semibold text-white/65 underline-offset-4 transition hover:text-white"
+                    >
+                      {tarot.back}
+                    </button>
+                  </div>
+                ) : null}
+
+                {tarotState === "result" && tarotResult ? (
+                  <div className="mt-6 space-y-6">
+                    {tarotSpread === "daily_card" ? (
+                      <div className="mx-auto max-w-sm">
+                        {tarotResult.cards.map((card, index) => (
+                          <div
+                            key={`${card.id}-${index}`}
+                            className="relative min-h-80 overflow-hidden rounded-[2rem] border border-amber-200/40 bg-gradient-to-br from-violet-200/25 via-violet-900/60 to-slate-950 p-5 text-center shadow-2xl shadow-black/35"
+                          >
+                            <div className="absolute inset-4 rounded-[1.55rem] border border-amber-100/20" />
+                            <div className="absolute left-1/2 top-20 h-32 w-32 -translate-x-1/2 rounded-full border border-amber-200/25 bg-amber-200/10 blur-sm" />
+                            <div className="relative flex min-h-72 flex-col items-center justify-center gap-7 rounded-[1.55rem] bg-black/18 px-4 py-5">
+                              <img
+                                src={card.imageUrl}
+                                alt={tarotCardName(card, lang)}
+                                className={`h-48 w-32 rounded-xl border border-amber-100/35 object-cover shadow-2xl shadow-black/45 ${card.reversed ? "rotate-180" : ""}`}
+                              />
+                              <div className="mt-2">
+                                <p className="text-2xl font-semibold leading-snug text-white">
+                                  {tarotCardName(card, lang)}
+                                </p>
+                                <p className="mt-2 text-[0.65rem] font-bold uppercase tracking-[0.22em] text-white/45">
+                                  {card.arcana === "major" ? tarot.arcanaMajor : tarot.arcanaMinor}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : tarotSpread === "three_card" ? (
+                      <div className="grid gap-4 sm:grid-cols-3">
+                        {tarotResult.cards.map((card, index) => (
+                          <div
+                            key={`${card.id}-${index}`}
+                            className="group relative min-h-64 overflow-hidden rounded-[1.7rem] border border-amber-200/35 bg-gradient-to-br from-violet-200/25 via-violet-900/55 to-slate-950 p-4 text-center shadow-2xl shadow-black/30"
+                          >
+                            <div className="absolute inset-3 rounded-[1.35rem] border border-amber-100/20" />
+                            <div className="absolute left-1/2 top-16 h-24 w-24 -translate-x-1/2 rounded-full border border-amber-200/25 bg-amber-200/10 blur-sm" />
+                            <div className="relative flex h-full min-h-56 flex-col items-center justify-between gap-5 rounded-[1.35rem] bg-black/18 px-3 py-4">
+                              <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-100/85">
+                                {tarotPositions(tarotSpread, lang)[index]}
+                              </p>
+                              <img
+                                src={card.imageUrl}
+                                alt={tarotCardName(card, lang)}
+                                className={`h-36 w-24 rounded-lg border border-amber-100/30 object-cover shadow-xl shadow-black/40 ${card.reversed ? "rotate-180" : ""}`}
+                              />
+                              <div className="mt-2">
+                                <p className="text-lg font-semibold leading-snug text-white">
+                                  {tarotCardName(card, lang)}
+                                </p>
+                                <p className="mt-2 text-[0.65rem] font-bold uppercase tracking-[0.22em] text-white/45">
+                                  {card.arcana === "major" ? tarot.arcanaMajor : tarot.arcanaMinor}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-[2rem] border border-violet-200/15 bg-black/20 p-4 pt-4 sm:p-6 sm:pt-5">
+                        <div className="mx-auto grid max-w-4xl content-start justify-center gap-3 md:grid-cols-5 md:grid-rows-4">
+                        {tarotResult.cards.map((card, index) => (
+                          <div
+                            key={`${card.id}-${index}`}
+                              className={`flex min-h-36 flex-col items-center rounded-2xl border border-amber-200/25 bg-gradient-to-br from-violet-300/18 to-violet-950/75 p-3 text-center shadow-xl shadow-black/25 ${celticCrossLayoutClasses[index] ?? ""}`}
+                          >
+                              <p className="min-h-8 text-[0.65rem] font-bold uppercase leading-4 tracking-[0.14em] text-amber-100/75">
+                                {index + 1}. {tarotPositions(tarotSpread, lang)[index]}
+                            </p>
+                              <img
+                                src={card.imageUrl}
+                                alt={tarotCardName(card, lang)}
+                                className={`mx-auto mt-3 h-20 w-14 rounded-md border border-amber-100/25 object-cover shadow-lg shadow-black/35 ${card.reversed ? "rotate-180" : ""}`}
+                              />
+                              <p className="mt-4 text-sm font-semibold leading-snug text-white">
+                              {tarotCardName(card, lang)}
+                            </p>
+                          </div>
+                        ))}
+                        </div>
+                      </div>
+                    )}
+                    <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
+                      <article className="max-w-none">
+                        <ReactMarkdown components={tarotInterpretationMarkdownComponents}>
+                          {tarotResult.interpretation}
+                        </ReactMarkdown>
+                      </article>
+                    </div>
+                    {tarotMessage ? (
+                      <div className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">
+                        {tarotMessage}
+                      </div>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={resetTarot}
+                      className="rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-5 py-3 text-sm font-bold text-black shadow-lg shadow-amber-950/20 transition hover:from-amber-100 hover:to-amber-300"
+                    >
+                      {tarot.newReading}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+                </div>
+              )}
+            {!isTarotReportView ? (
+            <div className="-mx-4 border-t border-violet-400/30 px-5 pb-6 pt-7 sm:-mx-6 sm:px-7 sm:pb-7 sm:pt-8">
             <form onSubmit={onSubmit} className="space-y-4">
               <div className="w-full">
                 <h2 className="cosmotips-heading-3">
@@ -1461,475 +1937,8 @@ function HomePageContent() {
               </div>
 
             </form>
-            </section>
+            </div>
             ) : null}
-
-            {!isTarotReportView ? (
-            <section className="order-0 overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur lg:col-span-2">
-              <div className="border-b border-white/10 bg-black/18 p-4 sm:p-6">
-                <div className="mx-auto flex w-full max-w-2xl rounded-2xl border border-white/10 bg-white/[0.04] p-1 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset]">
-                  {(["natal", "tarot"] as const).map((module) => {
-                    const selected = activeModule === module;
-                    return (
-                      <button
-                        key={module}
-                        type="button"
-                        onClick={() => selectHomeModule(module)}
-                        className={[
-                          "flex-1 rounded-xl px-3 py-2.5 text-center text-sm font-semibold transition sm:px-4",
-                          selected
-                            ? "bg-gradient-to-b from-amber-200 to-amber-400 text-black shadow-lg shadow-amber-950/20"
-                            : "text-amber-100/80 hover:bg-amber-300/10 hover:text-amber-50",
-                        ].join(" ")}
-                        aria-pressed={selected}
-                      >
-                        {copy.moduleTabs[module]}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div
-                  className="cosmic-tool-pitch mx-auto mt-3 max-w-2xl sm:mt-3.5"
-                  lang={lang}
-                >
-                  <div className="relative z-10 text-pretty text-sm leading-snug text-white/72 sm:mt-1 sm:leading-relaxed">
-                    {activePitch.map((para, i) => (
-                      <p key={i} className={i > 0 ? "mt-2 sm:mt-2" : undefined}>
-                        {para}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </section>
-            ) : null}
-
-            <section className="order-1 lg:order-1">
-              {activeModule === "natal" ? (
-                <div>
-              <div>
-              <div className="mx-auto w-full max-w-4xl rounded-2xl border border-violet-400/45 bg-gradient-to-b from-violet-500/[0.18] via-violet-950/30 to-violet-950/50 p-5 shadow-[0_0_0_1px_rgba(196,181,253,0.2),0_16px_48px_-12px_rgba(0,0,0,0.55)] ring-1 ring-violet-300/25 sm:p-6">
-                <h2 className="cosmotips-heading-3">
-                  1. {copy.reportSectionTitle}
-                </h2>
-
-                <div className="mt-4 grid gap-2.5 sm:grid-cols-2 sm:items-stretch">
-                  {reportCardIds.map((id) => {
-                    const selected = reportType === id;
-                    const c = copy.reports[id];
-                    const locked = id === "natal_basic" && freeBasicUsed;
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => {
-                          if (locked) return;
-                          setReportType(id);
-                        }}
-                        className={[
-                          "flex h-full min-h-0 flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
-                          locked
-                            ? "cursor-not-allowed border-white/10 bg-black/20 opacity-45"
-                            : selected
-                              ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
-                              : id === "natal_basic"
-                                ? "border-amber-300/35 bg-amber-950/20 hover:border-amber-200/45 hover:bg-amber-950/30"
-                                : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
-                        ].join(" ")}
-                      >
-                        <div className="flex min-h-0 flex-1 gap-3">
-                          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                            <div className="flex shrink-0 flex-wrap items-center gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
-                              <span>{c.title}</span>
-                              {c.freeBadge ? (
-                                <span className="rounded-full border border-amber-300/45 bg-amber-400/20 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-amber-100">
-                                  {c.freeBadge}
-                                </span>
-                              ) : null}
-                            </div>
-                            <p className="mt-1 min-h-0 flex-1 text-sm leading-6 text-white/75">
-                              {c.desc}
-                            </p>
-                          </div>
-                          <div
-                            className={[
-                              "mt-0.5 h-5 w-5 shrink-0 self-start rounded-full border",
-                              selected
-                                ? "border-violet-200/60 bg-violet-300"
-                                : "border-violet-300/35 bg-transparent",
-                            ].join(" ")}
-                            aria-hidden="true"
-                          />
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="mt-5 rounded-2xl border border-amber-300/35 bg-amber-400/10 p-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-amber-50">
-                        {proCopy.title}: {proCopy.price}
-                      </p>
-                      <ul className="mt-3 space-y-1.5 text-sm font-medium leading-6 text-white/82">
-                        {proCopy.benefits.map((benefit) => (
-                          <li key={benefit} className="flex gap-2">
-                            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-200" />
-                            <span>{benefit}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-start">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSubscriptionInterval("monthly");
-                          void startProSubscription("monthly");
-                        }}
-                        disabled={subscriptionLoading}
-                        className="rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-2 text-xs font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {proCopy.monthly}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSubscriptionInterval("yearly");
-                          void startProSubscription("yearly");
-                        }}
-                        disabled={subscriptionLoading}
-                        className="rounded-2xl border border-amber-200/35 px-4 py-2 text-xs font-bold text-amber-50 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {proCopy.yearly}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                {freeBasicUsed ? (
-                  <p className="mt-3 text-pretty text-xs leading-relaxed text-amber-100/75">
-                    {copy.freeBasicUsedHint}
-                  </p>
-                ) : null}
-              </div>
-
-              </div>
-
-                  {error ? (
-                    <div className="mt-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-                      {error}
-                    </div>
-                  ) : null}
-                </div>
-              ) : (
-                <div>
-              <div className="mx-auto max-w-4xl">
-
-                {tarotMessage && !isTarotReportView ? (
-                  <div className="mt-5 rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">
-                    {tarotMessage}
-                  </div>
-                ) : null}
-                {tarotError ? (
-                  <div className="mt-5 rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-                    {tarotError}
-                  </div>
-                ) : null}
-
-                {tarotState === "idle" ? (
-                  <>
-                    <div className="mx-auto w-full max-w-4xl rounded-2xl border border-violet-400/45 bg-gradient-to-b from-violet-500/[0.18] via-violet-950/30 to-violet-950/50 p-5 shadow-[0_0_0_1px_rgba(196,181,253,0.2),0_16px_48px_-12px_rgba(0,0,0,0.55)] ring-1 ring-violet-300/25 sm:p-6">
-                      <h2 className="cosmotips-heading-3">
-                        1. {tarot.chooseSpread}
-                      </h2>
-                    <div className="mt-4 grid gap-2.5 sm:grid-cols-2 sm:items-stretch xl:grid-cols-3">
-                      {([
-                        {
-                          id: "daily_card" as const,
-                          title: tarot.dailyCard,
-                          desc: tarot.dailyCardDesc,
-                          meta: tarot.dailyCardCost,
-                          badge: tarot.dailyCardBadge,
-                        },
-                        {
-                          id: "three_card" as const,
-                          title: tarot.threeCard,
-                          desc: tarot.threeCardDesc,
-                          meta: tarot.oneToken,
-                          badge: null,
-                        },
-                        {
-                          id: "celtic_cross" as const,
-                          title: tarot.celticCross,
-                          desc: tarot.celticCrossDesc,
-                          meta: tarot.oneToken,
-                          badge: null,
-                        },
-                      ]).map((spread) => {
-                        const selected = tarotSpread === spread.id;
-                        return (
-                          <button
-                            key={spread.id}
-                            type="button"
-                            onClick={() => {
-                              setTarotError(null);
-                              setTarotMessage(null);
-                              setTarotSpread(spread.id);
-                            }}
-                            className={[
-                              "flex h-full min-h-[8.75rem] flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
-                              selected
-                                ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
-                                : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
-                            ].join(" ")}
-                          >
-                            <div className="flex min-h-0 flex-1 gap-3">
-                              <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                                <div className="flex min-h-[2.5rem] shrink-0 flex-wrap items-start gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
-                                  <span>{spread.title}</span>
-                                  {spread.badge ? (
-                                    <span className="rounded-full border border-amber-300/45 bg-amber-400/20 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-amber-100">
-                                      {spread.badge}
-                                    </span>
-                                  ) : null}
-                                </div>
-                                <p className="mt-1 min-h-0 flex-1 text-sm leading-6 text-white/75">
-                                  {spread.desc}
-                                </p>
-                                <p className="mt-3 text-xs font-bold uppercase tracking-wide text-amber-100/80">
-                                  {spread.meta}
-                                </p>
-                              </div>
-                              <div
-                                className={[
-                                  "mt-0.5 h-5 w-5 shrink-0 self-start rounded-full border",
-                                  selected
-                                    ? "border-violet-200/60 bg-violet-300"
-                                    : "border-violet-300/35 bg-transparent",
-                                ].join(" ")}
-                                aria-hidden="true"
-                              />
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <div className="mt-5 rounded-2xl border border-amber-300/35 bg-amber-400/10 p-4">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-amber-50">
-                            {proCopy.title}: {proCopy.price}
-                          </p>
-                          <ul className="mt-3 space-y-1.5 text-sm font-medium leading-6 text-white/82">
-                            {proCopy.benefits.map((benefit) => (
-                              <li key={benefit} className="flex gap-2">
-                                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-200" />
-                                <span>{benefit}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-start">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSubscriptionInterval("monthly");
-                              void startProSubscription("monthly");
-                            }}
-                            disabled={subscriptionLoading}
-                            className="rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-2 text-xs font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {proCopy.monthly}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSubscriptionInterval("yearly");
-                              void startProSubscription("yearly");
-                            }}
-                            disabled={subscriptionLoading}
-                            className="rounded-2xl border border-amber-200/35 px-4 py-2 text-xs font-bold text-amber-50 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {proCopy.yearly}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    </div>
-                  </>
-                ) : null}
-
-                {isTarotReportView ? (
-                  <div className="rounded-2xl border border-violet-400/45 bg-gradient-to-b from-violet-500/[0.18] via-violet-950/30 to-violet-950/50 p-5 text-center shadow-[0_0_0_1px_rgba(196,181,253,0.2),0_16px_48px_-12px_rgba(0,0,0,0.55)] ring-1 ring-violet-300/25 sm:p-6">
-                    <h1 className="cosmotips-heading-3">
-                      {tarotReportTitle}
-                    </h1>
-                  </div>
-                ) : null}
-
-                {tarotState === "shuffling" ? (
-                  <div className="mt-6 flex flex-col items-center justify-center py-10 text-center">
-                    <style jsx>{`
-                      @keyframes tarotShuffle {
-                        0% { transform: translateX(-34px) rotate(-8deg); }
-                        50% { transform: translateX(34px) rotate(8deg); }
-                        100% { transform: translateX(-34px) rotate(-8deg); }
-                      }
-                    `}</style>
-                    <div className="relative h-28 w-44">
-                      {[0, 1, 2].map((i) => (
-                        <div
-                          key={i}
-                          className="absolute left-1/2 top-2 h-24 w-16 -translate-x-1/2 rounded-xl border border-amber-200/35 bg-gradient-to-br from-violet-300/40 to-violet-950 shadow-xl"
-                          style={{
-                            animation: "tarotShuffle 0.8s ease-in-out infinite",
-                            animationDelay: `${i * 120}ms`,
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <p className="mt-4 text-sm font-semibold text-violet-100">
-                      {tarot.shuffling}
-                    </p>
-                  </div>
-                ) : null}
-
-                {tarotState === "generating" ? (
-                  <div className="mt-6 flex items-center justify-center gap-3 py-10 text-white/75">
-                    <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-violet-200" />
-                    {tarot.generating}
-                  </div>
-                ) : null}
-
-                {tarotState === "no_tokens" ? (
-                  <div className="mt-7 rounded-3xl border border-amber-300/25 bg-amber-400/10 p-5 text-center">
-                    <p className="text-sm leading-6 text-amber-50">{tarot.noTokens}</p>
-                    <button
-                      type="button"
-                      onClick={() => void buyTarotReading()}
-                      disabled={tarotCheckoutLoading || !termsAccepted}
-                      className="mt-4 rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-5 py-3 text-sm font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {tarotCheckoutLoading ? tarot.generating : tarot.buyTokens}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={resetTarot}
-                      className="mt-3 block w-full text-center text-sm font-semibold text-white/65 underline-offset-4 transition hover:text-white"
-                    >
-                      {tarot.back}
-                    </button>
-                  </div>
-                ) : null}
-
-                {tarotState === "result" && tarotResult ? (
-                  <div className="mt-6 space-y-6">
-                    {tarotSpread === "daily_card" ? (
-                      <div className="mx-auto max-w-sm">
-                        {tarotResult.cards.map((card, index) => (
-                          <div
-                            key={`${card.id}-${index}`}
-                            className="relative min-h-80 overflow-hidden rounded-[2rem] border border-amber-200/40 bg-gradient-to-br from-violet-200/25 via-violet-900/60 to-slate-950 p-5 text-center shadow-2xl shadow-black/35"
-                          >
-                            <div className="absolute inset-4 rounded-[1.55rem] border border-amber-100/20" />
-                            <div className="absolute left-1/2 top-20 h-32 w-32 -translate-x-1/2 rounded-full border border-amber-200/25 bg-amber-200/10 blur-sm" />
-                            <div className="relative flex min-h-72 flex-col items-center justify-center gap-7 rounded-[1.55rem] bg-black/18 px-4 py-5">
-                              <img
-                                src={card.imageUrl}
-                                alt={tarotCardName(card, lang)}
-                                className={`h-48 w-32 rounded-xl border border-amber-100/35 object-cover shadow-2xl shadow-black/45 ${card.reversed ? "rotate-180" : ""}`}
-                              />
-                              <div className="mt-2">
-                                <p className="text-2xl font-semibold leading-snug text-white">
-                                  {tarotCardName(card, lang)}
-                                </p>
-                                <p className="mt-2 text-[0.65rem] font-bold uppercase tracking-[0.22em] text-white/45">
-                                  {card.arcana === "major" ? tarot.arcanaMajor : tarot.arcanaMinor}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : tarotSpread === "three_card" ? (
-                      <div className="grid gap-4 sm:grid-cols-3">
-                        {tarotResult.cards.map((card, index) => (
-                          <div
-                            key={`${card.id}-${index}`}
-                            className="group relative min-h-64 overflow-hidden rounded-[1.7rem] border border-amber-200/35 bg-gradient-to-br from-violet-200/25 via-violet-900/55 to-slate-950 p-4 text-center shadow-2xl shadow-black/30"
-                          >
-                            <div className="absolute inset-3 rounded-[1.35rem] border border-amber-100/20" />
-                            <div className="absolute left-1/2 top-16 h-24 w-24 -translate-x-1/2 rounded-full border border-amber-200/25 bg-amber-200/10 blur-sm" />
-                            <div className="relative flex h-full min-h-56 flex-col items-center justify-between gap-5 rounded-[1.35rem] bg-black/18 px-3 py-4">
-                              <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-100/85">
-                                {tarotPositions(tarotSpread, lang)[index]}
-                              </p>
-                              <img
-                                src={card.imageUrl}
-                                alt={tarotCardName(card, lang)}
-                                className={`h-36 w-24 rounded-lg border border-amber-100/30 object-cover shadow-xl shadow-black/40 ${card.reversed ? "rotate-180" : ""}`}
-                              />
-                              <div className="mt-2">
-                                <p className="text-lg font-semibold leading-snug text-white">
-                                  {tarotCardName(card, lang)}
-                                </p>
-                                <p className="mt-2 text-[0.65rem] font-bold uppercase tracking-[0.22em] text-white/45">
-                                  {card.arcana === "major" ? tarot.arcanaMajor : tarot.arcanaMinor}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="rounded-[2rem] border border-violet-200/15 bg-black/20 p-4 pt-4 sm:p-6 sm:pt-5">
-                        <div className="mx-auto grid max-w-4xl content-start justify-center gap-3 md:grid-cols-5 md:grid-rows-4">
-                        {tarotResult.cards.map((card, index) => (
-                          <div
-                            key={`${card.id}-${index}`}
-                              className={`flex min-h-36 flex-col items-center rounded-2xl border border-amber-200/25 bg-gradient-to-br from-violet-300/18 to-violet-950/75 p-3 text-center shadow-xl shadow-black/25 ${celticCrossLayoutClasses[index] ?? ""}`}
-                          >
-                              <p className="min-h-8 text-[0.65rem] font-bold uppercase leading-4 tracking-[0.14em] text-amber-100/75">
-                                {index + 1}. {tarotPositions(tarotSpread, lang)[index]}
-                            </p>
-                              <img
-                                src={card.imageUrl}
-                                alt={tarotCardName(card, lang)}
-                                className={`mx-auto mt-3 h-20 w-14 rounded-md border border-amber-100/25 object-cover shadow-lg shadow-black/35 ${card.reversed ? "rotate-180" : ""}`}
-                              />
-                              <p className="mt-4 text-sm font-semibold leading-snug text-white">
-                              {tarotCardName(card, lang)}
-                            </p>
-                          </div>
-                        ))}
-                        </div>
-                      </div>
-                    )}
-                    <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
-                      <article className="max-w-none">
-                        <ReactMarkdown components={tarotInterpretationMarkdownComponents}>
-                          {tarotResult.interpretation}
-                        </ReactMarkdown>
-                      </article>
-                    </div>
-                    {tarotMessage ? (
-                      <div className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">
-                        {tarotMessage}
-                      </div>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={resetTarot}
-                      className="rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-5 py-3 text-sm font-bold text-black shadow-lg shadow-amber-950/20 transition hover:from-amber-100 hover:to-amber-300"
-                    >
-                      {tarot.newReading}
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-                </div>
-              )}
             </section>
         </main>
 
