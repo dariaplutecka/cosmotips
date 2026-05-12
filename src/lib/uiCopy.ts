@@ -123,9 +123,6 @@ export const tarotCopy: Record<
     dailyCardUsed: string;
     termsRequired: string;
     missingProfile: string;
-    tokenPackageLabel: string;
-    tokenPackageOption1: string;
-    tokenPackageOption3: string;
     arcanaMajor: string;
     arcanaMinor: string;
   }
@@ -176,9 +173,6 @@ export const tarotCopy: Record<
     dailyCardUsed: "You have already drawn your free Card of the Day today. Come back tomorrow.",
     termsRequired: "Accept the Terms of Service to continue.",
     missingProfile: "Enter your name and date of birth to continue.",
-    tokenPackageLabel: "Tarot token package",
-    tokenPackageOption1: "1 token — €5",
-    tokenPackageOption3: "3 tokens — €10",
     arcanaMajor: "Major Arcana",
     arcanaMinor: "Minor Arcana",
   },
@@ -228,9 +222,6 @@ export const tarotCopy: Record<
     dailyCardUsed: "Karta dnia została już dziś wylosowana. Wróć jutro po kolejną.",
     termsRequired: "Zaakceptuj regulamin, aby kontynuować.",
     missingProfile: "Podaj imię i datę urodzenia, aby kontynuować.",
-    tokenPackageLabel: "Pakiet tokenów tarota",
-    tokenPackageOption1: "1 token — 5 EUR",
-    tokenPackageOption3: "3 tokeny — 10 EUR",
     arcanaMajor: "Wielkie Arkana",
     arcanaMinor: "Małe Arkana",
   },
@@ -280,9 +271,6 @@ export const tarotCopy: Record<
     dailyCardUsed: "Ya has sacado tu Carta del Día gratis hoy. Vuelve mañana.",
     termsRequired: "Acepta los términos de servicio para continuar.",
     missingProfile: "Introduce tu nombre y fecha de nacimiento para continuar.",
-    tokenPackageLabel: "Paquete de fichas de tarot",
-    tokenPackageOption1: "1 ficha — 5 EUR",
-    tokenPackageOption3: "3 fichas — 10 EUR",
     arcanaMajor: "Arcanos Mayores",
     arcanaMinor: "Arcanos Menores",
   },

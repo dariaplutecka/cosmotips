@@ -19,6 +19,8 @@ type Props = {
   /** Strona główna: zmiana języka bez przeładowania. Podstrony: pomijamy — linki `?lang=` */
   onLangChange?: (code: AppLang) => void;
   onLogoClick?: () => void;
+  /** Zwiększ po odświeżeniu statusu subskrypcji/tokenów (np. na stronie głównej), aby ponownie pobrać saldo. */
+  sessionSyncKey?: number;
 };
 
 type AuthUser = {
@@ -31,7 +33,14 @@ type AuthUser = {
 type SubscriptionStatus = {
   authenticated: boolean;
   pro: boolean;
+  tarotBalance?: number;
 };
+
+function tarotBalanceAria(lang: AppLang, n: number): string {
+  if (lang === "pl") return `Saldo tokenów tarota: ${n}`;
+  if (lang === "es") return `Saldo de fichas de tarot: ${n}`;
+  return `Tarot token balance: ${n}`;
+}
 
 function authText(lang: AppLang) {
   if (lang === "pl") {
@@ -82,6 +91,7 @@ export function CosmotipsTopBar({
   logoAriaLabel,
   onLangChange,
   onLogoClick,
+  sessionSyncKey,
 }: Props) {
   const pathname = usePathname() || "/";
   const homeHref = `/?lang=${lang}`;
@@ -108,7 +118,9 @@ export function CosmotipsTopBar({
 
   useEffect(() => {
     void refreshSession();
-  }, []);
+    // sessionSyncKey: gdy przekazany, każdy przyrost odnawia dane; gdy brak — tylko mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, sessionSyncKey !== undefined ? [sessionSyncKey] : []);
 
   useEffect(() => {
     if (!authOpen) return;
@@ -261,11 +273,22 @@ export function CosmotipsTopBar({
           className="rounded-full border border-violet-200/30 bg-violet-400/15 px-3 py-2 text-xs font-bold text-white shadow-lg shadow-black/20 transition hover:bg-violet-400/25"
         >
           {user ? (
-            <span className="inline-flex items-center gap-2">
-              {user.email.split("@")[0]}
+            <span className="inline-flex max-w-[min(100%,14rem)] items-center gap-1.5 sm:max-w-none sm:gap-2">
+              <span className="min-w-0 truncate">{user.email.split("@")[0]}</span>
               {subscription?.pro ? (
-                <span className="rounded-full bg-amber-300 px-1.5 py-0.5 text-[0.6rem] font-black uppercase text-black">
+                <span className="shrink-0 rounded-full bg-amber-300 px-1.5 py-0.5 text-[0.6rem] font-black uppercase text-black">
                   {copy.pro}
+                </span>
+              ) : null}
+              {typeof subscription?.tarotBalance === "number" ? (
+                <span
+                  className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-violet-200/35 bg-violet-950/55 px-1.5 py-0.5 text-[0.65rem] font-bold tabular-nums text-violet-100"
+                  aria-label={tarotBalanceAria(lang, subscription.tarotBalance)}
+                >
+                  <span aria-hidden className="text-[0.7rem] leading-none">
+                    🎴
+                  </span>
+                  <span>{subscription.tarotBalance}</span>
                 </span>
               ) : null}
             </span>

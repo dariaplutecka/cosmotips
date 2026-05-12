@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, type ReactNode, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   CheckoutPayloadSchema,
@@ -24,6 +24,32 @@ import {
   type TarotTopic,
 } from "@/lib/tarotDeck";
 import { homeCopy, tarotCopy } from "@/lib/uiCopy";
+import ReactMarkdown from "react-markdown";
+
+/** Same typography as saved astrological reports (`/reports`). */
+const tarotInterpretationMarkdownComponents = {
+  h1: ({ children }: { children?: ReactNode }) => (
+    <h1 className="cosmotips-heading-2 mb-5">{children}</h1>
+  ),
+  h2: ({ children }: { children?: ReactNode }) => (
+    <h2 className="cosmotips-heading-3 mt-7 mb-3 text-violet-100 first:mt-0">{children}</h2>
+  ),
+  h3: ({ children }: { children?: ReactNode }) => (
+    <h3 className="cosmotips-heading-3 mt-6 mb-2 text-violet-100 first:mt-0">{children}</h3>
+  ),
+  p: ({ children }: { children?: ReactNode }) => (
+    <p className="mb-3 leading-8 text-white/85">{children}</p>
+  ),
+  ul: ({ children }: { children?: ReactNode }) => (
+    <ul className="mb-4 list-disc space-y-2 pl-6 text-white/85">{children}</ul>
+  ),
+  ol: ({ children }: { children?: ReactNode }) => (
+    <ol className="mb-4 list-decimal space-y-2 pl-6 text-white/85">{children}</ol>
+  ),
+  li: ({ children }: { children?: ReactNode }) => (
+    <li className="leading-7">{children}</li>
+  ),
+};
 
 const placeSuggestions = [
   "Warsaw, Poland",
@@ -77,7 +103,6 @@ type SubscriptionStatus = {
 };
 
 type ProInterval = "monthly" | "yearly";
-type TarotPackageSize = "1" | "3";
 type ProAuthModalView = "login" | "sent";
 type PendingProSubscription = {
   interval: ProInterval;
@@ -263,7 +288,7 @@ function HomePageContent() {
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [subscriptionInterval, setSubscriptionInterval] =
     useState<ProInterval>("monthly");
-  const [tarotPackageSize, setTarotPackageSize] = useState<TarotPackageSize>("1");
+  const [topBarSessionKey, setTopBarSessionKey] = useState(0);
   const [proAuthModalOpen, setProAuthModalOpen] = useState(false);
   const [proAuthModalView, setProAuthModalView] = useState<ProAuthModalView>("login");
   const [proAuthEmail, setProAuthEmail] = useState("");
@@ -291,9 +316,11 @@ function HomePageContent() {
       const res = await fetch("/api/subscription/status");
       const data = (await res.json().catch(() => null)) as SubscriptionStatus | null;
       setSubscriptionStatus(data);
+      setTopBarSessionKey((k) => k + 1);
       return data;
     } catch {
       setSubscriptionStatus(null);
+      setTopBarSessionKey((k) => k + 1);
       return null;
     }
   }
@@ -778,7 +805,7 @@ function HomePageContent() {
       const res = await fetch("/api/tarot/checkout", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: cleanEmail, lang, packageSize: tarotPackageSize }),
+        body: JSON.stringify({ email: cleanEmail, lang, packageSize: "1" }),
       });
       const data = (await res.json().catch(() => null)) as
         | { url?: string; error?: string }
@@ -1024,6 +1051,7 @@ function HomePageContent() {
           logoAriaLabel={copy.navLogoHomeAria}
           onLangChange={setLang}
           onLogoClick={returnToHomeView}
+          sessionSyncKey={topBarSessionKey}
         />
 
         {!isTarotReportView ? (
@@ -1372,22 +1400,6 @@ function HomePageContent() {
                     <option value="love">{tarot.topicLove}</option>
                     <option value="finance_career">{tarot.topicFinance}</option>
                     <option value="health">{tarot.topicHealth}</option>
-                  </select>
-                </div>
-              ) : null}
-
-              {activeModule === "tarot" && tarotSpread !== "daily_card" ? (
-                <div className="mx-auto mt-4 w-full max-w-2xl">
-                  <label className="block text-xs font-medium text-white/70">
-                    {tarot.tokenPackageLabel}
-                  </label>
-                  <select
-                    value={tarotPackageSize}
-                    onChange={(e) => setTarotPackageSize(e.target.value as TarotPackageSize)}
-                    className="cosmic-birth-field mt-1.5"
-                  >
-                    <option value="1">{tarot.tokenPackageOption1}</option>
-                    <option value="3">{tarot.tokenPackageOption3}</option>
                   </select>
                 </div>
               ) : null}
@@ -1793,16 +1805,6 @@ function HomePageContent() {
                 {tarotState === "no_tokens" ? (
                   <div className="mt-7 rounded-3xl border border-amber-300/25 bg-amber-400/10 p-5 text-center">
                     <p className="text-sm leading-6 text-amber-50">{tarot.noTokens}</p>
-                    <div className="mx-auto mt-4 max-w-xs">
-                      <select
-                        value={tarotPackageSize}
-                        onChange={(e) => setTarotPackageSize(e.target.value as TarotPackageSize)}
-                        className="cosmic-birth-field text-left"
-                      >
-                        <option value="1">{tarot.tokenPackageOption1}</option>
-                        <option value="3">{tarot.tokenPackageOption3}</option>
-                      </select>
-                    </div>
                     <button
                       type="button"
                       onClick={() => void buyTarotReading()}
@@ -1905,18 +1907,11 @@ function HomePageContent() {
                       </div>
                     )}
                     <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
-                      {tarotResult.interpretation
-                        .split(/\n{2,}/)
-                        .map((paragraph) => paragraph.trim())
-                        .filter(Boolean)
-                        .map((paragraph, index) => (
-                          <p
-                            key={index}
-                            className="mb-4 leading-8 text-white/84 last:mb-0"
-                          >
-                            {paragraph}
-                          </p>
-                        ))}
+                      <article className="max-w-none">
+                        <ReactMarkdown components={tarotInterpretationMarkdownComponents}>
+                          {tarotResult.interpretation}
+                        </ReactMarkdown>
+                      </article>
                     </div>
                     {tarotMessage ? (
                       <div className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">

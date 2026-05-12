@@ -3,6 +3,10 @@ import type { AppLang } from "@/lib/reportSchema";
 import { formatResendSendError } from "@/lib/resendFormatError";
 import { reportEmailCopy, tarotCopy } from "@/lib/uiCopy";
 import {
+  parseMarkdownBlocks,
+  type MarkdownBlock,
+} from "@/lib/reportMarkdownBlocks";
+import {
   celticCrossPositions,
   type SpreadType,
   type TarotCard,
@@ -141,16 +145,109 @@ function tarotCardsHtml(
   `;
 }
 
+function markdownBlocksToTarotEmailHtml(blocks: MarkdownBlock[]): string {
+  const h2Style =
+    "margin:26px 0 10px;color:#e9ddff;font-size:1.125rem;font-weight:600;line-height:1.35;font-family:Arial,Helvetica,sans-serif;";
+  const parts: string[] = [];
+
+  function walk(tokens: MarkdownBlock[]): void {
+    for (const token of tokens) {
+      switch (token.type) {
+        case "heading":
+          parts.push(`<h2 style="${h2Style}">${escapeHtml(token.text)}</h2>`);
+          break;
+        case "paragraph":
+          parts.push(
+            `<p style="margin:0 0 16px;color:#f2ecff;font-size:16px;line-height:1.75;">${escapeHtml(token.text).replace(/\n/g, "<br />")}</p>`,
+          );
+          break;
+        case "list": {
+          const tag = token.ordered ? "ol" : "ul";
+          const items = token.items
+            .map((item) => `<li style="margin:0 0 6px;">${escapeHtml(item)}</li>`)
+            .join("");
+          parts.push(
+            `<${tag} style="margin:0 0 16px;padding-left:22px;color:#f2ecff;font-size:16px;line-height:1.75;">${items}</${tag}>`,
+          );
+          break;
+        }
+        case "hr":
+          parts.push(
+            `<div role="presentation" style="height:1px;background:rgba(201,168,76,0.35);margin:18px 0;"></div>`,
+          );
+          break;
+        case "code":
+          parts.push(
+            `<pre style="font-size:13px;line-height:1.5;color:#e0d8f4;margin:0 0 16px;padding:12px;border-radius:12px;background:#1f1538;white-space:pre-wrap;font-family:ui-monospace,monospace;">${escapeHtml(token.text)}</pre>`,
+          );
+          break;
+        case "blockquote":
+          if (token.blocks.length) {
+            parts.push(
+              `<blockquote style="margin:0 0 16px;padding:0 0 0 14px;border-left:3px solid rgba(167,139,250,0.55);">${markdownBlocksToTarotEmailHtml(token.blocks)}</blockquote>`,
+            );
+          } else {
+            parts.push(
+              `<blockquote style="margin:0 0 16px;padding:0 0 0 14px;border-left:3px solid rgba(167,139,250,0.55);color:#ddd6fe;font-size:16px;line-height:1.75;"><p style="margin:0;">${escapeHtml(token.text)}</p></blockquote>`,
+            );
+          }
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  walk(blocks);
+  return parts.join("");
+}
+
+function markdownBlocksToTarotPlainText(blocks: MarkdownBlock[]): string {
+  const lines: string[] = [];
+  for (const token of blocks) {
+    switch (token.type) {
+      case "heading":
+        lines.push(token.text);
+        lines.push("");
+        break;
+      case "paragraph":
+        lines.push(token.text);
+        lines.push("");
+        break;
+      case "list": {
+        let n = Number.isFinite(token.start) ? token.start : 1;
+        for (const item of token.items) {
+          lines.push(token.ordered ? `${n++}. ${item}` : `- ${item}`);
+        }
+        lines.push("");
+        break;
+      }
+      case "hr":
+        lines.push("—");
+        lines.push("");
+        break;
+      case "code":
+        lines.push(token.text);
+        lines.push("");
+        break;
+      case "blockquote":
+        if (token.blocks.length) {
+          lines.push(markdownBlocksToTarotPlainText(token.blocks));
+          lines.push("");
+        } else if (token.text) {
+          lines.push(token.text);
+          lines.push("");
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 function tarotInterpretationHtml(interpretation: string): string {
-  return interpretation
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean)
-    .map(
-      (paragraph) =>
-        `<p style="margin:0 0 16px;color:#f2ecff;font-size:16px;line-height:1.75;">${escapeHtml(paragraph).replace(/\n/g, "<br />")}</p>`,
-    )
-    .join("");
+  return markdownBlocksToTarotEmailHtml(parseMarkdownBlocks(interpretation));
 }
 
 export async function sendReportPdfEmail(opts: {
@@ -269,7 +366,10 @@ export async function sendTarotEmail(opts: {
         `${positions[index] ?? index + 1}: ${tarotCardName(card, opts.lang)}`,
     )
     .join("\n");
-  const text = `${title}\n${spreadContext}\n\n${cardsText}\n\n${opts.interpretation}\n\nCosmoTips — ${baseUrl}`;
+  const interpretationPlain = markdownBlocksToTarotPlainText(
+    parseMarkdownBlocks(opts.interpretation),
+  );
+  const text = `${title}\n${spreadContext}\n\n${cardsText}\n\n${interpretationPlain}\n\nCosmoTips — ${baseUrl}`;
   const html = `
     <div style="margin:0;padding:0;background:#1a1033;color:#f7f0ff;font-family:Arial,Helvetica,sans-serif;">
       <div style="max-width:720px;margin:0 auto;padding:34px 20px;">
