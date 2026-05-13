@@ -1139,12 +1139,11 @@ function HomePageContent() {
               className={`w-full ${!isTarotReportView ? "overflow-hidden rounded-b-3xl border-x border-b border-white/12 border-t-0 bg-gradient-to-b from-violet-950/45 via-violet-950/22 to-[#070412] px-4 pt-5 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.5)] ring-1 ring-violet-400/18 sm:px-6 sm:pt-6" : ""}`}
             >
               {activeModule === "natal" ? (
-                <div>
-              <div>
+                <div className="mx-auto w-full max-w-4xl space-y-3">
               <h2 className="cosmotips-heading-3 mb-4 sm:mb-5">
                   1. {copy.reportSectionTitle}
               </h2>
-              <div className="mx-auto w-full max-w-4xl rounded-2xl bg-black/18 p-5 sm:p-6">
+              <div className="w-full rounded-2xl bg-black/18 p-5 sm:p-6">
                 <div className="grid gap-2.5 sm:grid-cols-2 sm:items-stretch">
                   {reportCardIds.map((id) => {
                     const selected = reportType === id;
@@ -1245,10 +1244,8 @@ function HomePageContent() {
                 ) : null}
               </div>
 
-              </div>
-
                   {error ? (
-                    <div className="mt-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                    <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
                       {error}
                     </div>
                   ) : null}
@@ -1273,7 +1270,7 @@ function HomePageContent() {
                     <h2 className="cosmotips-heading-3 mb-4 sm:mb-5">
                       1. {tarot.chooseSpread}
                     </h2>
-                    <div className="mx-auto w-full max-w-4xl rounded-2xl bg-black/18 p-5 sm:p-6">
+                    <div className="w-full rounded-2xl bg-black/18 p-5 sm:p-6">
                     <div className="grid gap-2.5 sm:grid-cols-2 sm:items-stretch xl:grid-cols-3">
                       {([
                         {
@@ -1563,13 +1560,16 @@ function HomePageContent() {
               )}
             {!isTarotReportView ? (
             <div className="-mx-4 border-t border-violet-400/30 px-4 pb-6 pt-7 sm:-mx-6 sm:px-6 sm:pb-7 sm:pt-8">
-            <form onSubmit={onSubmit} className="space-y-4">
+            <form
+              onSubmit={onSubmit}
+              className="mx-auto flex w-full max-w-4xl flex-col gap-4"
+            >
               <div className="w-full">
                 <h2 className="cosmotips-heading-3">
                   2. {copy.dataStepTitle}
                 </h2>
               </div>
-              <div className="mx-auto w-full max-w-2xl space-y-3">
+              <div className="w-full space-y-3">
                 <div>
                   <span className="text-xs font-medium text-white/70">
                     {tarot.name}
@@ -1858,7 +1858,7 @@ function HomePageContent() {
               </div>
 
               {activeModule === "tarot" && tarotSpread !== "daily_card" ? (
-                <div className="mx-auto mt-4 w-full max-w-2xl">
+                <div className="mt-4 w-full">
                   <label className="block text-xs font-medium text-white/70">
                     {tarot.chooseTopic}
                   </label>
@@ -1874,7 +1874,7 @@ function HomePageContent() {
                 </div>
               ) : null}
 
-              <div className="mx-auto mt-6 flex w-full max-w-2xl items-start gap-3 rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="mt-6 flex w-full items-start gap-3 rounded-2xl border border-white/10 bg-black/20 p-4">
                 <input
                   id="terms-accept-final"
                   type="checkbox"
@@ -1900,7 +1900,7 @@ function HomePageContent() {
                 </label>
               </div>
 
-              <div className="mx-auto mt-6 flex w-full max-w-2xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-6 flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-center text-xs text-white/55 sm:max-w-[min(100%,28rem)] sm:text-left">
                   {activeModule === "natal" ? copy.priceLine : tarot.pageSubtitle}
                 </p>
