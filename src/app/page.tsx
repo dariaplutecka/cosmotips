@@ -1140,10 +1140,11 @@ function HomePageContent() {
             >
               {activeModule === "natal" ? (
                 <div className="mx-auto w-full max-w-4xl space-y-3">
-              <h2 className="cosmotips-heading-3 mb-4 sm:mb-5">
+              <div className="w-full rounded-2xl bg-black/18 p-5 sm:p-6">
+              <div className="space-y-4 sm:space-y-5">
+              <h2 className="cosmotips-heading-3">
                   1. {copy.reportSectionTitle}
               </h2>
-              <div className="w-full rounded-2xl bg-black/18 p-5 sm:p-6">
                 <div className="grid gap-2.5 sm:grid-cols-2 sm:items-stretch">
                   {reportCardIds.map((id) => {
                     const selected = reportType === id;
@@ -1243,6 +1244,7 @@ function HomePageContent() {
                   </p>
                 ) : null}
               </div>
+              </div>
 
                   {error ? (
                     <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
@@ -1267,10 +1269,11 @@ function HomePageContent() {
 
                 {tarotState === "idle" ? (
                   <>
-                    <h2 className="cosmotips-heading-3 mb-4 sm:mb-5">
+                    <div className="w-full rounded-2xl bg-black/18 p-5 sm:p-6">
+                    <div className="space-y-4 sm:space-y-5">
+                    <h2 className="cosmotips-heading-3">
                       1. {tarot.chooseSpread}
                     </h2>
-                    <div className="w-full rounded-2xl bg-black/18 p-5 sm:p-6">
                     <div className="grid gap-2.5 sm:grid-cols-2 sm:items-stretch xl:grid-cols-3">
                       {([
                         {
@@ -1383,6 +1386,7 @@ function HomePageContent() {
                           </button>
                         </div>
                       </div>
+                    </div>
                     </div>
                     </div>
                   </>
@@ -1562,7 +1566,7 @@ function HomePageContent() {
             <div className="-mx-4 border-t border-violet-400/30 px-4 pb-6 pt-7 sm:-mx-6 sm:px-6 sm:pb-7 sm:pt-8">
             <form
               onSubmit={onSubmit}
-              className="mx-auto flex w-full max-w-4xl flex-col gap-4"
+              className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-5 sm:px-6"
             >
               <div className="w-full">
                 <h2 className="cosmotips-heading-3">
