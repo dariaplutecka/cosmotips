@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { FEATURE_GOOGLE_AUTH_UI } from "@/lib/featureFlags";
 import type { AppLang } from "@/lib/reportSchema";
 
 const LANGS: Array<{ code: AppLang; flag: string; abbr: string }> = [
@@ -344,12 +345,14 @@ export function CosmotipsTopBar({
                 >
                   {copy.magicLink}
                 </button>
-                <a
-                  href={`/api/auth/google/start?lang=${lang}`}
-                  className="block rounded-2xl border border-white/15 px-4 py-2 text-center text-sm font-bold text-white/85 transition hover:bg-white/10"
-                >
-                  {copy.google}
-                </a>
+                {FEATURE_GOOGLE_AUTH_UI ? (
+                  <a
+                    href={`/api/auth/google/start?lang=${lang}`}
+                    className="block rounded-2xl border border-white/15 px-4 py-2 text-center text-sm font-bold text-white/85 transition hover:bg-white/10"
+                  >
+                    {copy.google}
+                  </a>
+                ) : null}
                 {authMessage ? (
                   <p className="text-xs leading-5 text-emerald-200">{authMessage}</p>
                 ) : null}

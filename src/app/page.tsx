@@ -8,6 +8,7 @@ import {
   type AppLang,
   type ReportType,
 } from "@/lib/reportSchema";
+import { FEATURE_GOOGLE_AUTH_UI } from "@/lib/featureFlags";
 import {
   MIN_BIRTH_YEAR,
   currentBirthYearMax,
@@ -754,12 +755,10 @@ function HomePageContent() {
       } catch {
         /* If storage is unavailable, server-side cache still prevents extra AI work. */
       }
-    }
-    if (spreadType === "daily_card") {
       setTarotState("shuffling");
       return;
     }
-    setTarotState("shuffling");
+    void ensureTarotTokensForPaidSpread();
   }
 
   function validateTarotProfile(): boolean {
@@ -771,19 +770,19 @@ function HomePageContent() {
     return true;
   }
 
-  async function buyTarotReading(checkoutEmail = email) {
+  async function buyTarotReading(checkoutEmail = email): Promise<boolean> {
     if (!termsAccepted) {
       setTarotError(tarot.termsRequired);
-      return;
+      return false;
     }
     if (!validateTarotProfile()) {
-      return;
+      return false;
     }
     const cleanEmail = checkoutEmail.trim();
     if (!cleanEmail) {
       setTarotError(tarot.enterEmail);
       setTarotState("idle");
-      return;
+      return false;
     }
     try {
       localStorage.setItem(
@@ -814,9 +813,56 @@ function HomePageContent() {
         throw new Error(data?.error ?? tarot.networkError);
       }
       window.location.assign(data.url);
+      return true;
     } catch (err) {
       setTarotError(err instanceof Error ? err.message : tarot.networkError);
       setTarotCheckoutLoading(false);
+      return false;
+    }
+  }
+
+  /** Paid spreads: open Stripe checkout when balance is 0 before shuffling (requires Redis in production). */
+  async function ensureTarotTokensForPaidSpread() {
+    try {
+      const res = await fetch(
+        `/api/tarot/balance?email=${encodeURIComponent(email.trim())}`,
+      );
+      const data = (await res.json().catch(() => null)) as
+        | { balance?: number; error?: string }
+        | null;
+
+      if (
+        res.status === 503 &&
+        (data?.error === "token_store_unavailable" || data == null)
+      ) {
+        setTarotError(tarot.tokenStoreUnavailable);
+        setTarotState("idle");
+        return;
+      }
+
+      if (
+        !res.ok ||
+        data == null ||
+        typeof data.balance !== "number" ||
+        data.error === "token_store_unavailable"
+      ) {
+        setTarotError(tarot.networkError);
+        setTarotState("idle");
+        return;
+      }
+
+      if (data.balance < 1) {
+        const redirected = await buyTarotReading();
+        if (!redirected) {
+          setTarotState("idle");
+        }
+        return;
+      }
+
+      setTarotState("shuffling");
+    } catch {
+      setTarotError(tarot.networkError);
+      setTarotState("idle");
     }
   }
 
@@ -894,11 +940,6 @@ function HomePageContent() {
       else setError(message);
       setSubscriptionLoading(false);
     }
-  }
-
-  function startGoogleProAuth() {
-    storePendingProSubscription(subscriptionInterval);
-    window.location.assign(`/api/auth/google/start?lang=${lang}`);
   }
 
   async function submitProMagicLink(event?: FormEvent<HTMLFormElement>) {
@@ -1963,13 +2004,18 @@ function HomePageContent() {
                     {proCopy.modalTitle}
                   </h2>
                 </div>
-                <button
-                  type="button"
-                  onClick={startGoogleProAuth}
-                  className="w-full rounded-2xl border border-white/12 bg-white px-4 py-3 text-sm font-bold text-black transition hover:bg-amber-50"
-                >
-                  {proCopy.modalGoogle}
-                </button>
+                {FEATURE_GOOGLE_AUTH_UI ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      storePendingProSubscription(subscriptionInterval);
+                      window.location.assign(`/api/auth/google/start?lang=${lang}`);
+                    }}
+                    className="w-full rounded-2xl border border-white/12 bg-white px-4 py-3 text-sm font-bold text-black transition hover:bg-amber-50"
+                  >
+                    {proCopy.modalGoogle}
+                  </button>
+                ) : null}
                 <form className="space-y-3" onSubmit={submitProMagicLink}>
                   <input
                     type="email"

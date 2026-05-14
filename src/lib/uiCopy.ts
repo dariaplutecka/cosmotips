@@ -167,7 +167,7 @@ export const tarotCopy: Record<
     paymentSuccess: "Payment successful. You can now generate your reading.",
     networkError: "Something went wrong. Try again in a moment.",
     tokenStoreUnavailable:
-      "Tarot tokens are not configured locally. Add Upstash Redis credentials and restart the dev server.",
+      "Tarot tokens aren’t available: the Redis database isn’t configured. Add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in your hosting dashboard (Production), redeploy, and complete payment again.",
     aiGenerationFailed:
       "The cards could not be interpreted right now. Try again in a moment.",
     dailyCardUsed: "You have already drawn your free Card of the Day today. Come back tomorrow.",
@@ -216,7 +216,7 @@ export const tarotCopy: Record<
     paymentSuccess: "Płatność zakończona. Możesz teraz wygenerować rozkład.",
     networkError: "Coś poszło nie tak. Spróbuj ponownie za chwilę.",
     tokenStoreUnavailable:
-      "Tokeny tarota nie są skonfigurowane lokalnie. Dodaj dane Upstash Redis i uruchom ponownie dev server.",
+      "Tarot jest niedostępny: brak konfiguracji Redis (magazyn tokenów). W panelu hostingu dodaj zmienne UPSTASH_REDIS_REST_URL oraz UPSTASH_REDIS_REST_TOKEN dla środowiska Production i zrób Redeploy. Bez tego ani płatność Stripe, ani tokeny po zakupie nie zadziałają poprawnie.",
     aiGenerationFailed:
       "Nie udało się teraz zinterpretować kart. Spróbuj ponownie za chwilę.",
     dailyCardUsed: "Karta dnia została już dziś wylosowana. Wróć jutro po kolejną.",
@@ -265,7 +265,7 @@ export const tarotCopy: Record<
     paymentSuccess: "Pago realizado. Ya puedes generar tu tirada.",
     networkError: "Algo salió mal. Inténtalo de nuevo en un momento.",
     tokenStoreUnavailable:
-      "Las fichas de tarot no están configuradas localmente. Añade las credenciales de Upstash Redis y reinicia el servidor.",
+      "El tarot no está disponible: falta configurar Redis para las fichas. Añade UPSTASH_REDIS_REST_URL y UPSTASH_REDIS_REST_TOKEN en el panel del hosting (Producción), vuelve a desplegar y completa el pago de nuevo.",
     aiGenerationFailed:
       "No se pudieron interpretar las cartas ahora. Inténtalo de nuevo en un momento.",
     dailyCardUsed: "Ya has sacado tu Carta del Día gratis hoy. Vuelve mañana.",
