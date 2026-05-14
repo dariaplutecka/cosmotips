@@ -1026,10 +1026,23 @@ function HomePageContent() {
               reportType: "natal_basic",
             },
           };
+          const pendingPayload = pending;
+          console.log(
+            "[debug] localStorage przed zapisem:",
+            localStorage.getItem("cosmotips:pending_free_natal_v1"),
+          );
+          console.log(
+            "[debug] dane do zapisu:",
+            JSON.stringify(pendingPayload),
+          );
           try {
             localStorage.setItem(
               PENDING_FREE_NATAL_STORAGE_KEY,
               JSON.stringify(pending),
+            );
+            console.log(
+              "[debug] localStorage po zapisie:",
+              localStorage.getItem("cosmotips:pending_free_natal_v1"),
             );
           } catch {
             /* ignore */
