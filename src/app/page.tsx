@@ -109,6 +109,27 @@ function clearPendingFreeNatalStorage(): void {
   }
 }
 
+/** Cookie from magic-link redirect can lag one tick behind first client fetch; retry a few times. */
+async function fetchSessionEmailWithRetries(): Promise<string> {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    try {
+      const sessionRes = await fetch("/api/auth/session", {
+        credentials: "include",
+        cache: "no-store",
+      });
+      const sessionJson = (await sessionRes.json().catch(() => null)) as {
+        user?: { email?: string } | null;
+      } | null;
+      const e = sessionJson?.user?.email?.trim().toLowerCase() ?? "";
+      if (e) return e;
+    } catch {
+      /* next attempt */
+    }
+    await new Promise((r) => setTimeout(r, 120 * (attempt + 1)));
+  }
+  return "";
+}
+
 const TOB_HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => i);
 const TOB_MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) => i);
 type HomeModule = "natal" | "tarot";
@@ -484,9 +505,34 @@ function HomePageContent() {
     void refreshSubscriptionStatus();
   }, [searchParams]);
 
+  const searchQueryKey = searchParams.toString();
+
+  /** Also depends on serialized query string (`searchQueryKey`): `ReadonlyURLSearchParams` identity can miss updates vs the URL bar. */
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (searchParams.get("auth") !== "success") return;
+
+    let authFromWindow: string | null = null;
+    try {
+      authFromWindow = new URL(window.location.href).searchParams.get("auth");
+    } catch {
+      authFromWindow = null;
+    }
+    const authFromRouter = searchParams.get("auth");
+    const pendingRawPreview = readPendingFreeNatalRaw();
+    console.info("[cosmotips:free-natal] auth resume effect RUN (first line, no branch yet)", {
+      at: new Date().toISOString(),
+      authFromWindow,
+      authFromRouter,
+      locationSearch: window.location.search,
+      routerQuery: searchQueryKey,
+      hasPendingJson: Boolean(pendingRawPreview),
+    });
+
+    /** `useSearchParams` can be briefly empty on hydrated static `/` — URL bar is source of truth */
+    const authParam = authFromWindow ?? authFromRouter;
+    if (authParam !== "success") return;
+
+    let cancelled = false;
 
     void (async () => {
       const rawFree = readPendingFreeNatalRaw();
@@ -521,16 +567,13 @@ function HomePageContent() {
           );
 
           try {
-            const sessionRes = await fetch("/api/auth/session");
-            const sessionJson = (await sessionRes.json().catch(() => null)) as {
-              user?: { email?: string } | null;
-            } | null;
-            const loggedEmail =
-              sessionJson?.user?.email?.trim().toLowerCase() ?? "";
+            const loggedEmail = await fetchSessionEmailWithRetries();
             const wantEmail = pending.payload.email.trim().toLowerCase();
 
+            if (cancelled) return;
+
             console.log(
-              "[cosmotips:free-natal] /api/auth/session email:",
+              "[cosmotips:free-natal] /api/auth/session email (after retries):",
               loggedEmail || "(none)",
               "| pending:",
               wantEmail,
@@ -563,6 +606,8 @@ function HomePageContent() {
 
               setLoading(true);
 
+              if (cancelled) return;
+
               const res = await fetch("/api/stripe/checkout", {
                 method: "POST",
                 headers: { "content-type": "application/json" },
@@ -575,6 +620,8 @@ function HomePageContent() {
               if (!res.ok || !data?.url) {
                 throw new Error("checkout_failed");
               }
+
+              if (cancelled) return;
 
               console.log(
                 "[cosmotips:free-natal] checkout OK → window.location.assign:",
@@ -601,6 +648,8 @@ function HomePageContent() {
           }
         }
       }
+
+      if (cancelled) return;
 
       const rawPending = localStorage.getItem(PRO_PENDING_SUBSCRIPTION_STORAGE_KEY);
       if (!rawPending) return;
@@ -636,8 +685,11 @@ function HomePageContent() {
         localStorage.removeItem(PRO_PENDING_SUBSCRIPTION_STORAGE_KEY);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- run when URL auth flag changes only
-  }, [searchParams]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [searchQueryKey]);
 
   useEffect(() => {
     if (reportType !== "natal_basic") setFreeNatalInboxModalOpen(false);
