@@ -8,7 +8,7 @@ import { CosmotipsTopBar } from "@/components/CosmotipsTopBar";
 import { NatalChartWheel } from "@/components/NatalChartWheel";
 import type { AppLang } from "@/lib/reportSchema";
 import type { NatalChartPayload } from "@/lib/natalChart";
-import { homeCopy, successUi, zodiacDisplayName } from "@/lib/uiCopy";
+import { errorMessages, homeCopy, successUi, zodiacDisplayName } from "@/lib/uiCopy";
 
 type Meta = {
   email: string;
@@ -157,8 +157,9 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
   }, [meta?.reportType, report, title, uiLang]);
 
   const fetchReport = useCallback(async () => {
+    const em = errorMessages[uiLang];
     if (!sessionId) {
-      setError(successUi[uiLang].missingSession);
+      setError(em.invalidLink);
       setLoading(false);
       return;
     }
@@ -193,13 +194,9 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
         method: "GET",
       });
       const data = (await res.json().catch(() => null)) as GenerateResponse | null;
-      const serverError =
-        data && "error" in data && typeof data.error === "string"
-          ? data.error
-          : null;
-      if (!res.ok) throw new Error(serverError ?? successUi[uiLang].generateFailedGeneric);
-      if (!data || "error" in data)
-        throw new Error(serverError ?? successUi[uiLang].generateFailedGeneric);
+      if (!res.ok || !data || "error" in data) {
+        throw new Error("generate_failed");
+      }
 
       setReport(data.report);
       setMeta({
@@ -225,10 +222,8 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
       } catch {
         // ignore localStorage issues
       }
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : successUi[uiLang].generateFailedGeneric,
-      );
+    } catch {
+      setError(em.reportFailed);
       setLoading(false);
     }
   }, [
@@ -274,17 +269,16 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
           | { chart?: NatalChartPayload; error?: string }
           | null;
         if (cancelled) return;
+        const em = errorMessages[meta.lang];
         if (!res.ok || !data?.chart) {
-          setChartError(
-            data?.error ?? successUi[meta.lang].chartError,
-          );
+          setChartError(em.reportFailed);
           setChart(null);
         } else {
           setChart(data.chart);
         }
       } catch {
         if (!cancelled) {
-          setChartError(successUi[meta.lang].chartError);
+          setChartError(errorMessages[meta.lang].reportFailed);
           setChart(null);
         }
       } finally {
@@ -348,14 +342,9 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
           </div>
         </div>
 
-        <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur sm:p-7">
-          {loading ? (
-            <div className="flex items-center gap-3 text-white/70">
-              <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
-              {su.generating}
-            </div>
-          ) : error ? (
-            <div className="space-y-3">
+        <div className="mt-8 space-y-4">
+          {!loading && error ? (
+            <div className="space-y-4">
               <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
                 {error}
               </div>
@@ -374,9 +363,21 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
                 </Link>
               </div>
             </div>
-          ) : report ? (
-            <article className="max-w-none space-y-4">
-              {emailPdfInfo ? (
+          ) : (
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur sm:p-7">
+              {loading ? (
+                <div className="flex items-center gap-3 text-white/70">
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
+                  {su.generating}
+                </div>
+              ) : report ? (
+                <article className="max-w-none space-y-4">
+                  {chartError ? (
+                    <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                      {chartError}
+                    </div>
+                  ) : null}
+                  {emailPdfInfo ? (
                 <div
                   className={[
                     "rounded-xl border px-4 py-3 text-sm",
@@ -417,10 +418,6 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
                 <div className="border-b border-white/10 pb-8">
                   <NatalChartWheel chart={chart} lang={uiLang} />
                 </div>
-              ) : chartError ? (
-                <p className="pb-4 text-center text-sm text-amber-200/80">
-                  {chartError}
-                </p>
               ) : null}
               <ReactMarkdown
                 components={{
@@ -473,8 +470,10 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
                 </button>
               </div>
             </article>
-          ) : (
-            <div className="text-white/70">{su.noReportFound}</div>
+              ) : (
+                <div className="text-white/70">{su.noReportFound}</div>
+              )}
+            </div>
           )}
         </div>
 

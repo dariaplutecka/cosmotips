@@ -77,6 +77,40 @@ export const seoMeta: Record<
   },
 };
 
+/** User-facing validation / outage copy (homepage, login panel, success). */
+export const errorMessages: Record<
+  AppLang,
+  {
+    loginFailed: string;
+    emailSent: string;
+    reportFailed: string;
+    invalidLink: string;
+    invalidEmail: string;
+  }
+> = {
+  en: {
+    loginFailed: "Something went wrong. Please try again.",
+    emailSent: "Check your inbox — we sent you a login link.",
+    reportFailed: "We couldn't generate your report. Please try again.",
+    invalidLink: "This link has expired. Please log in again.",
+    invalidEmail: "Enter a valid email address.",
+  },
+  pl: {
+    loginFailed: "Coś poszło nie tak. Spróbuj ponownie.",
+    emailSent: "Sprawdź skrzynkę — wysłaliśmy Ci link do logowania.",
+    reportFailed: "Nie udało się wygenerować raportu. Spróbuj ponownie.",
+    invalidLink: "Link wygasł. Zaloguj się ponownie.",
+    invalidEmail: "Podaj poprawny adres e-mail.",
+  },
+  es: {
+    loginFailed: "Algo salió mal. Por favor, inténtalo de nuevo.",
+    emailSent: "Revisa tu correo — te enviamos un enlace de acceso.",
+    reportFailed: "No pudimos generar tu informe. Inténtalo de nuevo.",
+    invalidLink: "El enlace ha caducado. Por favor, inicia sesión de nuevo.",
+    invalidEmail: "Introduce un correo válido.",
+  },
+};
+
 export const tarotCopy: Record<
   AppLang,
   {
@@ -539,6 +573,8 @@ export type HomeCopy = {
   freeBasicUsedHint: string;
   /** Przy próbie ponownego zamówienia darmowego typu */
   freeBasicAlreadyUsedError: string;
+  /** Po wysłaniu magic linka przed darmowym raportem natalnym */
+  freeNatalMagicLinkHint: string;
 };
 
 export const successUi: Record<
@@ -776,6 +812,8 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       "The free report can only be used once. Please choose the full report option below.",
     freeBasicAlreadyUsedError:
       "The free basic natal preview was already used on this device. Pick a paid report type.",
+    freeNatalMagicLinkHint:
+      "We sent a link to your email. Click it to see your report.",
   },
   pl: {
     heroTitle: "Twoja historia została zapisana jeszcze przed Twoimi narodzinami.",
@@ -853,6 +891,8 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       "Z darmowego raportu można skorzystać tylko raz. Wybierz poniżej opcję pełnego raportu.",
     freeBasicAlreadyUsedError:
       "Darmowy podgląd mapy był już użyty na tym urządzeniu. Wybierz typ raportu płatnego.",
+    freeNatalMagicLinkHint:
+      "Wysłaliśmy link na Twój e-mail. Kliknij go aby zobaczyć raport.",
   },
   es: {
     heroTitle: "Tu historia escrita antes de nacer.",
@@ -930,6 +970,8 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       "El informe gratuito solo puede usarse una vez. Elige abajo la opción de informe completo.",
     freeBasicAlreadyUsedError:
       "La vista básica gratuita ya se usó en este dispositivo. Elige un tipo de informe de pago.",
+    freeNatalMagicLinkHint:
+      "Te enviamos un enlace. Haz clic para ver tu informe.",
   },
 };
 

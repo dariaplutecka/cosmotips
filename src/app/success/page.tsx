@@ -1,15 +1,22 @@
 import { Suspense } from "react";
+import { headers } from "next/headers";
 import type { AppLang } from "@/lib/reportSchema";
 import { successUi } from "@/lib/uiCopy";
 import { SuccessClient } from "./SuccessClient";
 
 function pickLangFromSearchParams(
   sp: Record<string, string | string[] | undefined>,
-): AppLang {
+): AppLang | null {
   const raw = sp.lang;
   const v = Array.isArray(raw) ? raw[0] : raw;
   if (v === "pl" || v === "es" || v === "en") return v;
-  return "en";
+  return null;
+}
+
+function pickLangHeader(h: Headers): AppLang | null {
+  const v = h.get("x-cosmotips-lang")?.trim().toLowerCase();
+  if (v === "pl" || v === "es" || v === "en") return v;
+  return null;
 }
 
 export default async function SuccessPage({
@@ -18,7 +25,9 @@ export default async function SuccessPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const initialLang = pickLangFromSearchParams(sp);
+  const hdrs = await headers();
+  const initialLang =
+    pickLangFromSearchParams(sp) ?? pickLangHeader(hdrs) ?? "en";
 
   return (
     <Suspense

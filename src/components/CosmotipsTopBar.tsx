@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { FEATURE_GOOGLE_AUTH_UI } from "@/lib/featureFlags";
 import type { AppLang } from "@/lib/reportSchema";
+import { errorMessages } from "@/lib/uiCopy";
 
 const LANGS: Array<{ code: AppLang; flag: string; abbr: string }> = [
   { code: "en", flag: "🇬🇧", abbr: "EN" },
@@ -51,9 +52,6 @@ function authText(lang: AppLang) {
       emailPlaceholder: "Twój e-mail",
       magicLink: "Kontynuuj przez e-mail",
       google: "Kontynuuj z Google",
-      sent: "Sprawdź skrzynkę. Wysłaliśmy link do logowania.",
-      error: "Nie udało się zalogować. Spróbuj ponownie.",
-      emailInvalid: "Podaj poprawny adres e-mail.",
       pro: "Pro",
       manage: "Zarządzaj subskrypcją",
     };
@@ -65,9 +63,6 @@ function authText(lang: AppLang) {
       emailPlaceholder: "Tu correo",
       magicLink: "Continuar con correo",
       google: "Continuar con Google",
-      sent: "Revisa tu correo. Te enviamos un enlace de acceso.",
-      error: "No se pudo iniciar sesión. Inténtalo de nuevo.",
-      emailInvalid: "Introduce un correo válido.",
       pro: "Pro",
       manage: "Gestionar suscripción",
     };
@@ -78,9 +73,6 @@ function authText(lang: AppLang) {
     emailPlaceholder: "Your email",
     magicLink: "Continue with email",
     google: "Continue with Google",
-    sent: "Check your email. We sent you a sign-in link.",
-    error: "Could not sign in. Try again.",
-    emailInvalid: "Enter a valid email address.",
     pro: "Pro",
     manage: "Manage subscription",
   };
@@ -97,6 +89,7 @@ export function CosmotipsTopBar({
   const pathname = usePathname() || "/";
   const homeHref = `/?lang=${lang}`;
   const copy = authText(lang);
+  const em = errorMessages[lang];
   const authBtnRef = useRef<HTMLButtonElement>(null);
   const authPanelRef = useRef<HTMLDivElement>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -148,7 +141,7 @@ export function CosmotipsTopBar({
     const emailLooksValid =
       clean.includes("@") && clean.includes(".") && clean.indexOf("@") < clean.lastIndexOf(".");
     if (!emailLooksValid) {
-      setAuthError(copy.emailInvalid);
+      setAuthError(em.invalidEmail);
       setAuthMessage(null);
       return;
     }
@@ -162,9 +155,9 @@ export function CosmotipsTopBar({
         body: JSON.stringify({ email: clean, lang }),
       });
       if (!res.ok) throw new Error("magic_link_failed");
-      setAuthMessage(copy.sent);
+      setAuthMessage(em.emailSent);
     } catch {
-      setAuthError(copy.error);
+      setAuthError(em.loginFailed);
     } finally {
       setAuthLoading(false);
     }
@@ -183,10 +176,10 @@ export function CosmotipsTopBar({
     try {
       const res = await fetch("/api/stripe/customer-portal", { method: "POST" });
       const data = (await res.json().catch(() => null)) as { url?: string; error?: string } | null;
-      if (!res.ok || !data?.url) throw new Error(data?.error ?? copy.error);
+      if (!res.ok || !data?.url) throw new Error("portal_failed");
       window.location.assign(data.url);
     } catch {
-      setAuthError(copy.error);
+      setAuthError(em.loginFailed);
       setPortalLoading(false);
     }
   }
@@ -330,6 +323,16 @@ export function CosmotipsTopBar({
               </div>
             ) : (
               <div className="space-y-3">
+                {authMessage ? (
+                  <div className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-3 py-2.5 text-xs leading-5 text-emerald-50">
+                    {authMessage}
+                  </div>
+                ) : null}
+                {authError ? (
+                  <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-xs leading-5 text-red-100">
+                    {authError}
+                  </div>
+                ) : null}
                 <input
                   type="email"
                   value={authEmail}
@@ -352,12 +355,6 @@ export function CosmotipsTopBar({
                   >
                     {copy.google}
                   </a>
-                ) : null}
-                {authMessage ? (
-                  <p className="text-xs leading-5 text-emerald-200">{authMessage}</p>
-                ) : null}
-                {authError ? (
-                  <p className="text-xs leading-5 text-red-200">{authError}</p>
                 ) : null}
               </div>
             )}

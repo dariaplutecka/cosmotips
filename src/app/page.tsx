@@ -24,7 +24,7 @@ import {
   type TarotCard,
   type TarotTopic,
 } from "@/lib/tarotDeck";
-import { homeCopy, tarotCopy } from "@/lib/uiCopy";
+import { errorMessages, homeCopy, tarotCopy } from "@/lib/uiCopy";
 import ReactMarkdown from "react-markdown";
 
 /** Same typography as saved astrological reports (`/reports`). */
@@ -78,6 +78,8 @@ const TAROT_PENDING_CHECKOUT_STORAGE_KEY = "cosmotips:tarot_pending_checkout";
 const HOME_MODULE_STORAGE_KEY = "cosmotips:active_home_module";
 const USER_FORM_STORAGE_KEY = "cosmotips:user_form";
 const PRO_PENDING_SUBSCRIPTION_STORAGE_KEY = "cosmotips:pro_pending_subscription";
+const PENDING_FREE_NATAL_SESSION_KEY = "cosmotips:pending_free_natal_v1";
+const PENDING_FREE_NATAL_MAX_AGE_MS = 1000 * 60 * 60;
 
 const TOB_HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => i);
 const TOB_MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) => i);
@@ -116,6 +118,20 @@ type PendingProSubscription = {
   createdAt: number;
 };
 
+type PendingFreeNatalV1 = {
+  v: 1;
+  createdAt: number;
+  payload: {
+    email: string;
+    dob: string;
+    tob: string;
+    pob: string;
+    reportType: "natal_basic";
+    lang: AppLang;
+    birthTimeUnknown: boolean;
+  };
+};
+
 function proUiText(lang: AppLang) {
   if (lang === "pl") {
     return {
@@ -130,8 +146,6 @@ function proUiText(lang: AppLang) {
       yearly: "Pro rocznie",
       subscriptionSuccess: "Subskrypcja Pro została aktywowana.",
       subscriptionCancelled: "Subskrypcja nie została dokończona.",
-      authInvalid: "Link logowania jest nieważny albo wygasł. Spróbuj ponownie.",
-      authError: "Nie udało się zalogować. Spróbuj ponownie.",
       modalTitle: "Zaloguj się aby subskrybować",
       modalEmailPlaceholder: "Twój e-mail",
       modalMagicLink: "Wyślij link logowania",
@@ -155,8 +169,6 @@ function proUiText(lang: AppLang) {
       yearly: "Pro anual",
       subscriptionSuccess: "La suscripción Pro ha sido activada.",
       subscriptionCancelled: "La suscripción no se completó.",
-      authInvalid: "El enlace de acceso no es válido o ha caducado. Inténtalo de nuevo.",
-      authError: "No se pudo iniciar sesión. Inténtalo de nuevo.",
       modalTitle: "Inicia sesión para suscribirte",
       modalEmailPlaceholder: "Tu correo",
       modalMagicLink: "Enviar enlace de acceso",
@@ -179,8 +191,6 @@ function proUiText(lang: AppLang) {
     yearly: "Pro yearly",
     subscriptionSuccess: "Pro subscription has been activated.",
     subscriptionCancelled: "Subscription was not completed.",
-    authInvalid: "The sign-in link is invalid or expired. Try again.",
-    authError: "Could not sign in. Try again.",
     modalTitle: "Sign in to subscribe",
     modalEmailPlaceholder: "Your email",
     modalMagicLink: "Send sign-in link",
@@ -295,16 +305,57 @@ function HomePageContent() {
   const [proAuthEmail, setProAuthEmail] = useState("");
   const [proAuthLoading, setProAuthLoading] = useState(false);
   const [proAuthError, setProAuthError] = useState<string | null>(null);
+  /** Green notice for natal tab (e.g. subscription success) — must not use the red `error` state. */
+  const [natalNotice, setNatalNotice] = useState<string | null>(null);
+  const [
+    freeNatalMagicLinkSent,
+    setFreeNatalMagicLinkSent,
+  ] = useState(false);
+
+  /** Latest callback so `auth=success` resume effect does not depend on unstable function identity. */
+  const hydratePendingFreeNatalRef = useRef<
+    (payload: PendingFreeNatalV1["payload"]) => void
+  >(() => {});
 
   const copy = homeCopy[lang];
   const tarot = tarotCopy[lang];
   const proCopy = proUiText(lang);
+  const em = errorMessages[lang];
+
+  hydratePendingFreeNatalRef.current = (
+    payload: PendingFreeNatalV1["payload"],
+  ) => {
+    setEmail(payload.email);
+    setPob(payload.pob);
+    const [y, mo, d] = payload.dob.split("-");
+    setDobYear(y ?? "");
+    setDobMonth(mo !== undefined && mo !== "" ? String(Number(mo)) : "");
+    setDobDay(d !== undefined && d !== "" ? String(Number(d)) : "");
+    setBirthTimeUnknown(payload.birthTimeUnknown);
+    if (payload.birthTimeUnknown) {
+      setTobHour("");
+      setTobMinute("");
+    } else {
+      const [h = "", mi = ""] = payload.tob.split(":");
+      setTobHour(h);
+      setTobMinute(mi);
+    }
+    setLang(payload.lang);
+    setReportType("natal_basic");
+    setActiveModule("natal");
+    setFreeNatalMagicLinkSent(false);
+    setError(null);
+    setNatalNotice(null);
+  };
+
   const activePitch =
     activeModule === "tarot" ? copy.tarotPitchParagraphs : copy.toolPitchParagraphs;
   const userFormHydratedRef = useRef(false);
 
   function selectHomeModule(module: HomeModule) {
     setActiveModule(module);
+    setNatalNotice(null);
+    setFreeNatalMagicLinkSent(false);
     try {
       localStorage.setItem(HOME_MODULE_STORAGE_KEY, module);
     } catch {
@@ -443,6 +494,104 @@ function HomePageContent() {
   }, [searchParams]);
 
   useEffect(() => {
+    if (reportType !== "natal_basic") setFreeNatalMagicLinkSent(false);
+  }, [reportType]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (searchParams.get("auth") !== "success") return;
+    if (localStorage.getItem(PRO_PENDING_SUBSCRIPTION_STORAGE_KEY)) return;
+
+    const raw = sessionStorage.getItem(PENDING_FREE_NATAL_SESSION_KEY);
+    if (!raw) return;
+
+    let pending: PendingFreeNatalV1;
+    try {
+      pending = JSON.parse(raw) as PendingFreeNatalV1;
+    } catch {
+      sessionStorage.removeItem(PENDING_FREE_NATAL_SESSION_KEY);
+      return;
+    }
+
+    const fresh =
+      typeof pending.createdAt === "number" &&
+      Date.now() - pending.createdAt < PENDING_FREE_NATAL_MAX_AGE_MS;
+    if (
+      pending.v !== 1 ||
+      !fresh ||
+      pending.payload?.reportType !== "natal_basic"
+    ) {
+      sessionStorage.removeItem(PENDING_FREE_NATAL_SESSION_KEY);
+      return;
+    }
+
+    void (async () => {
+      try {
+        const sessionRes = await fetch("/api/auth/session");
+        const sessionJson = (await sessionRes.json().catch(() => null)) as {
+          user?: { email?: string } | null;
+        } | null;
+        const loggedEmail =
+          sessionJson?.user?.email?.trim().toLowerCase() ?? "";
+        const wantEmail =
+          pending.payload.email.trim().toLowerCase();
+        if (!loggedEmail || loggedEmail !== wantEmail) {
+          return;
+        }
+
+        sessionStorage.removeItem(PENDING_FREE_NATAL_SESSION_KEY);
+        hydratePendingFreeNatalRef.current(pending.payload);
+
+        try {
+          const u = new URL(window.location.href);
+          if (u.searchParams.has("auth")) {
+            u.searchParams.delete("auth");
+            const q = u.searchParams.toString();
+            window.history.replaceState(
+              null,
+              "",
+              q ? `${u.pathname}?${q}` : u.pathname,
+            );
+          }
+        } catch {
+          /* ignore */
+        }
+
+        setLoading(true);
+
+        const res = await fetch("/api/stripe/checkout", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(pending.payload),
+        });
+        const data = (await res.json().catch(() => null)) as
+          | { url?: string }
+          | null;
+
+        if (!res.ok || !data?.url) {
+          throw new Error("checkout_failed");
+        }
+
+        try {
+          localStorage.setItem(NATAL_SAMPLE_STORAGE_KEY, "1");
+        } catch {
+          /* ignore */
+        }
+
+        void refreshSubscriptionStatus();
+        setTopBarSessionKey((k) => k + 1);
+
+        window.location.assign(data.url);
+      } catch {
+        setLoading(false);
+        setError(errorMessages[pending.payload.lang].loginFailed);
+      }
+    })();
+    // Runs when URL auth flag changes only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  useEffect(() => {
     try {
       if (typeof window === "undefined") return;
       if (!userFormHydratedRef.current) return;
@@ -470,6 +619,13 @@ function HomePageContent() {
     if (q === "en" || q === "pl" || q === "es") {
       setLang(q);
       return;
+    }
+    const docLang =
+      typeof document !== "undefined"
+        ? document.documentElement.getAttribute("lang")?.trim().toLowerCase()
+        : null;
+    if (docLang === "en" || docLang === "pl" || docLang === "es") {
+      setLang(docLang);
     }
     let cancelled = false;
     void (async () => {
@@ -569,16 +725,25 @@ function HomePageContent() {
     if (subscription === "success") {
       setError(null);
       setTarotError(null);
+      setNatalNotice(null);
       if (activeModule === "tarot") setTarotMessage(proCopy.subscriptionSuccess);
-      else setError(proCopy.subscriptionSuccess);
+      else setNatalNotice(proCopy.subscriptionSuccess);
       void refreshSubscriptionStatus();
     } else if (subscription === "cancelled") {
+      setNatalNotice(null);
       const message = proCopy.subscriptionCancelled;
       if (activeModule === "tarot") setTarotError(message);
       else setError(message);
     }
     if (auth === "invalid" || auth === "error") {
-      const message = auth === "invalid" ? proCopy.authInvalid : proCopy.authError;
+      setNatalNotice(null);
+      setFreeNatalMagicLinkSent(false);
+      try {
+        sessionStorage.removeItem(PENDING_FREE_NATAL_SESSION_KEY);
+      } catch {
+        /* ignore */
+      }
+      const message = auth === "invalid" ? em.invalidLink : em.loginFailed;
       if (activeModule === "tarot") setTarotError(message);
       else setError(message);
     }
@@ -688,31 +853,97 @@ function HomePageContent() {
       return;
     }
     setError(null);
+    setNatalNotice(null);
     if (reportType === "natal_basic" && freeBasicUsed) {
       setError(copy.freeBasicAlreadyUsedError);
       return;
     }
     setLoading(true);
     try {
+      const checkoutBody = {
+        email: email.trim(),
+        dob,
+        tob,
+        pob,
+        reportType,
+        lang,
+        birthTimeUnknown,
+      };
+
+      const parsedCheckout = CheckoutPayloadSchema.safeParse(checkoutBody);
+      if (!parsedCheckout.success) {
+        setError(em.loginFailed);
+        setLoading(false);
+        return;
+      }
+
+      if (reportType === "natal_basic") {
+        const sessionRes = await fetch("/api/auth/session");
+        const sessionJson = (await sessionRes.json().catch(() => null)) as {
+          user?: { email?: string } | null;
+        } | null;
+        const loggedEmail =
+          sessionJson?.user?.email?.trim().toLowerCase() ?? "";
+
+        if (!loggedEmail) {
+          const pending: PendingFreeNatalV1 = {
+            v: 1,
+            createdAt: Date.now(),
+            payload: {
+              ...parsedCheckout.data,
+              reportType: "natal_basic",
+            },
+          };
+          try {
+            sessionStorage.setItem(
+              PENDING_FREE_NATAL_SESSION_KEY,
+              JSON.stringify(pending),
+            );
+          } catch {
+            /* ignore */
+          }
+
+          const mlRes = await fetch("/api/auth/magic-link", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              email: parsedCheckout.data.email,
+              lang: parsedCheckout.data.lang,
+            }),
+          });
+
+          if (!mlRes.ok) {
+            setError(em.loginFailed);
+            setLoading(false);
+            return;
+          }
+
+          setFreeNatalMagicLinkSent(true);
+          setLoading(false);
+          return;
+        }
+
+        setFreeNatalMagicLinkSent(false);
+      }
+
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          email: email.trim(),
-          dob,
-          tob,
-          pob,
-          reportType,
-          lang,
-          birthTimeUnknown,
-        }),
+        body: JSON.stringify(parsedCheckout.data),
       });
       const data = (await res.json().catch(() => null)) as
-        | { url?: string; error?: string }
+        | { url?: string }
         | null;
 
-      if (!res.ok) throw new Error(data?.error ?? "Unable to start checkout.");
-      if (!data?.url) throw new Error("Missing checkout URL.");
+      if (!res.ok || !data?.url) throw new Error("checkout_failed");
+
+      if (reportType === "natal_basic") {
+        try {
+          sessionStorage.removeItem(PENDING_FREE_NATAL_SESSION_KEY);
+        } catch {
+          /* ignore */
+        }
+      }
 
       if (reportType === "natal_basic") {
         try {
@@ -723,8 +954,8 @@ function HomePageContent() {
       }
 
       window.location.assign(data.url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } catch {
+      setError(em.loginFailed);
       setLoading(false);
     }
   }
@@ -810,12 +1041,12 @@ function HomePageContent() {
         | { url?: string; error?: string }
         | null;
       if (!res.ok || !data?.url) {
-        throw new Error(data?.error ?? tarot.networkError);
+        throw new Error("checkout_failed");
       }
       window.location.assign(data.url);
       return true;
-    } catch (err) {
-      setTarotError(err instanceof Error ? err.message : tarot.networkError);
+    } catch {
+      setTarotError(em.loginFailed);
       setTarotCheckoutLoading(false);
       return false;
     }
@@ -846,7 +1077,7 @@ function HomePageContent() {
         typeof data.balance !== "number" ||
         data.error === "token_store_unavailable"
       ) {
-        setTarotError(tarot.networkError);
+        setTarotError(em.loginFailed);
         setTarotState("idle");
         return;
       }
@@ -861,7 +1092,7 @@ function HomePageContent() {
 
       setTarotState("shuffling");
     } catch {
-      setTarotError(tarot.networkError);
+      setTarotError(em.loginFailed);
       setTarotState("idle");
     }
   }
@@ -872,6 +1103,7 @@ function HomePageContent() {
   ) {
     setError(null);
     setTarotError(null);
+    setNatalNotice(null);
     const checkoutName = opts?.profile?.name ?? name.trim();
     const checkoutDob = opts?.profile?.dob ?? dob;
     const checkoutTob = opts?.profile?.tob ?? tob;
@@ -931,11 +1163,11 @@ function HomePageContent() {
         | { url?: string; error?: string }
         | null;
       if (!res.ok || !data?.url) {
-        throw new Error(data?.error ?? tarot.networkError);
+        throw new Error("subscription_checkout_failed");
       }
       window.location.assign(data.url);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : tarot.networkError;
+    } catch {
+      const message = em.loginFailed;
       if (activeModule === "tarot") setTarotError(message);
       else setError(message);
       setSubscriptionLoading(false);
@@ -947,13 +1179,7 @@ function HomePageContent() {
     setProAuthError(null);
     const cleanEmail = proAuthEmail.trim();
     if (!cleanEmail || !cleanEmail.includes("@")) {
-      setProAuthError(
-        lang === "pl"
-          ? "Podaj poprawny adres e-mail."
-          : lang === "es"
-            ? "Introduce un correo válido."
-            : "Enter a valid email address.",
-      );
+      setProAuthError(em.invalidEmail);
       return;
     }
     setProAuthLoading(true);
@@ -966,12 +1192,12 @@ function HomePageContent() {
       });
       const data = (await res.json().catch(() => null)) as { error?: string } | null;
       if (!res.ok) {
-        throw new Error(data?.error ?? tarot.networkError);
+        throw new Error("magic_link_failed");
       }
       setEmail(cleanEmail);
       setProAuthModalView("sent");
-    } catch (err) {
-      setProAuthError(err instanceof Error ? err.message : tarot.networkError);
+    } catch {
+      setProAuthError(em.loginFailed);
     } finally {
       setProAuthLoading(false);
     }
@@ -1027,7 +1253,7 @@ function HomePageContent() {
         return;
       }
       if (!res.ok || !data?.cards || !data.interpretation) {
-        throw new Error(data?.error ?? tarot.networkError);
+        throw new Error("TAROT_GENERIC");
       }
       setTarotResult({
         cards: data.cards,
@@ -1048,7 +1274,11 @@ function HomePageContent() {
       }
       setTarotState("result");
     } catch (err) {
-      setTarotError(err instanceof Error ? err.message : tarot.networkError);
+      setTarotError(
+        err instanceof Error && err.message !== "TAROT_GENERIC"
+          ? err.message
+          : em.loginFailed,
+      );
       setTarotState("idle");
     }
   }
@@ -1064,6 +1294,8 @@ function HomePageContent() {
     setActiveModule("tarot");
     resetTarot();
     setError(null);
+    setNatalNotice(null);
+    setFreeNatalMagicLinkSent(false);
     setLoading(false);
     setTarotCheckoutLoading(false);
     try {
@@ -1179,6 +1411,49 @@ function HomePageContent() {
             <section
               className={`w-full ${!isTarotReportView ? "overflow-hidden rounded-b-3xl border-x border-b border-white/12 border-t-0 bg-gradient-to-b from-violet-950/45 via-violet-950/22 to-[#070412] px-4 pt-5 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.5)] ring-1 ring-violet-400/18 sm:px-6 sm:pt-6" : ""}`}
             >
+              {isTarotReportView && activeModule === "tarot" ? (
+                <div className="mx-auto mb-6 w-full max-w-5xl space-y-3">
+                  {tarotMessage ? (
+                    <div className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">
+                      {tarotMessage}
+                    </div>
+                  ) : null}
+                  {tarotError ? (
+                    <div className="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                      {tarotError}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+              {!isTarotReportView ? (
+                <div className="mx-auto mb-3 w-full max-w-4xl space-y-3 sm:mb-4">
+                  {activeModule === "natal" && natalNotice ? (
+                    <div className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">
+                      {natalNotice}
+                    </div>
+                  ) : null}
+                  {activeModule === "natal" && freeNatalMagicLinkSent ? (
+                    <div className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">
+                      {copy.freeNatalMagicLinkHint}
+                    </div>
+                  ) : null}
+                  {activeModule === "natal" && error ? (
+                    <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                      {error}
+                    </div>
+                  ) : null}
+                  {activeModule === "tarot" && tarotMessage ? (
+                    <div className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">
+                      {tarotMessage}
+                    </div>
+                  ) : null}
+                  {activeModule === "tarot" && tarotError ? (
+                    <div className="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                      {tarotError}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
               {activeModule === "natal" ? (
                 <div className="mx-auto w-full max-w-4xl space-y-3">
               <div className="w-full rounded-2xl bg-black/18 p-5 sm:p-6">
@@ -1286,27 +1561,10 @@ function HomePageContent() {
                 ) : null}
               </div>
               </div>
-
-                  {error ? (
-                    <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-                      {error}
-                    </div>
-                  ) : null}
                 </div>
               ) : (
                 <div>
               <div className="mx-auto max-w-4xl">
-
-                {tarotMessage && !isTarotReportView ? (
-                  <div className="mt-5 rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">
-                    {tarotMessage}
-                  </div>
-                ) : null}
-                {tarotError ? (
-                  <div className="mt-5 rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-                    {tarotError}
-                  </div>
-                ) : null}
 
                 {tarotState === "idle" ? (
                   <>
@@ -1586,11 +1844,6 @@ function HomePageContent() {
                         </ReactMarkdown>
                       </article>
                     </div>
-                    {tarotMessage ? (
-                      <div className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">
-                        {tarotMessage}
-                      </div>
-                    ) : null}
                     <button
                       type="button"
                       onClick={resetTarot}
@@ -2004,6 +2257,11 @@ function HomePageContent() {
                     {proCopy.modalTitle}
                   </h2>
                 </div>
+                {proAuthError ? (
+                  <p className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                    {proAuthError}
+                  </p>
+                ) : null}
                 {FEATURE_GOOGLE_AUTH_UI ? (
                   <button
                     type="button"
@@ -2032,11 +2290,6 @@ function HomePageContent() {
                     {proAuthLoading ? "..." : proCopy.modalMagicLink}
                   </button>
                 </form>
-                {proAuthError ? (
-                  <p className="rounded-2xl border border-red-300/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-                    {proAuthError}
-                  </p>
-                ) : null}
               </div>
             ) : (
               <div className="space-y-5 pr-8">
