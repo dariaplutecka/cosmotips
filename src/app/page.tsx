@@ -585,20 +585,11 @@ function HomePageContent() {
               clearPendingFreeNatalStorage();
               hydratePendingFreeNatalRef.current(pending.payload);
 
-              try {
-                const u = new URL(window.location.href);
-                if (u.searchParams.has("auth")) {
-                  u.searchParams.delete("auth");
-                  const q = u.searchParams.toString();
-                  window.history.replaceState(
-                    null,
-                    "",
-                    q ? `${u.pathname}?${q}` : u.pathname,
-                  );
-                }
-              } catch {
-                /* ignore */
-              }
+              /**
+               * Do NOT strip `auth` via replaceState before redirect: that changes `searchParams`,
+               * retriggers this effect (`searchQueryKey` dep), cleanup sets `cancelled`, and we
+               * return after checkout without ever calling assign() — user stuck on spinner.
+               */
 
               console.log(
                 "[cosmotips:free-natal] POST /api/stripe/checkout (natal_basic → fnb_* session URL in response)",
@@ -613,19 +604,55 @@ function HomePageContent() {
                 headers: { "content-type": "application/json" },
                 body: JSON.stringify(pending.payload),
               });
-              const data = (await res.json().catch(() => null)) as
-                | { url?: string }
-                | null;
 
-              if (!res.ok || !data?.url) {
+              const rawBody = await res.text();
+              console.log("[cosmotips:free-natal] checkout HTTP", res.status, "raw:", rawBody);
+
+              let parsed: { url?: string; checkoutUrl?: string } | null = null;
+              try {
+                parsed = JSON.parse(rawBody) as { url?: string; checkoutUrl?: string };
+              } catch {
+                parsed = null;
+              }
+
+              const rawUrl =
+                (typeof parsed?.url === "string" ? parsed.url : "") ||
+                (typeof parsed?.checkoutUrl === "string" ? parsed.checkoutUrl : "");
+              let assignHref = rawUrl.trim();
+              if (
+                assignHref &&
+                assignHref.startsWith("/") &&
+                !assignHref.startsWith("//")
+              ) {
+                assignHref = new URL(assignHref, window.location.origin).href;
+              }
+
+              console.log("[cosmotips:free-natal] parsed checkout object:", parsed);
+
+              if (!res.ok) {
+                console.warn("[cosmotips:free-natal] checkout not ok:", res.status, parsed);
+                throw new Error("checkout_failed");
+              }
+              if (!assignHref) {
+                console.warn("[cosmotips:free-natal] empty checkout url after parse:", {
+                  parsed,
+                  rawLen: rawBody.length,
+                });
+                throw new Error("checkout_failed");
+              }
+
+              try {
+                new URL(assignHref);
+              } catch {
+                console.warn("[cosmotips:free-natal] invalid redirect URL:", assignHref);
                 throw new Error("checkout_failed");
               }
 
               if (cancelled) return;
 
               console.log(
-                "[cosmotips:free-natal] checkout OK → window.location.assign:",
-                data.url,
+                "[cosmotips:free-natal] checkout OK → about to window.location.assign:",
+                assignHref,
               );
 
               try {
@@ -637,7 +664,8 @@ function HomePageContent() {
               void refreshSubscriptionStatus();
               setTopBarSessionKey((k) => k + 1);
 
-              window.location.assign(data.url);
+              console.log("[cosmotips:free-natal] window.location.assign() NOW:", assignHref);
+              window.location.assign(assignHref);
               return;
             }
           } catch (err) {
