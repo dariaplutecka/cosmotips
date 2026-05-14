@@ -60,7 +60,13 @@ end
 redis.call("DEL", KEYS[1])
 return value
 `;
-  const raw = await client.eval<[], string | null>(script, [key], []);
+  const raw = await client.eval<[], string | CheckoutPayload | null>(
+    script,
+    [key],
+    [],
+  );
   if (!raw) return null;
-  return JSON.parse(raw) as CheckoutPayload;
+  const data =
+    typeof raw === "string" ? (JSON.parse(raw) as CheckoutPayload) : raw;
+  return data;
 }

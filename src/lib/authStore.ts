@@ -67,9 +67,15 @@ end
 redis.call("DEL", KEYS[1])
 return value
 `;
-  const raw = await redisClient.eval<[], string | null>(script, [key], []);
+  const raw = await redisClient.eval<[], string | MagicLinkRecord | null>(
+    script,
+    [key],
+    [],
+  );
   if (!raw) return null;
-  return JSON.parse(raw) as MagicLinkRecord;
+  const data =
+    typeof raw === "string" ? (JSON.parse(raw) as MagicLinkRecord) : raw;
+  return data;
 }
 
 export async function storeGoogleState(state: string): Promise<void> {
