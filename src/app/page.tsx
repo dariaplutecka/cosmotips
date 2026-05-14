@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import {
   CheckoutPayloadSchema,
   type AppLang,
+  type PendingFreeNatalV1,
   type ReportType,
 } from "@/lib/reportSchema";
 import { FEATURE_GOOGLE_AUTH_UI } from "@/lib/featureFlags";
@@ -165,20 +166,6 @@ type PendingProSubscription = {
   birthTimeUnknown: boolean;
   lang: AppLang;
   createdAt: number;
-};
-
-type PendingFreeNatalV1 = {
-  v: 1;
-  createdAt: number;
-  payload: {
-    email: string;
-    dob: string;
-    tob: string;
-    pob: string;
-    reportType: "natal_basic";
-    lang: AppLang;
-    birthTimeUnknown: boolean;
-  };
 };
 
 function proUiText(lang: AppLang) {
@@ -535,6 +522,166 @@ function HomePageContent() {
     let cancelled = false;
 
     void (async () => {
+      async function finalizeFreeNatalCheckout(
+        checkoutPayload: PendingFreeNatalV1["payload"],
+      ): Promise<void> {
+        clearPendingFreeNatalStorage();
+        hydratePendingFreeNatalRef.current(checkoutPayload);
+
+        console.log(
+          "[cosmotips:free-natal] POST /api/stripe/checkout (natal_basic → fnb_* session URL in response)",
+        );
+
+        if (cancelled) return;
+
+        setLoading(true);
+
+        if (cancelled) {
+          setLoading(false);
+          return;
+        }
+
+        const res = await fetch("/api/stripe/checkout", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(checkoutPayload),
+        });
+
+        const rawBody = await res.text();
+        console.log("[cosmotips:free-natal] checkout HTTP", res.status, "raw:", rawBody);
+
+        let checkoutParsed: { url?: string; checkoutUrl?: string } | null = null;
+        try {
+          checkoutParsed = JSON.parse(rawBody) as {
+            url?: string;
+            checkoutUrl?: string;
+          };
+        } catch {
+          checkoutParsed = null;
+        }
+
+        const rawUrl =
+          (typeof checkoutParsed?.url === "string" ? checkoutParsed.url : "") ||
+          (typeof checkoutParsed?.checkoutUrl === "string"
+            ? checkoutParsed.checkoutUrl
+            : "");
+        let assignHref = rawUrl.trim();
+        if (
+          assignHref &&
+          assignHref.startsWith("/") &&
+          !assignHref.startsWith("//")
+        ) {
+          assignHref = new URL(assignHref, window.location.origin).href;
+        }
+
+        console.log("[cosmotips:free-natal] parsed checkout object:", checkoutParsed);
+
+        if (!res.ok) {
+          console.warn("[cosmotips:free-natal] checkout not ok:", res.status, checkoutParsed);
+          throw new Error("checkout_failed");
+        }
+        if (!assignHref) {
+          console.warn("[cosmotips:free-natal] empty checkout url after parse:", {
+            checkoutParsed,
+            rawLen: rawBody.length,
+          });
+          throw new Error("checkout_failed");
+        }
+
+        try {
+          new URL(assignHref);
+        } catch {
+          console.warn("[cosmotips:free-natal] invalid redirect URL:", assignHref);
+          throw new Error("checkout_failed");
+        }
+
+        if (cancelled) {
+          setLoading(false);
+          return;
+        }
+
+        console.log(
+          "[cosmotips:free-natal] checkout OK → about to window.location.assign:",
+          assignHref,
+        );
+
+        try {
+          localStorage.setItem(NATAL_SAMPLE_STORAGE_KEY, "1");
+        } catch {
+          /* ignore */
+        }
+
+        void refreshSubscriptionStatus();
+        setTopBarSessionKey((k) => k + 1);
+
+        console.log("[cosmotips:free-natal] window.location.assign() NOW:", assignHref);
+        window.location.assign(assignHref);
+      }
+
+      let fnResumeFromWindow: string | null = null;
+      try {
+        fnResumeFromWindow = new URL(window.location.href).searchParams.get(
+          "fn_resume",
+        );
+      } catch {
+        fnResumeFromWindow = null;
+      }
+      const fnResumeTokCombined = fnResumeFromWindow ?? searchParams.get("fn_resume");
+      const fnResumeTok = fnResumeTokCombined?.trim() ?? "";
+
+      if (fnResumeTok) {
+        console.info(
+          "[cosmotips:free-natal] auth=success + fn_resume; server-backed resume (cross-browser)",
+        );
+        try {
+          const resumeRes = await fetch(
+            `/api/auth/free-natal-resume?token=${encodeURIComponent(fnResumeTok)}`,
+            {
+              credentials: "include",
+              cache: "no-store",
+            },
+          );
+          const resumeRaw = await resumeRes.text();
+          console.log(
+            "[cosmotips:free-natal] free-natal-resume HTTP",
+            resumeRes.status,
+            "raw:",
+            resumeRaw,
+          );
+
+          let resumeData: { payload?: PendingFreeNatalV1["payload"] } | null = null;
+          try {
+            resumeData = JSON.parse(resumeRaw) as {
+              payload?: PendingFreeNatalV1["payload"];
+            };
+          } catch {
+            resumeData = null;
+          }
+
+          if (
+            resumeRes.ok &&
+            resumeData?.payload &&
+            resumeData.payload.reportType === "natal_basic"
+          ) {
+            await finalizeFreeNatalCheckout(resumeData.payload);
+            return;
+          }
+
+          console.warn(
+            "[cosmotips:free-natal] fn_resume unavailable; fallback to local pending if any:",
+            resumeRes.status,
+            resumeData,
+          );
+        } catch (resumeErr) {
+          console.warn("[cosmotips:free-natal] fn_resume error:", resumeErr);
+          try {
+            setLoading(false);
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+
       const rawFree = readPendingFreeNatalRaw();
 
       if (rawFree) {
@@ -582,91 +729,15 @@ function HomePageContent() {
             );
 
             if (loggedEmail && loggedEmail === wantEmail) {
-              clearPendingFreeNatalStorage();
-              hydratePendingFreeNatalRef.current(pending.payload);
-
-              /**
-               * Do NOT strip `auth` via replaceState before redirect: that changes `searchParams`,
-               * retriggers this effect (`searchQueryKey` dep), cleanup sets `cancelled`, and we
-               * return after checkout without ever calling assign() — user stuck on spinner.
-               */
-
-              console.log(
-                "[cosmotips:free-natal] POST /api/stripe/checkout (natal_basic → fnb_* session URL in response)",
-              );
-
-              setLoading(true);
-
-              if (cancelled) return;
-
-              const res = await fetch("/api/stripe/checkout", {
-                method: "POST",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify(pending.payload),
-              });
-
-              const rawBody = await res.text();
-              console.log("[cosmotips:free-natal] checkout HTTP", res.status, "raw:", rawBody);
-
-              let parsed: { url?: string; checkoutUrl?: string } | null = null;
               try {
-                parsed = JSON.parse(rawBody) as { url?: string; checkoutUrl?: string };
-              } catch {
-                parsed = null;
+                await finalizeFreeNatalCheckout(pending.payload);
+                return;
+              } catch (checkoutErr) {
+                console.warn("[cosmotips:free-natal] resume failed:", checkoutErr);
+                setLoading(false);
+                setError(errorMessages[pending.payload.lang].loginFailed);
+                return;
               }
-
-              const rawUrl =
-                (typeof parsed?.url === "string" ? parsed.url : "") ||
-                (typeof parsed?.checkoutUrl === "string" ? parsed.checkoutUrl : "");
-              let assignHref = rawUrl.trim();
-              if (
-                assignHref &&
-                assignHref.startsWith("/") &&
-                !assignHref.startsWith("//")
-              ) {
-                assignHref = new URL(assignHref, window.location.origin).href;
-              }
-
-              console.log("[cosmotips:free-natal] parsed checkout object:", parsed);
-
-              if (!res.ok) {
-                console.warn("[cosmotips:free-natal] checkout not ok:", res.status, parsed);
-                throw new Error("checkout_failed");
-              }
-              if (!assignHref) {
-                console.warn("[cosmotips:free-natal] empty checkout url after parse:", {
-                  parsed,
-                  rawLen: rawBody.length,
-                });
-                throw new Error("checkout_failed");
-              }
-
-              try {
-                new URL(assignHref);
-              } catch {
-                console.warn("[cosmotips:free-natal] invalid redirect URL:", assignHref);
-                throw new Error("checkout_failed");
-              }
-
-              if (cancelled) return;
-
-              console.log(
-                "[cosmotips:free-natal] checkout OK → about to window.location.assign:",
-                assignHref,
-              );
-
-              try {
-                localStorage.setItem(NATAL_SAMPLE_STORAGE_KEY, "1");
-              } catch {
-                /* ignore */
-              }
-
-              void refreshSubscriptionStatus();
-              setTopBarSessionKey((k) => k + 1);
-
-              console.log("[cosmotips:free-natal] window.location.assign() NOW:", assignHref);
-              window.location.assign(assignHref);
-              return;
             }
           } catch (err) {
             console.warn("[cosmotips:free-natal] resume failed:", err);
@@ -1054,6 +1125,7 @@ function HomePageContent() {
             body: JSON.stringify({
               email: parsedCheckout.data.email,
               lang: parsedCheckout.data.lang,
+              pendingFreeNatal: pending,
             }),
           });
 

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { consumeMagicLinkToken } from "@/lib/authStore";
+import { randomBytes } from "crypto";
+import {
+  consumeMagicLinkToken,
+  storeFnbResumePayload,
+} from "@/lib/authStore";
 import { setAuthSessionCookie } from "@/lib/authSession";
 
 function getBaseUrl(request: Request) {
@@ -24,7 +28,18 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${baseUrl}/?lang=${lang}&auth=invalid`);
     }
 
-    const response = NextResponse.redirect(`${baseUrl}/?lang=${record.lang}&auth=success`);
+    let redirectHref = `${baseUrl}/?lang=${encodeURIComponent(record.lang)}&auth=success`;
+    if (record.pendingFreeNatalJson?.trim()) {
+      try {
+        const resumeTok = randomBytes(24).toString("base64url");
+        await storeFnbResumePayload(resumeTok, record.pendingFreeNatalJson);
+        redirectHref += `&fn_resume=${encodeURIComponent(resumeTok)}`;
+      } catch (resumeErr) {
+        console.error("[auth/verify] fn_resume store failed:", resumeErr);
+      }
+    }
+
+    const response = NextResponse.redirect(redirectHref);
     return setAuthSessionCookie(response, {
       email: record.email,
       provider: "email",

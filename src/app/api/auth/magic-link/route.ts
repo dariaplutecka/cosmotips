@@ -2,14 +2,34 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAuthToken, storeMagicLinkToken } from "@/lib/authStore";
 import { sendMagicLinkEmail } from "@/lib/authEmail";
-import { AppLangSchema, CheckoutPayloadSchema } from "@/lib/reportSchema";
+import {
+  AppLangSchema,
+  CheckoutPayloadSchema,
+  PendingFreeNatalV1Schema,
+} from "@/lib/reportSchema";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/requestIp";
+import { normalizeAuthEmail } from "@/lib/authSession";
 
-const MagicLinkPayloadSchema = z.object({
-  email: CheckoutPayloadSchema.shape.email,
-  lang: AppLangSchema.default("en"),
-});
+const MagicLinkPayloadSchema = z
+  .object({
+    email: CheckoutPayloadSchema.shape.email,
+    lang: AppLangSchema.default("en"),
+    pendingFreeNatal: PendingFreeNatalV1Schema.optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.pendingFreeNatal) return;
+    if (
+      normalizeAuthEmail(data.pendingFreeNatal.payload.email) !==
+      normalizeAuthEmail(data.email)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "pending_email_mismatch",
+        path: ["pendingFreeNatal", "payload", "email"],
+      });
+    }
+  });
 
 function getBaseUrl(request: Request) {
   const configured = process.env.NEXT_PUBLIC_BASE_URL?.trim();
@@ -33,7 +53,15 @@ export async function POST(request: Request) {
   const { email, lang } = parsed.data;
 
   try {
-    await storeMagicLinkToken({ token, email, lang });
+    await storeMagicLinkToken({
+      token,
+      email,
+      lang,
+      pendingFreeNatalJson:
+        parsed.data.pendingFreeNatal !== undefined
+          ? JSON.stringify(parsed.data.pendingFreeNatal)
+          : undefined,
+    });
     const url = `${getBaseUrl(request)}/api/auth/verify?token=${encodeURIComponent(token)}&lang=${lang}`;
     await sendMagicLinkEmail({ email, url, lang });
     return NextResponse.json({ ok: true });

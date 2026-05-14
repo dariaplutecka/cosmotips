@@ -6,6 +6,8 @@ type MagicLinkRecord = {
   email: string;
   lang: string;
   createdAt: number;
+  /** Stringified PendingFreeNatalV1 JSON (cross-browser resume after magic link). */
+  pendingFreeNatalJson?: string;
 };
 
 let redis: Redis | undefined;
@@ -30,6 +32,7 @@ function getRedisClient(): Redis {
 
 const magicLinkKey = (tokenHash: string) => `auth:magic:${tokenHash}`;
 const googleStateKey = (stateHash: string) => `auth:google_state:${stateHash}`;
+const fnbResumeKey = (tokenHash: string) => `auth:fnb_resume:${tokenHash}`;
 
 function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -43,11 +46,15 @@ export async function storeMagicLinkToken(opts: {
   token: string;
   email: string;
   lang: string;
+  pendingFreeNatalJson?: string;
 }): Promise<void> {
   const record: MagicLinkRecord = {
     email: normalizeAuthEmail(opts.email),
     lang: opts.lang,
     createdAt: Date.now(),
+    ...(opts.pendingFreeNatalJson !== undefined
+      ? { pendingFreeNatalJson: opts.pendingFreeNatalJson }
+      : {}),
   };
   await getRedisClient().set(magicLinkKey(hashToken(opts.token)), record, {
     ex: 60 * 15,
@@ -97,4 +104,23 @@ return 1
 `;
   const consumed = await redisClient.eval<[], number>(script, [key], []);
   return consumed === 1;
+}
+
+export async function storeFnbResumePayload(
+  plainToken: string,
+  rawJson: string,
+): Promise<void> {
+  await getRedisClient().set(fnbResumeKey(hashToken(plainToken)), rawJson, {
+    ex: 60 * 15,
+  });
+}
+
+/** Read without consuming until session validates (caller must delete after success). */
+export async function readFnbResumePayload(plainToken: string): Promise<string | null> {
+  const raw = await getRedisClient().get(fnbResumeKey(hashToken(plainToken)));
+  return typeof raw === "string" ? raw : null;
+}
+
+export async function deleteFnbResumePayload(plainToken: string): Promise<void> {
+  await getRedisClient().del(fnbResumeKey(hashToken(plainToken)));
 }
