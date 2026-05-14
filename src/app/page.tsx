@@ -78,8 +78,36 @@ const TAROT_PENDING_CHECKOUT_STORAGE_KEY = "cosmotips:tarot_pending_checkout";
 const HOME_MODULE_STORAGE_KEY = "cosmotips:active_home_module";
 const USER_FORM_STORAGE_KEY = "cosmotips:user_form";
 const PRO_PENDING_SUBSCRIPTION_STORAGE_KEY = "cosmotips:pro_pending_subscription";
-const PENDING_FREE_NATAL_SESSION_KEY = "cosmotips:pending_free_natal_v1";
+/** localStorage (not sessionStorage): magic link opens a new tab — sessionStorage would be empty there. */
+const PENDING_FREE_NATAL_STORAGE_KEY = "cosmotips:pending_free_natal_v1";
 const PENDING_FREE_NATAL_MAX_AGE_MS = 1000 * 60 * 60;
+
+function readPendingFreeNatalRaw(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const fromLocal = window.localStorage.getItem(PENDING_FREE_NATAL_STORAGE_KEY);
+    if (fromLocal) return fromLocal;
+    const legacy = window.sessionStorage.getItem(PENDING_FREE_NATAL_STORAGE_KEY);
+    if (legacy) {
+      window.localStorage.setItem(PENDING_FREE_NATAL_STORAGE_KEY, legacy);
+      window.sessionStorage.removeItem(PENDING_FREE_NATAL_STORAGE_KEY);
+      return legacy;
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function clearPendingFreeNatalStorage(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(PENDING_FREE_NATAL_STORAGE_KEY);
+    window.sessionStorage.removeItem(PENDING_FREE_NATAL_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 const TOB_HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => i);
 const TOB_MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) => i);
@@ -307,10 +335,8 @@ function HomePageContent() {
   const [proAuthError, setProAuthError] = useState<string | null>(null);
   /** Green notice for natal tab (e.g. subscription success) — must not use the red `error` state. */
   const [natalNotice, setNatalNotice] = useState<string | null>(null);
-  const [
-    freeNatalMagicLinkSent,
-    setFreeNatalMagicLinkSent,
-  ] = useState(false);
+  const [freeNatalInboxModalOpen, setFreeNatalInboxModalOpen] = useState(false);
+  const [freeNatalInboxModalEmail, setFreeNatalInboxModalEmail] = useState("");
 
   /** Latest callback so `auth=success` resume effect does not depend on unstable function identity. */
   const hydratePendingFreeNatalRef = useRef<
@@ -343,7 +369,7 @@ function HomePageContent() {
     setLang(payload.lang);
     setReportType("natal_basic");
     setActiveModule("natal");
-    setFreeNatalMagicLinkSent(false);
+    setFreeNatalInboxModalOpen(false);
     setError(null);
     setNatalNotice(null);
   };
@@ -355,7 +381,7 @@ function HomePageContent() {
   function selectHomeModule(module: HomeModule) {
     setActiveModule(module);
     setNatalNotice(null);
-    setFreeNatalMagicLinkSent(false);
+    setFreeNatalInboxModalOpen(false);
     try {
       localStorage.setItem(HOME_MODULE_STORAGE_KEY, module);
     } catch {
@@ -459,137 +485,163 @@ function HomePageContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (searchParams.get("auth") !== "success") return;
-    const rawPending = localStorage.getItem(PRO_PENDING_SUBSCRIPTION_STORAGE_KEY);
-    if (!rawPending) return;
-
-    try {
-      const pending = JSON.parse(rawPending) as PendingProSubscription;
-      const pendingIsFresh = Date.now() - (pending.createdAt ?? 0) < 1000 * 60 * 60;
-      if (
-        (pending.interval === "monthly" || pending.interval === "yearly") &&
-        pendingIsFresh
-      ) {
-        closeProAuthModal();
-        localStorage.removeItem(PRO_PENDING_SUBSCRIPTION_STORAGE_KEY);
-        if (pending.name) setName(pending.name);
-        if (pending.dob) {
-          const [year, month, day] = pending.dob.split("-");
-          setDobYear(year ?? "");
-          setDobMonth(month ?? "");
-          setDobDay(day ?? "");
-        }
-        if (pending.tob) {
-          const [hour, minute] = pending.tob.split(":");
-          setTobHour(hour ?? "");
-          setTobMinute(minute ?? "");
-        }
-        setBirthTimeUnknown(pending.birthTimeUnknown);
-        if (pending.pob) setPob(pending.pob);
-        void startProSubscription(pending.interval, { profile: pending });
-      }
-    } catch {
-      localStorage.removeItem(PRO_PENDING_SUBSCRIPTION_STORAGE_KEY);
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (reportType !== "natal_basic") setFreeNatalMagicLinkSent(false);
-  }, [reportType]);
-
-  useEffect(() => {
     if (typeof window === "undefined") return;
     if (searchParams.get("auth") !== "success") return;
-    if (localStorage.getItem(PRO_PENDING_SUBSCRIPTION_STORAGE_KEY)) return;
-
-    const raw = sessionStorage.getItem(PENDING_FREE_NATAL_SESSION_KEY);
-    if (!raw) return;
-
-    let pending: PendingFreeNatalV1;
-    try {
-      pending = JSON.parse(raw) as PendingFreeNatalV1;
-    } catch {
-      sessionStorage.removeItem(PENDING_FREE_NATAL_SESSION_KEY);
-      return;
-    }
-
-    const fresh =
-      typeof pending.createdAt === "number" &&
-      Date.now() - pending.createdAt < PENDING_FREE_NATAL_MAX_AGE_MS;
-    if (
-      pending.v !== 1 ||
-      !fresh ||
-      pending.payload?.reportType !== "natal_basic"
-    ) {
-      sessionStorage.removeItem(PENDING_FREE_NATAL_SESSION_KEY);
-      return;
-    }
 
     void (async () => {
-      try {
-        const sessionRes = await fetch("/api/auth/session");
-        const sessionJson = (await sessionRes.json().catch(() => null)) as {
-          user?: { email?: string } | null;
-        } | null;
-        const loggedEmail =
-          sessionJson?.user?.email?.trim().toLowerCase() ?? "";
-        const wantEmail =
-          pending.payload.email.trim().toLowerCase();
-        if (!loggedEmail || loggedEmail !== wantEmail) {
-          return;
+      const rawFree = readPendingFreeNatalRaw();
+
+      if (rawFree) {
+        let parsedFree: PendingFreeNatalV1 | null = null;
+        try {
+          parsedFree = JSON.parse(rawFree) as PendingFreeNatalV1;
+        } catch {
+          clearPendingFreeNatalStorage();
+          parsedFree = null;
         }
 
-        sessionStorage.removeItem(PENDING_FREE_NATAL_SESSION_KEY);
-        hydratePendingFreeNatalRef.current(pending.payload);
+        const fresh =
+          parsedFree &&
+          typeof parsedFree.createdAt === "number" &&
+          Date.now() - parsedFree.createdAt < PENDING_FREE_NATAL_MAX_AGE_MS &&
+          parsedFree.v === 1 &&
+          parsedFree.payload?.reportType === "natal_basic";
 
-        try {
-          const u = new URL(window.location.href);
-          if (u.searchParams.has("auth")) {
-            u.searchParams.delete("auth");
-            const q = u.searchParams.toString();
-            window.history.replaceState(
-              null,
-              "",
-              q ? `${u.pathname}?${q}` : u.pathname,
+        if (parsedFree && !fresh) {
+          clearPendingFreeNatalStorage();
+          parsedFree = null;
+        }
+
+        if (fresh && parsedFree) {
+          const pending = parsedFree;
+
+          console.log(
+            `[cosmotips:free-natal] auth=success; storage key="${PENDING_FREE_NATAL_STORAGE_KEY}" (localStorage + legacy sessionStorage migration); pending payload.email=`,
+            pending.payload.email,
+          );
+
+          try {
+            const sessionRes = await fetch("/api/auth/session");
+            const sessionJson = (await sessionRes.json().catch(() => null)) as {
+              user?: { email?: string } | null;
+            } | null;
+            const loggedEmail =
+              sessionJson?.user?.email?.trim().toLowerCase() ?? "";
+            const wantEmail = pending.payload.email.trim().toLowerCase();
+
+            console.log(
+              "[cosmotips:free-natal] /api/auth/session email:",
+              loggedEmail || "(none)",
+              "| pending:",
+              wantEmail,
+              "| match:",
+              Boolean(loggedEmail && loggedEmail === wantEmail),
             );
+
+            if (loggedEmail && loggedEmail === wantEmail) {
+              clearPendingFreeNatalStorage();
+              hydratePendingFreeNatalRef.current(pending.payload);
+
+              try {
+                const u = new URL(window.location.href);
+                if (u.searchParams.has("auth")) {
+                  u.searchParams.delete("auth");
+                  const q = u.searchParams.toString();
+                  window.history.replaceState(
+                    null,
+                    "",
+                    q ? `${u.pathname}?${q}` : u.pathname,
+                  );
+                }
+              } catch {
+                /* ignore */
+              }
+
+              console.log(
+                "[cosmotips:free-natal] POST /api/stripe/checkout (natal_basic → fnb_* session URL in response)",
+              );
+
+              setLoading(true);
+
+              const res = await fetch("/api/stripe/checkout", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify(pending.payload),
+              });
+              const data = (await res.json().catch(() => null)) as
+                | { url?: string }
+                | null;
+
+              if (!res.ok || !data?.url) {
+                throw new Error("checkout_failed");
+              }
+
+              console.log(
+                "[cosmotips:free-natal] checkout OK → window.location.assign:",
+                data.url,
+              );
+
+              try {
+                localStorage.setItem(NATAL_SAMPLE_STORAGE_KEY, "1");
+              } catch {
+                /* ignore */
+              }
+
+              void refreshSubscriptionStatus();
+              setTopBarSessionKey((k) => k + 1);
+
+              window.location.assign(data.url);
+              return;
+            }
+          } catch (err) {
+            console.warn("[cosmotips:free-natal] resume failed:", err);
+            setLoading(false);
+            setError(errorMessages[pending.payload.lang].loginFailed);
+            return;
           }
-        } catch {
-          /* ignore */
         }
+      }
 
-        setLoading(true);
+      const rawPending = localStorage.getItem(PRO_PENDING_SUBSCRIPTION_STORAGE_KEY);
+      if (!rawPending) return;
 
-        const res = await fetch("/api/stripe/checkout", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(pending.payload),
-        });
-        const data = (await res.json().catch(() => null)) as
-          | { url?: string }
-          | null;
-
-        if (!res.ok || !data?.url) {
-          throw new Error("checkout_failed");
+      try {
+        const pendingPro = JSON.parse(rawPending) as PendingProSubscription;
+        const pendingIsFresh =
+          Date.now() - (pendingPro.createdAt ?? 0) < 1000 * 60 * 60;
+        if (
+          (pendingPro.interval === "monthly" ||
+            pendingPro.interval === "yearly") &&
+          pendingIsFresh
+        ) {
+          closeProAuthModal();
+          localStorage.removeItem(PRO_PENDING_SUBSCRIPTION_STORAGE_KEY);
+          if (pendingPro.name) setName(pendingPro.name);
+          if (pendingPro.dob) {
+            const [year, month, day] = pendingPro.dob.split("-");
+            setDobYear(year ?? "");
+            setDobMonth(month ?? "");
+            setDobDay(day ?? "");
+          }
+          if (pendingPro.tob) {
+            const [hour, minute] = pendingPro.tob.split(":");
+            setTobHour(hour ?? "");
+            setTobMinute(minute ?? "");
+          }
+          setBirthTimeUnknown(pendingPro.birthTimeUnknown);
+          if (pendingPro.pob) setPob(pendingPro.pob);
+          void startProSubscription(pendingPro.interval, { profile: pendingPro });
         }
-
-        try {
-          localStorage.setItem(NATAL_SAMPLE_STORAGE_KEY, "1");
-        } catch {
-          /* ignore */
-        }
-
-        void refreshSubscriptionStatus();
-        setTopBarSessionKey((k) => k + 1);
-
-        window.location.assign(data.url);
       } catch {
-        setLoading(false);
-        setError(errorMessages[pending.payload.lang].loginFailed);
+        localStorage.removeItem(PRO_PENDING_SUBSCRIPTION_STORAGE_KEY);
       }
     })();
-    // Runs when URL auth flag changes only.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run when URL auth flag changes only
   }, [searchParams]);
+
+  useEffect(() => {
+    if (reportType !== "natal_basic") setFreeNatalInboxModalOpen(false);
+  }, [reportType]);
 
   useEffect(() => {
     try {
@@ -737,9 +789,9 @@ function HomePageContent() {
     }
     if (auth === "invalid" || auth === "error") {
       setNatalNotice(null);
-      setFreeNatalMagicLinkSent(false);
+      setFreeNatalInboxModalOpen(false);
       try {
-        sessionStorage.removeItem(PENDING_FREE_NATAL_SESSION_KEY);
+        clearPendingFreeNatalStorage();
       } catch {
         /* ignore */
       }
@@ -895,8 +947,8 @@ function HomePageContent() {
             },
           };
           try {
-            sessionStorage.setItem(
-              PENDING_FREE_NATAL_SESSION_KEY,
+            localStorage.setItem(
+              PENDING_FREE_NATAL_STORAGE_KEY,
               JSON.stringify(pending),
             );
           } catch {
@@ -918,12 +970,13 @@ function HomePageContent() {
             return;
           }
 
-          setFreeNatalMagicLinkSent(true);
+          setFreeNatalInboxModalEmail(parsedCheckout.data.email.trim());
+          setFreeNatalInboxModalOpen(true);
           setLoading(false);
           return;
         }
 
-        setFreeNatalMagicLinkSent(false);
+        setFreeNatalInboxModalOpen(false);
       }
 
       const res = await fetch("/api/stripe/checkout", {
@@ -939,13 +992,10 @@ function HomePageContent() {
 
       if (reportType === "natal_basic") {
         try {
-          sessionStorage.removeItem(PENDING_FREE_NATAL_SESSION_KEY);
+          clearPendingFreeNatalStorage();
         } catch {
           /* ignore */
         }
-      }
-
-      if (reportType === "natal_basic") {
         try {
           localStorage.setItem(NATAL_SAMPLE_STORAGE_KEY, "1");
         } catch {
@@ -1295,7 +1345,7 @@ function HomePageContent() {
     resetTarot();
     setError(null);
     setNatalNotice(null);
-    setFreeNatalMagicLinkSent(false);
+    setFreeNatalInboxModalOpen(false);
     setLoading(false);
     setTarotCheckoutLoading(false);
     try {
@@ -1430,11 +1480,6 @@ function HomePageContent() {
                   {activeModule === "natal" && natalNotice ? (
                     <div className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">
                       {natalNotice}
-                    </div>
-                  ) : null}
-                  {activeModule === "natal" && freeNatalMagicLinkSent ? (
-                    <div className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">
-                      {copy.freeNatalMagicLinkHint}
                     </div>
                   ) : null}
                   {activeModule === "natal" && error ? (
@@ -2236,6 +2281,49 @@ function HomePageContent() {
 
         {!isTarotReportView ? <HomeFooter copy={copy} lang={lang} /> : null}
       </div>
+
+      {freeNatalInboxModalOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm"
+          role="presentation"
+          onClick={() => setFreeNatalInboxModalOpen(false)}
+          onKeyDown={(ev) => {
+            if (ev.key === "Escape") setFreeNatalInboxModalOpen(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="free-natal-inbox-title"
+            className="relative w-full max-w-md rounded-[2rem] border border-white/12 bg-[#17112f] px-6 py-8 text-center shadow-2xl shadow-black/40"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 text-5xl leading-none" aria-hidden>
+              ✉️
+            </div>
+            <h2
+              id="free-natal-inbox-title"
+              className="cosmotips-heading-3 text-balance text-white"
+            >
+              {copy.freeNatalInboxModalTitle}
+            </h2>
+            <p className="mt-4 text-pretty text-sm leading-relaxed text-white/75">
+              {copy.freeNatalInboxModalBodyTemplate.replace(
+                "{email}",
+                freeNatalInboxModalEmail,
+              )}
+            </p>
+            <button
+              type="button"
+              onClick={() => setFreeNatalInboxModalOpen(false)}
+              className="mt-8 inline-flex min-w-[8rem] items-center justify-center rounded-2xl bg-gradient-to-b from-violet-300 to-violet-500 px-6 py-3 text-sm font-bold text-black shadow-lg shadow-violet-500/20 transition hover:from-violet-200 hover:to-violet-400"
+            >
+              {copy.freeNatalInboxModalClose}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {proAuthModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm">
           <div className="relative w-full max-w-md rounded-[2rem] border border-white/12 bg-[#17112f] p-6 shadow-2xl shadow-black/40">
