@@ -16,6 +16,45 @@ type SessionPayload = AuthSessionUser & {
 };
 
 export const AUTH_SESSION_COOKIE = "cosmotips_session";
+
+/**
+ * Optional cookie `Domain` so the same auth session works across www ↔ apex when inbound
+ * links hit a different hostname than canonical `NEXT_PUBLIC_BASE_URL`.
+ *
+ * Override with `AUTH_COOKIE_DOMAIN` (leading dot), e.g. `.cosmotips.com`.
+ * Disabled on localhost, raw IPs, and `*.vercel.app` previews.
+ */
+export function resolvedAuthCookieDomain(): string | undefined {
+  const override = process.env.AUTH_COOKIE_DOMAIN?.trim();
+  if (override) return override;
+  const configured = process.env.NEXT_PUBLIC_BASE_URL?.trim();
+  if (!configured) return undefined;
+  let hostname: string;
+  try {
+    hostname = new URL(configured).hostname.toLowerCase();
+  } catch {
+    return undefined;
+  }
+  if (
+    hostname === "localhost" ||
+    hostname.endsWith(".localhost") ||
+    /^\d+\.\d+\.\d+\.\d+$/.test(hostname)
+  ) {
+    return undefined;
+  }
+  if (hostname.endsWith(".vercel.app")) return undefined;
+
+  if (hostname.startsWith("www.")) {
+    const rest = hostname.slice(4);
+    if (rest.split(".").length >= 2) return `.${rest}`;
+    return undefined;
+  }
+
+  const parts = hostname.split(".");
+  if (parts.length === 2) return `.${hostname}`;
+  return undefined;
+}
+
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
 let warnedMissingSecret = false;
@@ -100,23 +139,27 @@ export function setAuthSessionCookie(
   response: NextResponse,
   user: AuthSessionUser,
 ): NextResponse {
+  const domain = resolvedAuthCookieDomain();
   response.cookies.set(AUTH_SESSION_COOKIE, createSessionToken(user), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: SESSION_MAX_AGE_SECONDS,
+    ...(domain ? { domain } : {}),
   });
   return response;
 }
 
 export function clearAuthSessionCookie(response: NextResponse): NextResponse {
+  const domain = resolvedAuthCookieDomain();
   response.cookies.set(AUTH_SESSION_COOKIE, "", {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: 0,
+    ...(domain ? { domain } : {}),
   });
   return response;
 }

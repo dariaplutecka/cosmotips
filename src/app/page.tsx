@@ -131,6 +131,24 @@ async function fetchSessionEmailWithRetries(): Promise<string> {
   return "";
 }
 
+async function fetchFreeNatalResumeWithRetries(resumeTok: string): Promise<Response> {
+  let last = new Response("", { status: 0 });
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, 120 * attempt));
+    }
+    await fetchSessionEmailWithRetries();
+    last = await fetch(
+      `/api/auth/free-natal-resume?token=${encodeURIComponent(resumeTok)}`,
+      { credentials: "include", cache: "no-store" },
+    );
+    if (last.ok) return last;
+    if (last.status === 401) continue;
+    break;
+  }
+  return last;
+}
+
 const TOB_HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => i);
 const TOB_MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) => i);
 type HomeModule = "natal" | "tarot";
@@ -634,13 +652,7 @@ function HomePageContent() {
           "[cosmotips:free-natal] auth=success + fn_resume; server-backed resume (cross-browser)",
         );
         try {
-          const resumeRes = await fetch(
-            `/api/auth/free-natal-resume?token=${encodeURIComponent(fnResumeTok)}`,
-            {
-              credentials: "include",
-              cache: "no-store",
-            },
-          );
+          const resumeRes = await fetchFreeNatalResumeWithRetries(fnResumeTok);
           const resumeRaw = await resumeRes.text();
           console.log(
             "[cosmotips:free-natal] free-natal-resume HTTP",
