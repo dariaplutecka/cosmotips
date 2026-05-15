@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { getOpenAI } from "@/lib/openai";
 import {
@@ -147,9 +148,22 @@ export async function GET(req: Request) {
       );
     }
   } else {
-    const stripe = getStripe();
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-    if (session.payment_status !== "paid") {
+    let checkoutSession: Stripe.Checkout.Session;
+    try {
+      const stripe = getStripe();
+      checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
+    } catch (e) {
+      const detail =
+        e instanceof Stripe.errors.StripeError ? e.message : String(e);
+      console.error("[report/generate] Stripe session retrieve failed:", e);
+      return NextResponse.json(
+        {
+          error: `Stripe could not verify this checkout (${detail}). On production with real payments, set STRIPE_MODE=live and STRIPE_SECRET_KEY_LIVE to match the Checkout session.`,
+        },
+        { status: 502 },
+      );
+    }
+    if (checkoutSession.payment_status !== "paid") {
       return NextResponse.json(
         { error: "Payment not completed." },
         { status: 402 },
@@ -157,16 +171,16 @@ export async function GET(req: Request) {
     }
 
     email =
-      session.metadata?.email ??
-      session.customer_details?.email ??
-      session.customer_email ??
+      checkoutSession.metadata?.email ??
+      checkoutSession.customer_details?.email ??
+      checkoutSession.customer_email ??
       "";
-    dob = session.metadata?.dob ?? "";
-    tob = session.metadata?.tob ?? "";
-    pob = session.metadata?.pob ?? "";
-    reportTypeRaw = session.metadata?.reportType ?? "";
-    langRaw = session.metadata?.lang ?? "en";
-    birthTimeUnknown = session.metadata?.birthTimeUnknown === "1";
+    dob = checkoutSession.metadata?.dob ?? "";
+    tob = checkoutSession.metadata?.tob ?? "";
+    pob = checkoutSession.metadata?.pob ?? "";
+    reportTypeRaw = checkoutSession.metadata?.reportType ?? "";
+    langRaw = checkoutSession.metadata?.lang ?? "en";
+    birthTimeUnknown = checkoutSession.metadata?.birthTimeUnknown === "1";
   }
 
   const langParsed = AppLangSchema.safeParse(langRaw);

@@ -18,9 +18,9 @@ function getClientIp(req: Request) {
   return req.headers.get("x-real-ip")?.trim() || "unknown";
 }
 
+/** Amounts are EUR cents. Weekly/monthly forecasts: €5; personality portrait: €7. */
 function reportPrice(reportType: "natal_basic" | "personality" | "weekly" | "monthly") {
   if (reportType === "personality") return 700;
-  if (reportType === "monthly") return 900;
   return 500;
 }
 

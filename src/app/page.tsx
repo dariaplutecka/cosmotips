@@ -361,8 +361,6 @@ function HomePageContent() {
   const [proAuthError, setProAuthError] = useState<string | null>(null);
   /** Green notice for natal tab (e.g. subscription success) — must not use the red `error` state. */
   const [natalNotice, setNatalNotice] = useState<string | null>(null);
-  const [freeNatalInboxModalOpen, setFreeNatalInboxModalOpen] = useState(false);
-  const [freeNatalInboxModalEmail, setFreeNatalInboxModalEmail] = useState("");
 
   /** Latest callback so `auth=success` resume effect does not depend on unstable function identity. */
   const hydratePendingFreeNatalRef = useRef<
@@ -395,7 +393,6 @@ function HomePageContent() {
     setLang(payload.lang);
     setReportType("natal_basic");
     setActiveModule("natal");
-    setFreeNatalInboxModalOpen(false);
     setError(null);
     setNatalNotice(null);
   };
@@ -407,7 +404,6 @@ function HomePageContent() {
   function selectHomeModule(module: HomeModule) {
     setActiveModule(module);
     setNatalNotice(null);
-    setFreeNatalInboxModalOpen(false);
     try {
       localStorage.setItem(HOME_MODULE_STORAGE_KEY, module);
     } catch {
@@ -803,10 +799,6 @@ function HomePageContent() {
   }, [searchQueryKey]);
 
   useEffect(() => {
-    if (reportType !== "natal_basic") setFreeNatalInboxModalOpen(false);
-  }, [reportType]);
-
-  useEffect(() => {
     try {
       if (typeof window === "undefined") return;
       if (!userFormHydratedRef.current) return;
@@ -952,7 +944,6 @@ function HomePageContent() {
     }
     if (auth === "invalid" || auth === "error") {
       setNatalNotice(null);
-      setFreeNatalInboxModalOpen(false);
       try {
         clearPendingFreeNatalStorage();
       } catch {
@@ -1090,70 +1081,6 @@ function HomePageContent() {
         setError(em.loginFailed);
         setLoading(false);
         return;
-      }
-
-      if (reportType === "natal_basic") {
-        const sessionRes = await fetch("/api/auth/session");
-        const sessionJson = (await sessionRes.json().catch(() => null)) as {
-          user?: { email?: string } | null;
-        } | null;
-        const loggedEmail =
-          sessionJson?.user?.email?.trim().toLowerCase() ?? "";
-
-        if (!loggedEmail) {
-          const pending: PendingFreeNatalV1 = {
-            v: 1,
-            createdAt: Date.now(),
-            payload: {
-              ...parsedCheckout.data,
-              reportType: "natal_basic",
-            },
-          };
-          const pendingPayload = pending;
-          console.log(
-            "[debug] localStorage przed zapisem:",
-            localStorage.getItem("cosmotips:pending_free_natal_v1"),
-          );
-          console.log(
-            "[debug] dane do zapisu:",
-            JSON.stringify(pendingPayload),
-          );
-          try {
-            localStorage.setItem(
-              PENDING_FREE_NATAL_STORAGE_KEY,
-              JSON.stringify(pending),
-            );
-            console.log(
-              "[debug] localStorage po zapisie:",
-              localStorage.getItem("cosmotips:pending_free_natal_v1"),
-            );
-          } catch {
-            /* ignore */
-          }
-
-          const mlRes = await fetch("/api/auth/magic-link", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              email: parsedCheckout.data.email,
-              lang: parsedCheckout.data.lang,
-              pendingFreeNatal: pending,
-            }),
-          });
-
-          if (!mlRes.ok) {
-            setError(em.loginFailed);
-            setLoading(false);
-            return;
-          }
-
-          setFreeNatalInboxModalEmail(parsedCheckout.data.email.trim());
-          setFreeNatalInboxModalOpen(true);
-          setLoading(false);
-          return;
-        }
-
-        setFreeNatalInboxModalOpen(false);
       }
 
       const res = await fetch("/api/stripe/checkout", {
@@ -1522,7 +1449,6 @@ function HomePageContent() {
     resetTarot();
     setError(null);
     setNatalNotice(null);
-    setFreeNatalInboxModalOpen(false);
     setLoading(false);
     setTarotCheckoutLoading(false);
     try {
@@ -2458,48 +2384,6 @@ function HomePageContent() {
 
         {!isTarotReportView ? <HomeFooter copy={copy} lang={lang} /> : null}
       </div>
-
-      {freeNatalInboxModalOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm"
-          role="presentation"
-          onClick={() => setFreeNatalInboxModalOpen(false)}
-          onKeyDown={(ev) => {
-            if (ev.key === "Escape") setFreeNatalInboxModalOpen(false);
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="free-natal-inbox-title"
-            className="relative w-full max-w-md rounded-[2rem] border border-white/12 bg-[#17112f] px-6 py-8 text-center shadow-2xl shadow-black/40"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4 text-5xl leading-none" aria-hidden>
-              ✉️
-            </div>
-            <h2
-              id="free-natal-inbox-title"
-              className="cosmotips-heading-3 text-balance text-white"
-            >
-              {copy.freeNatalInboxModalTitle}
-            </h2>
-            <p className="mt-4 text-pretty text-sm leading-relaxed text-white/75">
-              {copy.freeNatalInboxModalBodyTemplate.replace(
-                "{email}",
-                freeNatalInboxModalEmail,
-              )}
-            </p>
-            <button
-              type="button"
-              onClick={() => setFreeNatalInboxModalOpen(false)}
-              className="mt-8 inline-flex min-w-[8rem] items-center justify-center rounded-2xl bg-gradient-to-b from-violet-300 to-violet-500 px-6 py-3 text-sm font-bold text-black shadow-lg shadow-violet-500/20 transition hover:from-violet-200 hover:to-violet-400"
-            >
-              {copy.freeNatalInboxModalClose}
-            </button>
-          </div>
-        </div>
-      ) : null}
 
       {proAuthModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm">

@@ -196,8 +196,18 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
         method: "GET",
       });
       const data = (await res.json().catch(() => null)) as GenerateResponse | null;
-      if (!res.ok || !data || "error" in data) {
-        throw new Error("generate_failed");
+      const serverMessage =
+        data &&
+        typeof data === "object" &&
+        "error" in data &&
+        typeof (data as { error: unknown }).error === "string"
+          ? (data as { error: string }).error
+          : null;
+
+      if (!res.ok || !data || !("report" in data)) {
+        setError(serverMessage ?? em.reportFailed);
+        setLoading(false);
+        return;
       }
 
       setReport(data.report);

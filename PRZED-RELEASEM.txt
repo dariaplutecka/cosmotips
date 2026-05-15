@@ -47,6 +47,9 @@ Obowiązkowe do sensownego działania aplikacji:
 
   STRIPE_MODE=live
     Dopiero po skonfigurowaniu płatności „na żywo” (patrz pkt 3).
+    Jeśli zostanie test lub brak dopasowania klucza: po opłacie Stripe nie da
+    się pobrać sesji Checkout — endpoint /api/report/generate nie wygeneruje
+    raportu (w panelu funkcji lub w przeglądarce zobaczysz błąd weryfikacji).
 
   STRIPE_SECRET_KEY_LIVE
     Tajny klucz z Stripe Dashboard (tryb Live).

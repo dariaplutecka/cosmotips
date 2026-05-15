@@ -573,11 +573,6 @@ export type HomeCopy = {
   freeBasicUsedHint: string;
   /** Przy próbie ponownego zamówienia darmowego typu */
   freeBasicAlreadyUsedError: string;
-  /** Overlay po wysłaniu magic linka przed darmowym raportem natalnym */
-  freeNatalInboxModalTitle: string;
-  /** Tekst modala; zamień znakowy placeholder `{email}` na adres z formularza. */
-  freeNatalInboxModalBodyTemplate: string;
-  freeNatalInboxModalClose: string;
 };
 
 export const successUi: Record<
@@ -802,7 +797,8 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     termsAcceptBefore: "I have read and accept the ",
     termsAcceptLink: "Terms of Service",
     termsAcceptAfter: ".",
-    priceLine: "Reports: 1 token = €5 · Instant delivery · Stripe",
+    priceLine:
+      "Weekly & monthly forecasts: €5 each · Personality portrait: €7 · Instant delivery · Stripe",
     footer:
       "Astrology is for reflection and entertainment. You’re always in control of your choices.",
     footerArticlesTitle: "Articles",
@@ -815,10 +811,6 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       "The free report can only be used once. Please choose the full report option below.",
     freeBasicAlreadyUsedError:
       "The free basic natal preview was already used on this device. Pick a paid report type.",
-    freeNatalInboxModalTitle: "Check your inbox!",
-    freeNatalInboxModalBodyTemplate:
-      "We sent a link to {email}. Click it to view your report.",
-    freeNatalInboxModalClose: "Got it",
   },
   pl: {
     heroTitle: "Twoja historia została zapisana jeszcze przed Twoimi narodzinami.",
@@ -883,7 +875,8 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     termsAcceptBefore: "Akceptuję ",
     termsAcceptLink: "Terms of Service",
     termsAcceptAfter: " (regulamin).",
-    priceLine: "Raporty: 1 token = 5 EUR · Od razu · Stripe",
+    priceLine:
+      "Prognoza tygodniowa i miesięczna: 5 EUR każda · Opis osobowościowy: 7 EUR · Od razu · Stripe",
     footer:
       "Astrologia służy refleksji i rozrywce. Zawsze decydujesz o swoich wyborach.",
     footerArticlesTitle: "Artykuły",
@@ -896,10 +889,6 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       "Z darmowego raportu można skorzystać tylko raz. Wybierz poniżej opcję pełnego raportu.",
     freeBasicAlreadyUsedError:
       "Darmowy podgląd mapy był już użyty na tym urządzeniu. Wybierz typ raportu płatnego.",
-    freeNatalInboxModalTitle: "Sprawdź swoją skrzynkę!",
-    freeNatalInboxModalBodyTemplate:
-      "Wysłaliśmy link na {email}. Kliknij go, aby zobaczyć swój raport.",
-    freeNatalInboxModalClose: "Rozumiem",
   },
   es: {
     heroTitle: "Tu historia escrita antes de nacer.",
@@ -964,7 +953,8 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     termsAcceptBefore: "He leído y acepto los ",
     termsAcceptLink: "Términos de servicio (Terms of Service)",
     termsAcceptAfter: ".",
-    priceLine: "Informes: 1 ficha = 5 EUR · Al instante · Stripe",
+    priceLine:
+      "Pronóstico semanal y mensual: 5 EUR cada uno · Retrato de personalidad: 7 EUR · Al instante · Stripe",
     footer:
       "La astrología es para reflexionar y entretener. Tú decides siempre.",
     footerArticlesTitle: "Artículos",
@@ -977,10 +967,6 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       "El informe gratuito solo puede usarse una vez. Elige abajo la opción de informe completo.",
     freeBasicAlreadyUsedError:
       "La vista básica gratuita ya se usó en este dispositivo. Elige un tipo de informe de pago.",
-    freeNatalInboxModalTitle: "¡Revisa tu correo!",
-    freeNatalInboxModalBodyTemplate:
-      "Te enviamos un enlace a {email}. Haz clic para ver tu informe.",
-    freeNatalInboxModalClose: "Entendido",
   },
 };
 
