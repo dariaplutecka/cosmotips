@@ -101,6 +101,8 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
 
   const queryLang = parseLangParam(sp.get("lang"));
 
+  const stableFetchLang: AppLang = queryLang ?? initialLang;
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<string | null>(null);
@@ -157,7 +159,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
   }, [meta?.reportType, report, title, uiLang]);
 
   const fetchReport = useCallback(async () => {
-    const em = errorMessages[uiLang];
+    const em = errorMessages[stableFetchLang];
     if (!sessionId) {
       setError(em.invalidLink);
       setLoading(false);
@@ -238,7 +240,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
     devReportType,
     devLang,
     devBirthTimeUnknown,
-    uiLang,
+    stableFetchLang,
   ]);
 
   useEffect(() => {

@@ -41,6 +41,30 @@ export async function storeFreeReportPayload(
   await client.set(freeReportKey(sessionId), payload, { ex: FREE_REPORT_TTL_SECONDS });
 }
 
+/** Read payload without consuming (supports parallel / double-fetch before generation finishes). */
+export async function peekFreeReportPayload(
+  sessionId: string,
+): Promise<CheckoutPayload | null> {
+  const client = getRedisClient();
+  if (!client) {
+    return memoryFreeReports.get(sessionId) ?? null;
+  }
+  const raw = await client.get(freeReportKey(sessionId));
+  if (!raw) return null;
+  return typeof raw === "string"
+    ? (JSON.parse(raw) as CheckoutPayload)
+    : (raw as CheckoutPayload);
+}
+
+export async function deleteFreeReportPayload(sessionId: string): Promise<void> {
+  const client = getRedisClient();
+  if (!client) {
+    memoryFreeReports.delete(sessionId);
+    return;
+  }
+  await client.del(freeReportKey(sessionId));
+}
+
 export async function consumeFreeReportPayload(
   sessionId: string,
 ): Promise<CheckoutPayload | null> {

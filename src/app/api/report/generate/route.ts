@@ -10,12 +10,15 @@ import { computeNatalChart } from "@/lib/natalChart";
 import { buildNatalSampleBlurb } from "@/lib/natalSampleBlurb";
 import { generateReportPdfBuffer } from "@/lib/reportPdf";
 import { sendReportPdfEmail } from "@/lib/reportEmail";
-import { getReport, setReport } from "@/lib/reportCache";
+import { getReport, setReport, getFnNatalReportMeta, setFnNatalReportMeta } from "@/lib/reportCache";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { successUi } from "@/lib/uiCopy";
 import { getAuthSession } from "@/lib/authSession";
 import { isProSubscriber } from "@/lib/subscriptionStore";
-import { consumeFreeReportPayload } from "@/lib/freeReportStore";
+import {
+  deleteFreeReportPayload,
+  peekFreeReportPayload,
+} from "@/lib/freeReportStore";
 
 /** pdfmake + vfs_fonts need Node (not Edge). */
 export const runtime = "nodejs";
@@ -99,7 +102,17 @@ export async function GET(req: Request) {
     langRaw = searchParams.get("lang") ?? "en";
     birthTimeUnknown = searchParams.get("birthTimeUnknown") === "1";
   } else if (freeNatalBasic) {
-    const payload = await consumeFreeReportPayload(sessionId);
+    const cachedReportEarly = await getReport(sessionId);
+    const cachedMetaEarly = await getFnNatalReportMeta(sessionId);
+    if (cachedReportEarly && cachedMetaEarly) {
+      return NextResponse.json({
+        report: cachedReportEarly,
+        meta: cachedMetaEarly,
+        emailPdf: { status: "skipped" },
+      });
+    }
+
+    const payload = await peekFreeReportPayload(sessionId);
     if (!payload || payload.reportType !== "natal_basic") {
       return NextResponse.json(
         { error: "Invalid or expired free natal session." },
@@ -227,6 +240,16 @@ export async function GET(req: Request) {
     const blurb = buildNatalSampleBlurb(chart, parsed.data.lang);
     const report = `${blurb}\n\n---\n\n${aiText.trim()}`;
     await setReport(sessionId, report);
+    await setFnNatalReportMeta(sessionId, {
+      email: parsed.data.email,
+      dob: parsed.data.dob,
+      tob: parsed.data.tob,
+      pob: parsed.data.pob,
+      reportType: "natal_basic",
+      lang: parsed.data.lang,
+      birthTimeUnknown: parsed.data.birthTimeUnknown,
+    });
+    await deleteFreeReportPayload(sessionId);
 
     const pdfTitle = successUi[parsed.data.lang].reportTitle.natal_basic;
     let emailPdf: EmailPdfPayload = { status: "skipped" };
