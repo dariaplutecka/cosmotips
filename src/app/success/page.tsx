@@ -34,9 +34,16 @@ export default async function SuccessPage({
       fallback={
         <div className="min-h-dvh">
           <div className="mx-auto max-w-4xl px-4 py-10 sm:py-14">
-            <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-white/5 p-5 text-white/70 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur">
-              <span className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
-              {successUi[initialLang].generating}
+            <div className="flex gap-4 rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur sm:items-start">
+              <span className="mt-0.5 h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
+              <div className="min-w-0 space-y-2 text-white/70">
+                <p className="font-semibold text-white/90">
+                  {successUi[initialLang].generatingDurationHint}
+                </p>
+                <p className="text-sm leading-relaxed text-white/65">
+                  {successUi[initialLang].generatingStayOnPage}
+                </p>
+              </div>
             </div>
           </div>
         </div>

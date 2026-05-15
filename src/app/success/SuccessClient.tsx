@@ -378,9 +378,16 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
           ) : (
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur sm:p-7">
               {loading ? (
-                <div className="flex items-center gap-3 text-white/70">
-                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
-                  {su.generating}
+                <div className="flex gap-4 sm:items-start">
+                  <span className="mt-0.5 h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
+                  <div className="min-w-0 space-y-2">
+                    <p className="font-semibold text-white/90">
+                      {su.generatingDurationHint}
+                    </p>
+                    <p className="text-sm leading-relaxed text-white/65">
+                      {su.generatingStayOnPage}
+                    </p>
+                  </div>
                 </div>
               ) : report ? (
                 <article className="max-w-none space-y-4">

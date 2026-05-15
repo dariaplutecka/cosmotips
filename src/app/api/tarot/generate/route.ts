@@ -8,6 +8,7 @@ import {
   buildCelticCrossPrompt,
   buildDailyCardPrompt,
   buildThreeCardPrompt,
+  tarotDailyPersonalizationKey,
 } from "@/lib/tarotPrompt";
 import { calculateNumerologyTarotCard } from "@/lib/tarotNumerology";
 import {
@@ -67,11 +68,12 @@ export async function POST(request: Request) {
   }
   const cardCount = spreadType === "three_card" ? 3 : 10;
   const dailyIdentifier = guestId || email || "anonymous";
+  const dailyPersonalizationKey = tarotDailyPersonalizationKey(name);
   const cards =
     spreadType === "daily_card" ? [drawDailyCard(dailyIdentifier, dailyDate)] : drawCards(cardCount);
   const prompt =
     spreadType === "daily_card"
-      ? buildDailyCardPrompt(cards, lang)
+      ? buildDailyCardPrompt(cards, lang, name)
       : spreadType === "three_card"
         ? buildThreeCardPrompt(cards, topic, lang, {
             name,
@@ -86,7 +88,7 @@ export async function POST(request: Request) {
 
   const cachedDailyInterpretation =
     spreadType === "daily_card"
-      ? await getCachedDailyInterpretation(cards[0], lang, dailyDate)
+      ? await getCachedDailyInterpretation(cards[0], lang, dailyDate, dailyPersonalizationKey)
       : null;
   if (cachedDailyInterpretation) {
     return NextResponse.json({
@@ -121,7 +123,13 @@ export async function POST(request: Request) {
     );
   }
   if (spreadType === "daily_card") {
-    await setCachedDailyInterpretation(cards[0], lang, interpretation, dailyDate);
+    await setCachedDailyInterpretation(
+      cards[0],
+      lang,
+      interpretation,
+      dailyDate,
+      dailyPersonalizationKey,
+    );
   }
   if (email) {
     await sendTarotEmail({ email, cards, interpretation, spreadType, topic, lang });

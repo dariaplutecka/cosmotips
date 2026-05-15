@@ -93,9 +93,9 @@ export function buildNatalSampleBlurb(
       "",
       "- **Słońce** — rdzeń motywacji i sposobu bycia „na co dzień”.",
       "- **Księżyc** — potrzeby emocjonalne i to, co daje poczucie bezpieczeństwa.",
-      "- **Ascendent** — pierwszy kontakt z otoczeniem: jak zwykle Cię „pierwsze wrażenie” odbiera.",
+      "- **Ascendent** — jak zwykle wywołujesz pierwsze wrażenie i wchodzisz w kontakt ze światem.",
       "",
-      "To **skrócona próbka raportu** (ekliptyka + Ascendent), bez pełnej interpretacji domów, aspektów i prognoz. Wróć do strony głównej aby zamówić pełen raport.",
+      "To **skrócona próbka raportu** (ekliptyka + Ascendent), bez pełnej interpretacji domów, aspektów i prognoz. Wróć na stronę główną, aby zamówić **pełny** raport.",
     ].join("\n");
   }
 
@@ -109,7 +109,7 @@ export function buildNatalSampleBlurb(
       "- **Luna** — necesidades emocionales y lo que te da calma.",
       "- **Ascendente** — la primera impresión que sueles proyectar.",
       "",
-      "Es una **muestra breve del informe** (eclíptica + Ascendente), sin interpretación completa de casas, aspectos ni pronósticos. Vuelve a la página principal para pedir un informe completo.",
+      "Es solo una **muestra breve del informe** (eclíptica + Ascendente), sin interpretación completa de casas, aspectos ni pronósticos. Vuelve a la página principal para pedir un informe completo.",
     ].join("\n");
   }
 

@@ -50,8 +50,13 @@ function usageKey(email: string, date: string): string {
   return `tarot:daily:usage:${date}:${normalizeEmail(email)}`;
 }
 
-function interpretationKey(card: TarotCard, lang: AppLang, date: string): string {
-  return `tarot:daily:interpretation:${date}:${lang}:${card.id}:${card.reversed ? "r" : "u"}`;
+function interpretationKey(
+  card: TarotCard,
+  lang: AppLang,
+  date: string,
+  personalizationKey: string,
+): string {
+  return `tarot:daily:interpretation:${date}:${lang}:${card.id}:${card.reversed ? "r" : "u"}:${personalizationKey}`;
 }
 
 function hashToInt(input: string): number {
@@ -97,8 +102,9 @@ export async function getCachedDailyInterpretation(
   card: TarotCard,
   lang: AppLang,
   date = currentDailyTarotDate(),
+  personalizationKey: string,
 ): Promise<string | null> {
-  const key = interpretationKey(card, lang, date);
+  const key = interpretationKey(card, lang, date, personalizationKey);
   const client = getRedisClient();
   if (!client) return memoryFallback.get(key) ?? null;
   return await client.get<string>(key);
@@ -109,8 +115,9 @@ export async function setCachedDailyInterpretation(
   lang: AppLang,
   interpretation: string,
   date = currentDailyTarotDate(),
+  personalizationKey: string,
 ): Promise<void> {
-  const key = interpretationKey(card, lang, date);
+  const key = interpretationKey(card, lang, date, personalizationKey);
   const client = getRedisClient();
   if (!client) {
     memoryFallback.set(key, interpretation);

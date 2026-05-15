@@ -585,6 +585,10 @@ export const successUi: Record<
     pdfEmailSkipHintNoApiKey: string;
     pdfEmailSkipHintNoFrom: string;
     generating: string;
+    /** Pierwsza linia przy loaderze generowania raportu (czas oczekiwania). */
+    generatingDurationHint: string;
+    /** Druga linia: nie zamykać / nie odświeżać strony. */
+    generatingStayOnPage: string;
     regenerate: string;
     print: string;
     tryAgain: string;
@@ -614,6 +618,9 @@ export const successUi: Record<
     pdfEmailSkipHintNoFrom:
       "Tip for the site owner: set REPORT_EMAIL_FROM to a verified sender (e.g. CosmoTips <reports@yourdomain>).",
     generating: "Generating your report…",
+    generatingDurationHint: "This may take up to 5 minutes ✨",
+    generatingStayOnPage:
+      "Your report is being generated — please don't close or refresh this page.",
     regenerate: "Regenerate",
     print: "Download / Print",
     tryAgain: "Try again",
@@ -647,6 +654,9 @@ export const successUi: Record<
     pdfEmailSkipHintNoFrom:
       "Wskazówka: ustaw REPORT_EMAIL_FROM na zweryfikowany adres nadawcy w Resend.",
     generating: "Generuję raport…",
+    generatingDurationHint: "To może potrwać do 5 minut ✨",
+    generatingStayOnPage:
+      "Trwa generowanie Twojego raportu — prosimy, nie zamykaj ani nie odświeżaj tej strony.",
     regenerate: "Wygeneruj ponownie",
     print: "Pobierz / drukuj",
     tryAgain: "Spróbuj ponownie",
@@ -681,6 +691,9 @@ export const successUi: Record<
     pdfEmailSkipHintNoFrom:
       "Define REPORT_EMAIL_FROM con un remitente verificado en Resend.",
     generating: "Generando tu informe…",
+    generatingDurationHint: "Esto puede tardar hasta 5 minutos ✨",
+    generatingStayOnPage:
+      "Tu informe está siendo generado — por favor, no cierres ni actualices esta página.",
     regenerate: "Regenerar",
     print: "Descargar / imprimir",
     tryAgain: "Reintentar",
