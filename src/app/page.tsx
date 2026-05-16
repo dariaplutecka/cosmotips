@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { type FormEvent, type ReactNode, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   CheckoutPayloadSchema,
   type AppLang,
@@ -346,6 +346,8 @@ function getTarotGuestId(): string {
 
 function HomePageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const [lang, setLang] = useState<AppLang>("en");
   const [dobYear, setDobYear] = useState("");
   const [dobMonth, setDobMonth] = useState("");
@@ -1159,6 +1161,77 @@ function HomePageContent() {
       .slice(0, 8);
   }, [pob]);
 
+  /** Saldo tokenów z API; `null` = Redis niedostępny (503). */
+  async function readLiveTarotBalance(emailTrimmed: string): Promise<number | null> {
+    try {
+      const balRes = await fetch(
+        `/api/tarot/balance?email=${encodeURIComponent(emailTrimmed)}`,
+      );
+      const balData = (await balRes.json().catch(() => null)) as {
+        balance?: number;
+        error?: string;
+      } | null;
+
+      if (
+        balRes.status === 503 ||
+        balData?.error === "token_store_unavailable"
+      ) {
+        return null;
+      }
+      if (
+        balRes.ok &&
+        balData &&
+        typeof balData.balance === "number" &&
+        balData.error !== "token_store_unavailable"
+      ) {
+        return balData.balance;
+      }
+    } catch {
+      /* fall through */
+    }
+    return subscriptionStatus?.tarotBalance ?? 0;
+  }
+
+  /**
+   * Po powrocie ze Stripe tokeny dopisuje webhook — krótko może być 0 mimo opłaconej sesji.
+   * Przy `?payment=success&tab=tarot` czekamy na saldo > 0 (allowlista bez Stripe od razu ma tokeny).
+   */
+  async function readLiveTarotBalanceWithWebhookPoll(
+    emailTrimmed: string,
+  ): Promise<number | null> {
+    let balance = await readLiveTarotBalance(emailTrimmed);
+    if (balance === null) return null;
+    if (balance >= 1) return balance;
+
+    const awaitWebhook =
+      searchParams.get("payment") === "success" &&
+      searchParams.get("tab") === "tarot";
+
+    if (!awaitWebhook) return balance;
+
+    for (let i = 0; i < 12; i++) {
+      await new Promise((r) => setTimeout(r, 400));
+      const next = await readLiveTarotBalance(emailTrimmed);
+      if (next === null) return null;
+      balance = next;
+      if (balance >= 1) break;
+    }
+    return balance;
+  }
+
+  function clearTarotPaymentSuccessFromUrl() {
+    if (searchParams.get("payment") !== "success") return;
+    try {
+      const p = new URLSearchParams(searchParams.toString());
+      p.delete("payment");
+      const qs = p.toString();
+      const base = pathname || "/";
+      router.replace(qs ? `${base}?${qs}` : base);
+    } catch {
+      /* ignore */
+    }
+  }
+
   async function runNatalOneTimeCheckout() {
     setError(null);
     setNatalNotice(null);
@@ -1233,8 +1306,13 @@ function HomePageContent() {
       submitTarotFlow();
       return;
     }
-    const balance = subscriptionStatus?.tarotBalance ?? 0;
+    const balance = await readLiveTarotBalanceWithWebhookPoll(email.trim());
+    if (balance === null) {
+      setTarotError(tarot.tokenStoreUnavailable);
+      return;
+    }
     if (balance >= 1) {
+      clearTarotPaymentSuccessFromUrl();
       submitTarotFlow();
       return;
     }
@@ -1421,34 +1499,14 @@ function HomePageContent() {
   /** Paid spreads: open Stripe checkout when balance is 0 before shuffling (requires Redis in production). */
   async function ensureTarotTokensForPaidSpread() {
     try {
-      const res = await fetch(
-        `/api/tarot/balance?email=${encodeURIComponent(email.trim())}`,
-      );
-      const data = (await res.json().catch(() => null)) as
-        | { balance?: number; error?: string }
-        | null;
-
-      if (
-        res.status === 503 &&
-        (data?.error === "token_store_unavailable" || data == null)
-      ) {
+      const balance = await readLiveTarotBalanceWithWebhookPoll(email.trim());
+      if (balance === null) {
         setTarotError(tarot.tokenStoreUnavailable);
         setTarotState("idle");
         return;
       }
 
-      if (
-        !res.ok ||
-        data == null ||
-        typeof data.balance !== "number" ||
-        data.error === "token_store_unavailable"
-      ) {
-        setTarotError(em.loginFailed);
-        setTarotState("idle");
-        return;
-      }
-
-      if (data.balance < 1) {
+      if (balance < 1) {
         const redirected = await buyTarotReading();
         if (!redirected) {
           setTarotState("idle");
@@ -1456,6 +1514,7 @@ function HomePageContent() {
         return;
       }
 
+      clearTarotPaymentSuccessFromUrl();
       setTarotState("shuffling");
     } catch {
       setTarotError(em.loginFailed);
