@@ -11,7 +11,14 @@ import { computeNatalChart } from "@/lib/natalChart";
 import { buildNatalSampleBlurb } from "@/lib/natalSampleBlurb";
 import { generateReportPdfBuffer } from "@/lib/reportPdf";
 import { sendReportPdfEmail } from "@/lib/reportEmail";
-import { getReport, setReport, getFnNatalReportMeta, setFnNatalReportMeta } from "@/lib/reportCache";
+import {
+  getReport,
+  setReport,
+  getFnNatalReportMeta,
+  setFnNatalReportMeta,
+  getCompReportMeta,
+  setCompReportMeta,
+} from "@/lib/reportCache";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { successUi } from "@/lib/uiCopy";
 import { getAuthSession } from "@/lib/authSession";
@@ -20,6 +27,7 @@ import {
   deleteFreeReportPayload,
   peekFreeReportPayload,
 } from "@/lib/freeReportStore";
+import { isFreeReportEmailAllowed } from "@/lib/freeReportEmailAllowlist";
 
 /** pdfmake + vfs_fonts need Node (not Edge). */
 export const runtime = "nodejs";
@@ -147,6 +155,38 @@ export async function GET(req: Request) {
         { status: 403 },
       );
     }
+  } else if (
+    searchParams.get("comp") === "1" &&
+    sessionId.startsWith("comp_")
+  ) {
+    const cachedReportEarly = await getReport(sessionId);
+    const cachedMetaEarly = await getCompReportMeta(sessionId);
+    if (cachedReportEarly && cachedMetaEarly) {
+      return NextResponse.json({
+        report: cachedReportEarly,
+        meta: cachedMetaEarly,
+        emailPdf: { status: "skipped" },
+      });
+    }
+
+    const payload = await peekFreeReportPayload(sessionId);
+    if (
+      !payload ||
+      payload.reportType === "natal_basic" ||
+      !isFreeReportEmailAllowed(payload.email)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid or expired session." },
+        { status: 403 },
+      );
+    }
+    email = payload.email;
+    dob = payload.dob;
+    tob = payload.tob;
+    pob = payload.pob;
+    reportTypeRaw = payload.reportType;
+    langRaw = payload.lang;
+    birthTimeUnknown = payload.birthTimeUnknown;
   } else {
     let checkoutSession: Stripe.Checkout.Session;
     try {
@@ -349,6 +389,19 @@ export async function GET(req: Request) {
     );
   }
   await setReport(sessionId, text);
+
+  if (sessionId.startsWith("comp_")) {
+    await setCompReportMeta(sessionId, {
+      email: parsed.data.email,
+      dob: parsed.data.dob,
+      tob: parsed.data.tob,
+      pob: parsed.data.pob,
+      reportType: parsed.data.reportType,
+      lang: parsed.data.lang,
+      birthTimeUnknown: parsed.data.birthTimeUnknown,
+    });
+    await deleteFreeReportPayload(sessionId);
+  }
 
   const pdfTitle =
     successUi[parsed.data.lang].reportTitle[parsed.data.reportType];

@@ -11,6 +11,7 @@ import {
   markProPersonalityPortraitUsed,
 } from "@/lib/subscriptionStore";
 import { storeFreeReportPayload } from "@/lib/freeReportStore";
+import { isFreeReportEmailAllowed } from "@/lib/freeReportEmailAllowlist";
 
 function getClientIp(req: Request) {
   const forwardedFor = req.headers.get("x-forwarded-for");
@@ -99,6 +100,17 @@ export async function POST(req: Request) {
       });
       return NextResponse.json({ url: `${origin}/success?${params.toString()}` });
     }
+  }
+
+  if (isFreeReportEmailAllowed(email)) {
+    const sessionId = `comp_${randomUUID()}`;
+    await storeFreeReportPayload(sessionId, parsed.data);
+    const params = new URLSearchParams({
+      session_id: sessionId,
+      comp: "1",
+      lang,
+    });
+    return NextResponse.json({ url: `${origin}/success?${params.toString()}` });
   }
 
   if (skipPaymentForDev) {

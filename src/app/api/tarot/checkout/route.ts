@@ -7,6 +7,7 @@ import { tarotCopy } from "@/lib/uiCopy";
 import { getAuthSession } from "@/lib/authSession";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/requestIp";
+import { isFreeReportEmailAllowed } from "@/lib/freeReportEmailAllowlist";
 
 const TarotCheckoutPayloadSchema = z.object({
   email: CheckoutPayloadSchema.shape.email,
@@ -42,6 +43,13 @@ export async function POST(request: Request) {
   const skipPaymentForDev =
     stripeMode !== "live" &&
     (process.env.STRIPE_SKIP_PAYMENT_FOR_DEV ?? "false") === "true";
+
+  if (isFreeReportEmailAllowed(email)) {
+    await addTarotTokens(email, tokensToAdd);
+    return NextResponse.json({
+      url: `${baseUrl}/?tab=tarot&lang=${lang}&payment=success&email=${encodeURIComponent(email)}`,
+    });
+  }
 
   if (skipPaymentForDev) {
     await addTarotTokens(email, tokensToAdd);

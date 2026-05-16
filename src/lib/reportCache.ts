@@ -4,6 +4,7 @@ import type { AppLang } from "@/lib/reportSchema";
 const REPORT_TTL_SECONDS = 60 * 60 * 24 * 7;
 const KEY_PREFIX = "report:";
 const FNB_META_PREFIX = "report:fnb_meta:";
+const COMP_META_PREFIX = "report:comp_meta:";
 
 let redis: Redis | null | undefined;
 let missingEnvWarned = false;
@@ -71,6 +72,39 @@ export async function getFnNatalReportMeta(
   const client = getRedisClient();
   if (!client) return null;
   const raw = await client.get<FnNatalCachedMeta>(fnbMetaKey(sessionId));
+  return raw ?? null;
+}
+
+function compMetaKey(sessionId: string) {
+  return `${COMP_META_PREFIX}${sessionId}`;
+}
+
+/** Sidecar dla `comp_*` (complimentary / allowlista e-mail): meta po usunięciu payloadu z freeReportStore. */
+export type CompReportCachedMeta = {
+  email: string;
+  dob: string;
+  tob: string;
+  pob: string;
+  reportType: "personality" | "weekly" | "monthly";
+  lang: AppLang;
+  birthTimeUnknown: boolean;
+};
+
+export async function setCompReportMeta(
+  sessionId: string,
+  meta: CompReportCachedMeta,
+): Promise<void> {
+  const client = getRedisClient();
+  if (!client) return;
+  await client.set(compMetaKey(sessionId), meta, { ex: REPORT_TTL_SECONDS });
+}
+
+export async function getCompReportMeta(
+  sessionId: string,
+): Promise<CompReportCachedMeta | null> {
+  const client = getRedisClient();
+  if (!client) return null;
+  const raw = await client.get<CompReportCachedMeta>(compMetaKey(sessionId));
   return raw ?? null;
 }
 

@@ -88,6 +88,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
   const freeNatalMode = sp.get("fnb") === "1" && sessionId.startsWith("fnb_");
   const proPersonalityMode =
     sp.get("pro") === "1" && sessionId.startsWith("pro_personality_");
+  const compMode = sp.get("comp") === "1" && sessionId.startsWith("comp_");
   const devEmail = sp.get("email") ?? "";
   const devDob = sp.get("dob") ?? "";
   const devTob = sp.get("tob") ?? "";
@@ -190,6 +191,8 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
         params.set("reportType", devReportType);
         params.set("lang", devLang);
         if (devBirthTimeUnknown) params.set("birthTimeUnknown", "1");
+      } else if (compMode) {
+        params.set("comp", "1");
       }
 
       const res = await fetch(`/api/report/generate?${params.toString()}`, {
@@ -243,6 +246,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
     devMode,
     freeNatalMode,
     proPersonalityMode,
+    compMode,
     devEmail,
     devDob,
     devTob,
