@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { FEATURE_GOOGLE_AUTH_UI } from "@/lib/featureFlags";
+import { FEATURE_GOOGLE_AUTH_UI, FEATURE_SUBSCRIPTION_UI } from "@/lib/featureFlags";
 import type { AppLang } from "@/lib/reportSchema";
 import { errorMessages } from "@/lib/uiCopy";
 
@@ -111,6 +111,7 @@ export function CosmotipsTopBar({
   }
 
   useEffect(() => {
+    if (!FEATURE_SUBSCRIPTION_UI) return;
     void refreshSession();
     // sessionSyncKey: gdy przekazany, każdy przyrost odnawia dane; gdy brak — tylko mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -256,109 +257,113 @@ export function CosmotipsTopBar({
           })}
         </div>
 
-        <button
-          id="cosmotips-auth-button"
-          ref={authBtnRef}
-          type="button"
-          aria-expanded={authOpen}
-          aria-controls="cosmotips-auth-panel"
-          aria-haspopup="dialog"
-          onClick={() => setAuthOpen((current) => !current)}
-          className="rounded-full border border-violet-200/30 bg-violet-400/15 px-3 py-2 text-xs font-bold text-white shadow-lg shadow-black/20 transition hover:bg-violet-400/25"
-        >
-          {user ? (
-            <span className="inline-flex max-w-[min(100%,14rem)] items-center gap-1.5 sm:max-w-none sm:gap-2">
-              <span className="min-w-0 truncate">{user.email.split("@")[0]}</span>
-              {subscription?.pro ? (
-                <span className="shrink-0 rounded-full bg-amber-300 px-1.5 py-0.5 text-[0.6rem] font-black uppercase text-black">
-                  {copy.pro}
+        {FEATURE_SUBSCRIPTION_UI ? (
+          <>
+            <button
+              id="cosmotips-auth-button"
+              ref={authBtnRef}
+              type="button"
+              aria-expanded={authOpen}
+              aria-controls="cosmotips-auth-panel"
+              aria-haspopup="dialog"
+              onClick={() => setAuthOpen((current) => !current)}
+              className="rounded-full border border-violet-200/30 bg-violet-400/15 px-3 py-2 text-xs font-bold text-white shadow-lg shadow-black/20 transition hover:bg-violet-400/25"
+            >
+              {user ? (
+                <span className="inline-flex max-w-[min(100%,14rem)] items-center gap-1.5 sm:max-w-none sm:gap-2">
+                  <span className="min-w-0 truncate">{user.email.split("@")[0]}</span>
+                  {subscription?.pro ? (
+                    <span className="shrink-0 rounded-full bg-amber-300 px-1.5 py-0.5 text-[0.6rem] font-black uppercase text-black">
+                      {copy.pro}
+                    </span>
+                  ) : null}
+                  {typeof subscription?.tarotBalance === "number" ? (
+                    <span
+                      className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-violet-200/35 bg-violet-950/55 px-1.5 py-0.5 text-[0.65rem] font-bold tabular-nums text-violet-100"
+                      aria-label={tarotBalanceAria(lang, subscription.tarotBalance)}
+                    >
+                      <span aria-hidden className="text-[0.7rem] leading-none">
+                        🎴
+                      </span>
+                      <span>{subscription.tarotBalance}</span>
+                    </span>
+                  ) : null}
                 </span>
-              ) : null}
-              {typeof subscription?.tarotBalance === "number" ? (
-                <span
-                  className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-violet-200/35 bg-violet-950/55 px-1.5 py-0.5 text-[0.65rem] font-bold tabular-nums text-violet-100"
-                  aria-label={tarotBalanceAria(lang, subscription.tarotBalance)}
-                >
-                  <span aria-hidden className="text-[0.7rem] leading-none">
-                    🎴
-                  </span>
-                  <span>{subscription.tarotBalance}</span>
-                </span>
-              ) : null}
-            </span>
-          ) : (
-            copy.signIn
-          )}
-        </button>
+              ) : (
+                copy.signIn
+              )}
+            </button>
 
-        {authOpen ? (
-          <div
-            id="cosmotips-auth-panel"
-            ref={authPanelRef}
-            role="dialog"
-            aria-label={copy.signIn}
-            className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-3xl border border-white/12 bg-[#130b25]/95 p-4 text-white shadow-2xl shadow-black/40 backdrop-blur"
-          >
-            {user ? (
-              <div className="space-y-3">
-                <p className="text-xs text-white/55">{user.provider}</p>
-                <p className="text-sm font-semibold">{user.email}</p>
-                {subscription?.pro ? (
-                  <button
-                    type="button"
-                    onClick={() => void openCustomerPortal()}
-                    disabled={portalLoading}
-                    className="w-full rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-2 text-sm font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {portalLoading ? "..." : copy.manage}
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => void logout()}
-                  className="w-full rounded-2xl border border-white/15 px-4 py-2 text-sm font-bold text-white/85 transition hover:bg-white/10"
-                >
-                  {copy.signOut}
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {authMessage ? (
-                  <div className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-3 py-2.5 text-xs leading-5 text-emerald-50">
-                    {authMessage}
+            {authOpen ? (
+              <div
+                id="cosmotips-auth-panel"
+                ref={authPanelRef}
+                role="dialog"
+                aria-label={copy.signIn}
+                className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-3xl border border-white/12 bg-[#130b25]/95 p-4 text-white shadow-2xl shadow-black/40 backdrop-blur"
+              >
+                {user ? (
+                  <div className="space-y-3">
+                    <p className="text-xs text-white/55">{user.provider}</p>
+                    <p className="text-sm font-semibold">{user.email}</p>
+                    {subscription?.pro ? (
+                      <button
+                        type="button"
+                        onClick={() => void openCustomerPortal()}
+                        disabled={portalLoading}
+                        className="w-full rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-2 text-sm font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {portalLoading ? "..." : copy.manage}
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => void logout()}
+                      className="w-full rounded-2xl border border-white/15 px-4 py-2 text-sm font-bold text-white/85 transition hover:bg-white/10"
+                    >
+                      {copy.signOut}
+                    </button>
                   </div>
-                ) : null}
-                {authError ? (
-                  <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-xs leading-5 text-red-100">
-                    {authError}
+                ) : (
+                  <div className="space-y-3">
+                    {authMessage ? (
+                      <div className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-3 py-2.5 text-xs leading-5 text-emerald-50">
+                        {authMessage}
+                      </div>
+                    ) : null}
+                    {authError ? (
+                      <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-xs leading-5 text-red-100">
+                        {authError}
+                      </div>
+                    ) : null}
+                    <input
+                      type="email"
+                      value={authEmail}
+                      onChange={(e) => setAuthEmail(e.target.value)}
+                      placeholder={copy.emailPlaceholder}
+                      className="w-full rounded-2xl border border-violet-200/30 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-400/35"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void sendMagicLink()}
+                      disabled={authLoading || !authEmail.trim()}
+                      className="w-full rounded-2xl bg-gradient-to-b from-violet-300 to-violet-500 px-4 py-2 text-sm font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {copy.magicLink}
+                    </button>
+                    {FEATURE_GOOGLE_AUTH_UI ? (
+                      <a
+                        href={`/api/auth/google/start?lang=${lang}`}
+                        className="block rounded-2xl border border-white/15 px-4 py-2 text-center text-sm font-bold text-white/85 transition hover:bg-white/10"
+                      >
+                        {copy.google}
+                      </a>
+                    ) : null}
                   </div>
-                ) : null}
-                <input
-                  type="email"
-                  value={authEmail}
-                  onChange={(e) => setAuthEmail(e.target.value)}
-                  placeholder={copy.emailPlaceholder}
-                  className="w-full rounded-2xl border border-violet-200/30 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-400/35"
-                />
-                <button
-                  type="button"
-                  onClick={() => void sendMagicLink()}
-                  disabled={authLoading || !authEmail.trim()}
-                  className="w-full rounded-2xl bg-gradient-to-b from-violet-300 to-violet-500 px-4 py-2 text-sm font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {copy.magicLink}
-                </button>
-                {FEATURE_GOOGLE_AUTH_UI ? (
-                  <a
-                    href={`/api/auth/google/start?lang=${lang}`}
-                    className="block rounded-2xl border border-white/15 px-4 py-2 text-center text-sm font-bold text-white/85 transition hover:bg-white/10"
-                  >
-                    {copy.google}
-                  </a>
-                ) : null}
+                )}
               </div>
-            )}
-          </div>
+            ) : null}
+          </>
         ) : null}
       </div>
     </div>

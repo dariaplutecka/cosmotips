@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAuthSession } from "@/lib/authSession";
-import { getStripe } from "@/lib/stripe";
+import { createProSubscriptionStripeCheckoutUrl } from "@/lib/proSubscriptionCheckout";
 import { AppLangSchema, CheckoutPayloadSchema } from "@/lib/reportSchema";
-import {
-  type ProBillingInterval,
-  setProSubscriberProfile,
-} from "@/lib/subscriptionStore";
 
 const SubscriptionCheckoutSchema = CheckoutPayloadSchema.pick({
   dob: true,
@@ -25,14 +21,6 @@ function getBaseUrl(request: Request) {
   return new URL(request.url).origin;
 }
 
-function priceIdForInterval(interval: ProBillingInterval): string | null {
-  const key =
-    interval === "monthly"
-      ? "STRIPE_PRO_MONTHLY_PRICE_ID"
-      : "STRIPE_PRO_YEARLY_PRICE_ID";
-  return process.env[key]?.trim() || null;
-}
-
 export async function POST(request: Request) {
   const session = await getAuthSession();
   if (!session?.email) {
@@ -45,15 +33,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid input." }, { status: 400 });
   }
 
-  const priceId = priceIdForInterval(parsed.data.interval);
-  if (!priceId) {
-    return NextResponse.json(
-      { error: "Subscription price is not configured." },
-      { status: 503 },
-    );
-  }
-
-  await setProSubscriberProfile({
+  const baseUrl = getBaseUrl(request);
+  const result = await createProSubscriptionStripeCheckoutUrl({
     email: session.email,
     name: parsed.data.name,
     dob: parsed.data.dob,
@@ -61,30 +42,16 @@ export async function POST(request: Request) {
     pob: parsed.data.pob,
     birthTimeUnknown: parsed.data.birthTimeUnknown,
     lang: parsed.data.lang,
+    interval: parsed.data.interval,
+    baseUrl,
   });
 
-  const baseUrl = getBaseUrl(request);
-  const stripe = getStripe();
-  const checkoutSession = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    payment_method_types: ["card"],
-    customer_email: session.email,
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${baseUrl}/?lang=${encodeURIComponent(parsed.data.lang)}&subscription=success`,
-    cancel_url: `${baseUrl}/?lang=${encodeURIComponent(parsed.data.lang)}&subscription=cancelled`,
-    metadata: {
-      product: "pro_subscription",
-      email: session.email,
-      billingInterval: parsed.data.interval,
-    },
-    subscription_data: {
-      metadata: {
-        product: "pro_subscription",
-        email: session.email,
-        billingInterval: parsed.data.interval,
-      },
-    },
-  });
+  if ("error" in result) {
+    return NextResponse.json(
+      { error: "Subscription price is not configured." },
+      { status: 503 },
+    );
+  }
 
-  return NextResponse.json({ url: checkoutSession.url });
+  return NextResponse.json({ url: result.url });
 }

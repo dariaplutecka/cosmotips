@@ -9,7 +9,7 @@ import {
   type PendingFreeNatalV1,
   type ReportType,
 } from "@/lib/reportSchema";
-import { FEATURE_GOOGLE_AUTH_UI } from "@/lib/featureFlags";
+import { FEATURE_GOOGLE_AUTH_UI, FEATURE_SUBSCRIPTION_UI } from "@/lib/featureFlags";
 import {
   MIN_BIRTH_YEAR,
   currentBirthYearMax,
@@ -174,7 +174,27 @@ type SubscriptionStatus = {
 };
 
 type ProInterval = "monthly" | "yearly";
-type ProAuthModalView = "login" | "sent";
+type HomePaymentChoice =
+  | "once"
+  | "subscription_monthly"
+  | "subscription_yearly";
+
+function proIntervalFromChoice(
+  choice: HomePaymentChoice | null,
+): ProInterval | null {
+  if (choice === "subscription_monthly") return "monthly";
+  if (choice === "subscription_yearly") return "yearly";
+  return null;
+}
+
+function isProSubscriptionChoice(
+  choice: HomePaymentChoice | null,
+): choice is "subscription_monthly" | "subscription_yearly" {
+  return (
+    choice === "subscription_monthly" || choice === "subscription_yearly"
+  );
+}
+
 type PendingProSubscription = {
   interval: ProInterval;
   name: string;
@@ -205,7 +225,8 @@ function proUiText(lang: AppLang) {
       modalMagicLink: "Wyślij link logowania",
       modalGoogle: "Kontynuuj z Google",
       modalSentTitle: "Sprawdź swoją skrzynkę",
-      modalSentBody: "Wysłaliśmy link logowania. Po kliknięciu wrócisz tutaj i wznowimy subskrypcję.",
+      modalSentBody:
+        "Wysłaliśmy link na Twój e-mail. Po kliknięciu zalogujemy Cię i od razu przekierujemy do bezpiecznej płatności subskrypcji Stripe.",
       modalBack: "Wróć",
       modalResend: "Wyślij ponownie",
     };
@@ -228,7 +249,8 @@ function proUiText(lang: AppLang) {
       modalMagicLink: "Enviar enlace de acceso",
       modalGoogle: "Continuar con Google",
       modalSentTitle: "Revisa tu correo",
-      modalSentBody: "Te enviamos un enlace de acceso. Al abrirlo volverás aquí y retomaremos la suscripción.",
+      modalSentBody:
+        "Te enviamos un enlace. Al abrirlo iniciaremos sesión y te llevará directamente al pago seguro de la suscripción en Stripe.",
       modalBack: "Volver",
       modalResend: "Enviar de nuevo",
     };
@@ -250,7 +272,8 @@ function proUiText(lang: AppLang) {
     modalMagicLink: "Send sign-in link",
     modalGoogle: "Continue with Google",
     modalSentTitle: "Check your inbox",
-    modalSentBody: "We sent a sign-in link. After you open it, you will return here and we will resume your subscription.",
+    modalSentBody:
+      "We sent you a link. When you open it, we’ll sign you in and take you straight to secure Stripe subscription checkout.",
     modalBack: "Back",
     modalResend: "Resend",
   };
@@ -351,14 +374,17 @@ function HomePageContent() {
     null,
   );
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
-  const [subscriptionInterval, setSubscriptionInterval] =
-    useState<ProInterval>("monthly");
+  const [natalPaymentChoice, setNatalPaymentChoice] =
+    useState<HomePaymentChoice | null>(null);
+  const [tarotPaymentChoice, setTarotPaymentChoice] =
+    useState<HomePaymentChoice | null>(null);
   const [topBarSessionKey, setTopBarSessionKey] = useState(0);
-  const [proAuthModalOpen, setProAuthModalOpen] = useState(false);
-  const [proAuthModalView, setProAuthModalView] = useState<ProAuthModalView>("login");
-  const [proAuthEmail, setProAuthEmail] = useState("");
+  const [proSubscriptionSentModalOpen, setProSubscriptionSentModalOpen] =
+    useState(false);
   const [proAuthLoading, setProAuthLoading] = useState(false);
-  const [proAuthError, setProAuthError] = useState<string | null>(null);
+  const [proSubscriptionModalError, setProSubscriptionModalError] = useState<
+    string | null
+  >(null);
   /** Green notice for natal tab (e.g. subscription success) — must not use the red `error` state. */
   const [natalNotice, setNatalNotice] = useState<string | null>(null);
 
@@ -404,6 +430,8 @@ function HomePageContent() {
   function selectHomeModule(module: HomeModule) {
     setActiveModule(module);
     setNatalNotice(null);
+    setNatalPaymentChoice(null);
+    setTarotPaymentChoice(null);
     try {
       localStorage.setItem(HOME_MODULE_STORAGE_KEY, module);
     } catch {
@@ -412,6 +440,7 @@ function HomePageContent() {
   }
 
   async function refreshSubscriptionStatus() {
+    if (!FEATURE_SUBSCRIPTION_UI) return null;
     try {
       const res = await fetch("/api/subscription/status");
       const data = (await res.json().catch(() => null)) as SubscriptionStatus | null;
@@ -446,10 +475,9 @@ function HomePageContent() {
     }
   }
 
-  function closeProAuthModal() {
-    setProAuthModalOpen(false);
-    setProAuthModalView("login");
-    setProAuthError(null);
+  function closeProSubscriptionSentModal() {
+    setProSubscriptionSentModalOpen(false);
+    setProSubscriptionModalError(null);
   }
 
   useEffect(() => {
@@ -503,6 +531,7 @@ function HomePageContent() {
   }, [searchParams]);
 
   useEffect(() => {
+    if (!FEATURE_SUBSCRIPTION_UI) return;
     void refreshSubscriptionStatus();
   }, [searchParams]);
 
@@ -770,7 +799,7 @@ function HomePageContent() {
             pendingPro.interval === "yearly") &&
           pendingIsFresh
         ) {
-          closeProAuthModal();
+          closeProSubscriptionSentModal();
           localStorage.removeItem(PRO_PENDING_SUBSCRIPTION_STORAGE_KEY);
           if (pendingPro.name) setName(pendingPro.name);
           if (pendingPro.dob) {
@@ -929,14 +958,14 @@ function HomePageContent() {
       setTarotMessage(tarotCopy[lang].paymentCancelled);
       setTarotState("idle");
     }
-    if (subscription === "success") {
+    if (FEATURE_SUBSCRIPTION_UI && subscription === "success") {
       setError(null);
       setTarotError(null);
       setNatalNotice(null);
       if (activeModule === "tarot") setTarotMessage(proCopy.subscriptionSuccess);
       else setNatalNotice(proCopy.subscriptionSuccess);
       void refreshSubscriptionStatus();
-    } else if (subscription === "cancelled") {
+    } else if (FEATURE_SUBSCRIPTION_UI && subscription === "cancelled") {
       setNatalNotice(null);
       const message = proCopy.subscriptionCancelled;
       if (activeModule === "tarot") setTarotError(message);
@@ -1029,7 +1058,7 @@ function HomePageContent() {
     [email],
   );
 
-  const canSubmit = useMemo(
+  const natalFormFieldsOk = useMemo(
     () =>
       Boolean(
         dob &&
@@ -1037,12 +1066,90 @@ function HomePageContent() {
           pob &&
           emailValid &&
           reportType &&
-          termsAccepted &&
           !loading &&
           !(reportType === "natal_basic" && freeBasicUsed),
       ),
-    [dob, tob, pob, emailValid, reportType, termsAccepted, loading, freeBasicUsed],
+    [dob, tob, pob, emailValid, reportType, loading, freeBasicUsed],
   );
+
+  const natalCanSubmit = useMemo(() => {
+    if (!natalFormFieldsOk || !termsAccepted) return false;
+    if (!FEATURE_SUBSCRIPTION_UI) return true;
+    return (
+      natalPaymentChoice !== null &&
+      (!isProSubscriptionChoice(natalPaymentChoice) || Boolean(name.trim()))
+    );
+  }, [natalFormFieldsOk, natalPaymentChoice, name, termsAccepted]);
+
+  const tarotNeedsPaymentChoice = useMemo(
+    () =>
+      FEATURE_SUBSCRIPTION_UI &&
+      activeModule === "tarot" &&
+      tarotSpread !== "daily_card" &&
+      (subscriptionStatus?.tarotBalance ?? 0) < 1,
+    [activeModule, tarotSpread, subscriptionStatus?.tarotBalance],
+  );
+
+  const showTarotPaymentStep =
+    activeModule === "tarot" && tarotState === "idle" && tarotNeedsPaymentChoice;
+
+  const natalOncePaymentHint =
+    reportType === "natal_basic"
+      ? copy.paymentOnceHintFreePreview
+      : copy.paymentOnceFollowsReportPrice;
+
+  const natalSubmitLabel =
+    loading || subscriptionLoading
+      ? copy.submitting
+      : !FEATURE_SUBSCRIPTION_UI
+        ? copy.submit
+        : natalPaymentChoice === null
+          ? copy.submit
+          : isProSubscriptionChoice(natalPaymentChoice)
+            ? subscriptionStatus?.authenticated
+              ? copy.proceedToSubscriptionPayment
+              : copy.sendSubscriptionMagicLink
+            : natalPaymentChoice === "once" &&
+                reportType === "natal_basic" &&
+                !freeBasicUsed
+              ? copy.submit
+              : copy.paySubmit;
+
+  const tarotSubmitLabel =
+    tarotCheckoutLoading || subscriptionLoading
+      ? tarot.generating
+      : !FEATURE_SUBSCRIPTION_UI || tarotSpread === "daily_card"
+        ? tarot.generateReading
+        : !tarotNeedsPaymentChoice
+          ? tarot.generateReading
+          : tarotPaymentChoice === null
+            ? tarot.generateReading
+            : tarotPaymentChoice === "once"
+              ? copy.paySubmit
+              : subscriptionStatus?.authenticated
+                ? copy.proceedToSubscriptionPayment
+                : copy.sendSubscriptionMagicLink;
+
+  const tarotFormPrimaryDisabled =
+    !termsAccepted ||
+    tarotCheckoutLoading ||
+    subscriptionLoading ||
+    (tarotNeedsPaymentChoice && tarotPaymentChoice === null);
+
+  useEffect(() => {
+    if (!FEATURE_SUBSCRIPTION_UI) return;
+    setNatalPaymentChoice((prev) => {
+      if (reportType === "natal_basic" && !freeBasicUsed) {
+        if (prev === null) return "once";
+        return prev;
+      }
+      return null;
+    });
+  }, [reportType, freeBasicUsed]);
+
+  useEffect(() => {
+    setTarotPaymentChoice(null);
+  }, [tarotSpread]);
 
   const filteredPlaces = useMemo(() => {
     const q = pob.trim().toLowerCase();
@@ -1052,12 +1159,7 @@ function HomePageContent() {
       .slice(0, 8);
   }, [pob]);
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (activeModule === "tarot") {
-      submitTarotFlow();
-      return;
-    }
+  async function runNatalOneTimeCheckout() {
     setError(null);
     setNatalNotice(null);
     if (reportType === "natal_basic" && freeBasicUsed) {
@@ -1112,6 +1214,116 @@ function HomePageContent() {
       setError(em.loginFailed);
       setLoading(false);
     }
+  }
+
+  async function handleTarotFormSubmit() {
+    setTarotError(null);
+    if (!termsAccepted) {
+      setTarotError(tarot.termsRequired);
+      return;
+    }
+    if (!validateTarotProfile()) {
+      return;
+    }
+    if (tarotSpread !== "daily_card" && !email.trim()) {
+      setTarotError(tarot.enterEmail);
+      return;
+    }
+    if (tarotSpread === "daily_card") {
+      submitTarotFlow();
+      return;
+    }
+    const balance = subscriptionStatus?.tarotBalance ?? 0;
+    if (balance >= 1) {
+      submitTarotFlow();
+      return;
+    }
+    if (!FEATURE_SUBSCRIPTION_UI) {
+      void buyTarotReading();
+      return;
+    }
+    if (!tarotPaymentChoice) {
+      setTarotError(copy.pickPaymentError);
+      return;
+    }
+    if (tarotPaymentChoice === "once") {
+      void buyTarotReading();
+      return;
+    }
+    if (!name.trim()) {
+      setTarotError(
+        lang === "pl"
+          ? "Podaj imię, aby kontynuować subskrypcję Pro."
+          : lang === "es"
+            ? "Introduce tu nombre para continuar con la suscripción Pro."
+            : "Enter your name to continue with Pro subscription.",
+      );
+      return;
+    }
+    if (!subscriptionStatus?.authenticated) {
+      await sendProSubscriptionMagicLink({ tarot: true });
+      return;
+    }
+    const iv = proIntervalFromChoice(tarotPaymentChoice);
+    if (!iv) {
+      setTarotError(copy.pickPaymentError);
+      return;
+    }
+    void startProSubscription(iv);
+  }
+
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (activeModule === "tarot") {
+      void handleTarotFormSubmit();
+      return;
+    }
+    setError(null);
+    setNatalNotice(null);
+    if (reportType === "natal_basic" && freeBasicUsed) {
+      setError(copy.freeBasicAlreadyUsedError);
+      return;
+    }
+    if (!FEATURE_SUBSCRIPTION_UI) {
+      if (!termsAccepted) {
+        setError(tarot.termsRequired);
+        return;
+      }
+      await runNatalOneTimeCheckout();
+      return;
+    }
+    if (!natalPaymentChoice) {
+      setError(copy.pickPaymentError);
+      return;
+    }
+    if (isProSubscriptionChoice(natalPaymentChoice)) {
+      if (!name.trim()) {
+        setError(
+          lang === "pl"
+            ? "Podaj imię oraz dane urodzenia, aby uruchomić Pro."
+            : lang === "es"
+              ? "Introduce tu nombre y datos de nacimiento para activar Pro."
+              : "Enter your name and birth details to start Pro.",
+        );
+        return;
+      }
+      if (!termsAccepted) {
+        setError(tarot.termsRequired);
+        return;
+      }
+      if (!subscriptionStatus?.authenticated) {
+        await sendProSubscriptionMagicLink({ tarot: false });
+        return;
+      }
+      const iv = proIntervalFromChoice(natalPaymentChoice);
+      if (!iv) {
+        setError(copy.pickPaymentError);
+        return;
+      }
+      void startProSubscription(iv);
+      return;
+    }
+    await runNatalOneTimeCheckout();
   }
 
   function startTarotReading(spreadType: SpreadType) {
@@ -1252,7 +1464,7 @@ function HomePageContent() {
   }
 
   async function startProSubscription(
-    interval = subscriptionInterval,
+    interval: ProInterval,
     opts?: { profile?: PendingProSubscription },
   ) {
     setError(null);
@@ -1275,11 +1487,14 @@ function HomePageContent() {
       currentSubscriptionStatus = subscriptionStatus;
     }
     if (!currentSubscriptionStatus?.authenticated) {
-      storePendingProSubscription(interval);
-      setProAuthEmail(email.trim());
-      setProAuthModalView("login");
-      setProAuthError(null);
-      setProAuthModalOpen(true);
+      const message =
+        lang === "pl"
+          ? "Zaloguj się: wybierz subskrypcję Pro w kroku 3 i wyślij link potwierdzający na e-mail."
+          : lang === "es"
+            ? "Inicia sesión: elige la suscripción Pro en el paso 3 y envía el enlace de confirmación."
+            : "Sign in: choose Pro subscription in step 3 and send the confirmation email link.";
+      if (activeModule === "tarot") setTarotError(message);
+      else setError(message);
       return;
     }
     if (!checkoutName || !checkoutDob || !checkoutTob || !checkoutPob) {
@@ -1328,33 +1543,74 @@ function HomePageContent() {
     }
   }
 
-  async function submitProMagicLink(event?: FormEvent<HTMLFormElement>) {
-    event?.preventDefault();
-    setProAuthError(null);
-    const cleanEmail = proAuthEmail.trim();
-    if (!cleanEmail || !cleanEmail.includes("@")) {
-      setProAuthError(em.invalidEmail);
+  async function sendProSubscriptionMagicLink(opts: { tarot?: boolean }) {
+    setProSubscriptionModalError(null);
+    const cleanEmail = email.trim();
+    if (!cleanEmail || !CheckoutPayloadSchema.shape.email.safeParse(cleanEmail).success) {
+      if (opts.tarot) setTarotError(em.invalidEmail);
+      else setError(em.invalidEmail);
+      return;
+    }
+    if (!name.trim()) {
+      const message =
+        lang === "pl"
+          ? "Podaj imię, aby kontynuować subskrypcję Pro."
+          : lang === "es"
+            ? "Introduce tu nombre para continuar con la suscripción Pro."
+            : "Enter your name to continue with Pro subscription.";
+      if (opts.tarot) setTarotError(message);
+      else setError(message);
+      return;
+    }
+    if (!termsAccepted) {
+      if (opts.tarot) setTarotError(tarot.termsRequired);
+      else setError(tarot.termsRequired);
       return;
     }
     setProAuthLoading(true);
-    storePendingProSubscription(subscriptionInterval);
     try {
+      const paymentChoice = opts.tarot ? tarotPaymentChoice : natalPaymentChoice;
+      const interval = proIntervalFromChoice(paymentChoice);
+      if (!interval) {
+        if (opts.tarot) setTarotError(copy.pickPaymentError);
+        else setError(copy.pickPaymentError);
+        setProAuthLoading(false);
+        return;
+      }
+      const pending = {
+        v: 1 as const,
+        email: cleanEmail,
+        interval,
+        name: name.trim(),
+        dob,
+        tob,
+        pob,
+        birthTimeUnknown,
+        lang,
+      };
       const res = await fetch("/api/auth/magic-link", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: cleanEmail, lang }),
+        body: JSON.stringify({
+          email: cleanEmail,
+          lang,
+          pendingProSubscription: pending,
+        }),
       });
-      const data = (await res.json().catch(() => null)) as { error?: string } | null;
       if (!res.ok) {
         throw new Error("magic_link_failed");
       }
       setEmail(cleanEmail);
-      setProAuthModalView("sent");
+      setProSubscriptionSentModalOpen(true);
     } catch {
-      setProAuthError(em.loginFailed);
+      setProSubscriptionModalError(em.loginFailed);
     } finally {
       setProAuthLoading(false);
     }
+  }
+
+  async function resendProSubscriptionMagicLink() {
+    await sendProSubscriptionMagicLink({ tarot: activeModule === "tarot" });
   }
 
   function submitTarotFlow() {
@@ -1477,7 +1733,9 @@ function HomePageContent() {
           logoAriaLabel={copy.navLogoHomeAria}
           onLangChange={setLang}
           onLogoClick={returnToHomeView}
-          sessionSyncKey={topBarSessionKey}
+          sessionSyncKey={
+            FEATURE_SUBSCRIPTION_UI ? topBarSessionKey : undefined
+          }
         />
 
         {!isTarotReportView ? (
@@ -1548,8 +1806,11 @@ function HomePageContent() {
                   })}
                 </div>
 
-                <div className="cosmic-tool-pitch mx-auto mt-4 w-full max-w-none sm:mt-5" lang={lang}>
-                  <div className="relative z-10 text-pretty text-sm leading-snug text-white/72 sm:leading-relaxed">
+                <div
+                  className="cosmic-tool-pitch mx-auto mt-4 w-full max-w-none px-5 sm:mt-5 sm:px-7"
+                  lang={lang}
+                >
+                  <div className="relative z-10 text-pretty text-[0.9375rem] leading-snug text-white/72 sm:text-[0.97rem] sm:leading-relaxed">
                     {activePitch.map((para, i) => (
                       <p key={i} className={i > 0 ? "mt-2 sm:mt-2.5" : undefined}>
                         {para}
@@ -1562,7 +1823,7 @@ function HomePageContent() {
             ) : null}
 
             <section
-              className={`w-full ${!isTarotReportView ? "overflow-hidden rounded-b-3xl border-x border-b border-white/12 border-t-0 bg-gradient-to-b from-violet-950/45 via-violet-950/22 to-[#070412] px-4 pt-5 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.5)] ring-1 ring-violet-400/18 sm:px-6 sm:pt-6" : ""}`}
+              className={`w-full ${!isTarotReportView ? "overflow-x-hidden overflow-y-visible rounded-b-3xl border-x border-b border-white/12 border-t-0 bg-gradient-to-b from-violet-950/45 via-violet-950/22 to-[#070412] px-4 pt-5 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.5)] ring-1 ring-violet-400/18 sm:px-6 sm:pt-6" : ""}`}
             >
               {isTarotReportView && activeModule === "tarot" ? (
                 <div className="mx-auto mb-6 w-full max-w-5xl space-y-3">
@@ -1643,6 +1904,9 @@ function HomePageContent() {
                                 </span>
                               ) : null}
                             </div>
+                            <p className="mt-1 text-xs font-semibold tracking-wide text-amber-100/85">
+                              {c.priceLabel}
+                            </p>
                             <p className="mt-1 min-h-0 flex-1 text-sm leading-6 text-white/75">
                               {c.desc}
                             </p>
@@ -1660,47 +1924,6 @@ function HomePageContent() {
                       </button>
                     );
                   })}
-                </div>
-                <div className="mt-5 rounded-2xl border border-amber-300/35 bg-amber-400/10 p-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-amber-50">
-                        {proCopy.title}: {proCopy.price}
-                      </p>
-                      <ul className="mt-3 space-y-1.5 text-sm font-medium leading-6 text-white/82">
-                        {proCopy.benefits.map((benefit) => (
-                          <li key={benefit} className="flex gap-2">
-                            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-200" />
-                            <span>{benefit}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-start">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSubscriptionInterval("monthly");
-                          void startProSubscription("monthly");
-                        }}
-                        disabled={subscriptionLoading}
-                        className="rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-2 text-xs font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {proCopy.monthly}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSubscriptionInterval("yearly");
-                          void startProSubscription("yearly");
-                        }}
-                        disabled={subscriptionLoading}
-                        className="rounded-2xl border border-amber-200/35 px-4 py-2 text-xs font-bold text-amber-50 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {proCopy.yearly}
-                      </button>
-                    </div>
-                  </div>
                 </div>
                 {freeBasicUsed ? (
                   <p className="mt-3 text-pretty text-xs leading-relaxed text-amber-100/75">
@@ -1721,7 +1944,7 @@ function HomePageContent() {
                     <h2 className="cosmotips-heading-3">
                       1. {tarot.chooseSpread}
                     </h2>
-                    <div className="grid gap-2.5 sm:grid-cols-2 sm:items-stretch xl:grid-cols-3">
+                    <div className="grid gap-2.5 sm:grid-cols-2 sm:items-stretch">
                       {([
                         {
                           id: "daily_card" as const,
@@ -1756,7 +1979,7 @@ function HomePageContent() {
                               setTarotSpread(spread.id);
                             }}
                             className={[
-                              "flex h-full min-h-[8.75rem] flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                              "flex h-full min-h-0 flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
                               selected
                                 ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
                                 : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
@@ -1764,7 +1987,7 @@ function HomePageContent() {
                           >
                             <div className="flex min-h-0 flex-1 gap-3">
                               <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                                <div className="flex min-h-[2.5rem] shrink-0 flex-wrap items-start gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
+                                <div className="flex shrink-0 flex-wrap items-center gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
                                   <span>{spread.title}</span>
                                   {spread.badge ? (
                                     <span className="rounded-full border border-amber-300/45 bg-amber-400/20 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-amber-100">
@@ -1772,11 +1995,11 @@ function HomePageContent() {
                                     </span>
                                   ) : null}
                                 </div>
+                                <p className="mt-1 text-xs font-semibold tracking-wide text-amber-100/85">
+                                  {spread.meta}
+                                </p>
                                 <p className="mt-1 min-h-0 flex-1 text-sm leading-6 text-white/75">
                                   {spread.desc}
-                                </p>
-                                <p className="mt-3 text-xs font-bold uppercase tracking-wide text-amber-100/80">
-                                  {spread.meta}
                                 </p>
                               </div>
                               <div
@@ -1792,47 +2015,6 @@ function HomePageContent() {
                           </button>
                         );
                       })}
-                    </div>
-                    <div className="mt-5 rounded-2xl border border-amber-300/35 bg-amber-400/10 p-4">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-amber-50">
-                            {proCopy.title}: {proCopy.price}
-                          </p>
-                          <ul className="mt-3 space-y-1.5 text-sm font-medium leading-6 text-white/82">
-                            {proCopy.benefits.map((benefit) => (
-                              <li key={benefit} className="flex gap-2">
-                                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-200" />
-                                <span>{benefit}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-start">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSubscriptionInterval("monthly");
-                              void startProSubscription("monthly");
-                            }}
-                            disabled={subscriptionLoading}
-                            className="rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-2 text-xs font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {proCopy.monthly}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSubscriptionInterval("yearly");
-                              void startProSubscription("yearly");
-                            }}
-                            disabled={subscriptionLoading}
-                            className="rounded-2xl border border-amber-200/35 px-4 py-2 text-xs font-bold text-amber-50 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {proCopy.yearly}
-                          </button>
-                        </div>
-                      </div>
                     </div>
                     </div>
                     </div>
@@ -2320,7 +2502,167 @@ function HomePageContent() {
                 </div>
               ) : null}
 
-              <div className="mt-6 flex w-full items-start gap-3 rounded-2xl border border-white/10 bg-black/20 p-4">
+              {FEATURE_SUBSCRIPTION_UI && activeModule === "natal" ? (
+                <div className="mt-8 w-full space-y-4">
+                  <h2 id="natal-payment-step" className="cosmotips-heading-3 scroll-mt-24">
+                    3. {copy.paymentStepTitle}
+                  </h2>
+                  <div className="grid gap-2.5 sm:grid-cols-2 sm:items-stretch">
+                    <button
+                      type="button"
+                      onClick={() => setNatalPaymentChoice("once")}
+                      className={[
+                        "flex h-full flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                        natalPaymentChoice === "once"
+                          ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
+                          : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
+                      ].join(" ")}
+                    >
+                      <span className="text-sm font-semibold text-white">
+                        ① {copy.paymentOnceTitle}
+                      </span>
+                      <span className="mt-2 text-sm leading-6 text-white/75">
+                        {natalOncePaymentHint}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNatalPaymentChoice("subscription_monthly")}
+                      className={[
+                        "flex h-full flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                        natalPaymentChoice === "subscription_monthly"
+                          ? "border-amber-300/55 bg-amber-400/15 shadow-md shadow-amber-950/25 ring-1 ring-amber-200/25"
+                          : "border-amber-200/25 bg-amber-950/15 hover:border-amber-300/45 hover:bg-amber-950/25",
+                      ].join(" ")}
+                    >
+                      <span className="text-sm font-semibold text-amber-50">
+                        ② {copy.paymentMonthlySubscriptionTitle}
+                      </span>
+                      <span className="mt-2 text-sm leading-6 text-white/78">
+                        {copy.paymentMonthlySubscriptionHint}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNatalPaymentChoice("subscription_yearly")}
+                      className={[
+                        "flex h-full flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                        natalPaymentChoice === "subscription_yearly"
+                          ? "border-amber-300/55 bg-amber-400/15 shadow-md shadow-amber-950/25 ring-1 ring-amber-200/25"
+                          : "border-amber-200/25 bg-amber-950/15 hover:border-amber-300/45 hover:bg-amber-950/25",
+                      ].join(" ")}
+                    >
+                      <span className="text-sm font-semibold text-amber-50">
+                        ③ {copy.paymentYearlySubscriptionTitle}
+                      </span>
+                      <span className="mt-2 text-sm leading-6 text-white/78">
+                        {copy.paymentYearlySubscriptionHint}
+                      </span>
+                    </button>
+                  </div>
+                  {natalPaymentChoice != null &&
+                  isProSubscriptionChoice(natalPaymentChoice) &&
+                  FEATURE_GOOGLE_AUTH_UI ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const iv = proIntervalFromChoice(natalPaymentChoice);
+                        if (!iv) return;
+                        storePendingProSubscription(iv);
+                        window.location.assign(
+                          `/api/auth/google/start?lang=${lang}`,
+                        );
+                      }}
+                      className="mt-4 w-full rounded-2xl border border-white/12 bg-white px-4 py-3 text-sm font-bold text-black transition hover:bg-amber-50"
+                    >
+                      {proCopy.modalGoogle}
+                    </button>
+                  ) : null}
+                </div>
+              ) : FEATURE_SUBSCRIPTION_UI && showTarotPaymentStep ? (
+                <div className="mt-8 w-full space-y-4">
+                  <h2 className="cosmotips-heading-3">
+                    3. {copy.paymentStepTitle}
+                  </h2>
+                  <div className="grid gap-2.5 sm:grid-cols-2 sm:items-stretch">
+                    <button
+                      type="button"
+                      onClick={() => setTarotPaymentChoice("once")}
+                      className={[
+                        "flex h-full flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                        tarotPaymentChoice === "once"
+                          ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
+                          : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
+                      ].join(" ")}
+                    >
+                      <span className="text-sm font-semibold text-white">
+                        ① {copy.paymentOnceTitle}
+                      </span>
+                      <span className="mt-2 text-sm leading-6 text-white/75">
+                        {copy.paymentTarotOnceHint}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setTarotPaymentChoice("subscription_monthly")
+                      }
+                      className={[
+                        "flex h-full flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                        tarotPaymentChoice === "subscription_monthly"
+                          ? "border-amber-300/55 bg-amber-400/15 shadow-md shadow-amber-950/25 ring-1 ring-amber-200/25"
+                          : "border-amber-200/25 bg-amber-950/15 hover:border-amber-300/45 hover:bg-amber-950/25",
+                      ].join(" ")}
+                    >
+                      <span className="text-sm font-semibold text-amber-50">
+                        ② {copy.paymentMonthlySubscriptionTitle}
+                      </span>
+                      <span className="mt-2 text-sm leading-6 text-white/78">
+                        {copy.paymentMonthlySubscriptionHint}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setTarotPaymentChoice("subscription_yearly")
+                      }
+                      className={[
+                        "flex h-full flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                        tarotPaymentChoice === "subscription_yearly"
+                          ? "border-amber-300/55 bg-amber-400/15 shadow-md shadow-amber-950/25 ring-1 ring-amber-200/25"
+                          : "border-amber-200/25 bg-amber-950/15 hover:border-amber-300/45 hover:bg-amber-950/25",
+                      ].join(" ")}
+                    >
+                      <span className="text-sm font-semibold text-amber-50">
+                        ③ {copy.paymentYearlySubscriptionTitle}
+                      </span>
+                      <span className="mt-2 text-sm leading-6 text-white/78">
+                        {copy.paymentYearlySubscriptionHint}
+                      </span>
+                    </button>
+                  </div>
+                  {tarotPaymentChoice != null &&
+                  isProSubscriptionChoice(tarotPaymentChoice) &&
+                  FEATURE_GOOGLE_AUTH_UI ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const iv = proIntervalFromChoice(tarotPaymentChoice);
+                        if (!iv) return;
+                        storePendingProSubscription(iv);
+                        window.location.assign(
+                          `/api/auth/google/start?lang=${lang}`,
+                        );
+                      }}
+                      className="mt-4 w-full rounded-2xl border border-white/12 bg-white px-4 py-3 text-sm font-bold text-black transition hover:bg-amber-50"
+                    >
+                      {proCopy.modalGoogle}
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+
+              <div className="mt-8 flex w-full items-start gap-3 rounded-2xl border border-white/10 bg-black/20 p-4">
                 <input
                   id="terms-accept-final"
                   type="checkbox"
@@ -2348,12 +2690,14 @@ function HomePageContent() {
 
               <div className="mt-6 flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-center text-xs text-white/55 sm:max-w-[min(100%,28rem)] sm:text-left">
-                  {activeModule === "natal" ? copy.priceLine : tarot.pageSubtitle}
+                  {activeModule === "natal"
+                    ? copy.paymentFooterHint
+                    : tarot.pageSubtitle}
                 </p>
                 {activeModule === "natal" ? (
                   <button
                     type="submit"
-                    disabled={!canSubmit}
+                    disabled={!natalCanSubmit || subscriptionLoading}
                     className="inline-flex w-full max-w-xs items-center justify-center gap-2 self-end rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-6 py-3 text-sm font-semibold text-black shadow-lg shadow-amber-950/20 transition hover:from-amber-100 hover:to-amber-300 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:max-w-none sm:shrink-0 sm:self-auto"
                   >
                     {loading ? (
@@ -2362,16 +2706,16 @@ function HomePageContent() {
                         {copy.submitting}
                       </>
                     ) : (
-                      <>{copy.submit}</>
+                      natalSubmitLabel
                     )}
                   </button>
                 ) : (
                   <button
                     type="submit"
-                    disabled={!termsAccepted || tarotCheckoutLoading}
+                    disabled={tarotFormPrimaryDisabled}
                     className="inline-flex w-full max-w-xs items-center justify-center rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-6 py-3 text-sm font-bold text-black shadow-lg shadow-amber-950/20 transition hover:from-amber-100 hover:to-amber-300 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:max-w-none sm:shrink-0"
                   >
-                    {tarotCheckoutLoading ? tarot.generating : tarot.generateReading}
+                    {tarotSubmitLabel}
                   </button>
                 )}
               </div>
@@ -2385,90 +2729,46 @@ function HomePageContent() {
         {!isTarotReportView ? <HomeFooter copy={copy} lang={lang} /> : null}
       </div>
 
-      {proAuthModalOpen ? (
+      {FEATURE_SUBSCRIPTION_UI && proSubscriptionSentModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm">
           <div className="relative w-full max-w-md rounded-[2rem] border border-white/12 bg-[#17112f] p-6 shadow-2xl shadow-black/40">
             <button
               type="button"
-              onClick={closeProAuthModal}
+              onClick={closeProSubscriptionSentModal}
               aria-label="Close"
               className="absolute right-4 top-4 rounded-full border border-white/10 px-3 py-1 text-lg leading-none text-white/70 transition hover:bg-white/10 hover:text-white"
             >
               &times;
             </button>
-            {proAuthModalView === "login" ? (
-              <div className="space-y-5">
-                <div className="pr-8">
-                  <p className="text-xs font-bold uppercase tracking-[0.3em] text-amber-200/80">
-                    Pro
-                  </p>
-                  <h2 className="cosmotips-heading-3 mt-2">
-                    {proCopy.modalTitle}
-                  </h2>
-                </div>
-                {proAuthError ? (
-                  <p className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-                    {proAuthError}
-                  </p>
-                ) : null}
-                {FEATURE_GOOGLE_AUTH_UI ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      storePendingProSubscription(subscriptionInterval);
-                      window.location.assign(`/api/auth/google/start?lang=${lang}`);
-                    }}
-                    className="w-full rounded-2xl border border-white/12 bg-white px-4 py-3 text-sm font-bold text-black transition hover:bg-amber-50"
-                  >
-                    {proCopy.modalGoogle}
-                  </button>
-                ) : null}
-                <form className="space-y-3" onSubmit={submitProMagicLink}>
-                  <input
-                    type="email"
-                    value={proAuthEmail}
-                    onChange={(event) => setProAuthEmail(event.target.value)}
-                    placeholder={proCopy.modalEmailPlaceholder}
-                    className="w-full rounded-2xl border border-white/12 bg-white/[0.08] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/45 focus:border-amber-200"
-                  />
-                  <button
-                    type="submit"
-                    disabled={proAuthLoading}
-                    className="w-full rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-3 text-sm font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {proAuthLoading ? "..." : proCopy.modalMagicLink}
-                  </button>
-                </form>
-              </div>
-            ) : (
-              <div className="space-y-5 pr-8">
-                <p className="text-xs font-bold uppercase tracking-[0.3em] text-amber-200/80">
-                  Pro
+            <div className="space-y-5 pr-8">
+              <p className="text-xs font-bold uppercase tracking-[0.3em] text-amber-200/80">
+                Pro
+              </p>
+              <h2 className="cosmotips-heading-3">{proCopy.modalSentTitle}</h2>
+              <p className="text-sm leading-6 text-white/72">{proCopy.modalSentBody}</p>
+              {proSubscriptionModalError ? (
+                <p className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                  {proSubscriptionModalError}
                 </p>
-                <h2 className="cosmotips-heading-3">{proCopy.modalSentTitle}</h2>
-                <p className="text-sm leading-6 text-white/72">{proCopy.modalSentBody}</p>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProAuthModalView("login");
-                      setProAuthError(null);
-                    }}
-                    className="rounded-2xl border border-white/12 px-4 py-3 text-sm font-bold text-white transition hover:bg-white/10"
-                  >
-                    {proCopy.modalBack}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void submitProMagicLink()}
-                    disabled={proAuthLoading}
-                    className="rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-3 text-sm font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {proAuthLoading ? "..." : proCopy.modalResend}
-                  </button>
-                </div>
+              ) : null}
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={closeProSubscriptionSentModal}
+                  className="rounded-2xl border border-white/12 px-4 py-3 text-sm font-bold text-white transition hover:bg-white/10"
+                >
+                  {proCopy.modalBack}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void resendProSubscriptionMagicLink()}
+                  disabled={proAuthLoading}
+                  className="rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 px-4 py-3 text-sm font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {proAuthLoading ? "..." : proCopy.modalResend}
+                </button>
               </div>
-            )}
+            </div>
           </div>
         </div>
       ) : null}

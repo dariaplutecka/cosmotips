@@ -9,7 +9,11 @@ import {
   setAuthSessionCookie,
 } from "@/lib/authSession";
 import { storeFreeReportPayload } from "@/lib/freeReportStore";
-import { PendingFreeNatalV1Schema } from "@/lib/reportSchema";
+import { createProSubscriptionStripeCheckoutUrl } from "@/lib/proSubscriptionCheckout";
+import {
+  PendingFreeNatalV1Schema,
+  PendingProSubscriptionMagicV1Schema,
+} from "@/lib/reportSchema";
 
 function coerceMagicLinkPendingJson(record: {
   pendingFreeNatalJson?: string;
@@ -51,11 +55,11 @@ export async function GET(request: Request) {
 
     let redirectHref = `${baseUrl}/?lang=${encodeURIComponent(record.lang)}&auth=success`;
 
-    const pendingRaw = coerceMagicLinkPendingJson(record);
-    if (pendingRaw) {
+    const pendingFreeRaw = coerceMagicLinkPendingJson(record);
+    if (pendingFreeRaw) {
       let directWorked = false;
       try {
-        const asJson = JSON.parse(pendingRaw) as unknown;
+        const asJson = JSON.parse(pendingFreeRaw) as unknown;
         const validated = PendingFreeNatalV1Schema.safeParse(asJson);
         if (
           validated.success &&
@@ -80,11 +84,38 @@ export async function GET(request: Request) {
       if (!directWorked) {
         try {
           const resumeTok = randomBytes(24).toString("base64url");
-          await storeFnbResumePayload(resumeTok, pendingRaw);
+          await storeFnbResumePayload(resumeTok, pendingFreeRaw);
           redirectHref = `${baseUrl}/?lang=${encodeURIComponent(record.lang)}&auth=success&fn_resume=${encodeURIComponent(resumeTok)}`;
         } catch (resumeErr) {
           console.error("[auth/verify] fn_resume store failed:", resumeErr);
         }
+      }
+    } else if (record.pendingProSubscriptionJson) {
+      try {
+        const asJson = JSON.parse(record.pendingProSubscriptionJson) as unknown;
+        const validated = PendingProSubscriptionMagicV1Schema.safeParse(asJson);
+        if (
+          validated.success &&
+          normalizeAuthEmail(validated.data.email) ===
+            normalizeAuthEmail(record.email)
+        ) {
+          const checkout = await createProSubscriptionStripeCheckoutUrl({
+            email: record.email,
+            name: validated.data.name,
+            dob: validated.data.dob,
+            tob: validated.data.tob,
+            pob: validated.data.pob,
+            birthTimeUnknown: validated.data.birthTimeUnknown,
+            lang: validated.data.lang,
+            interval: validated.data.interval,
+            baseUrl,
+          });
+          if ("url" in checkout) {
+            redirectHref = checkout.url;
+          }
+        }
+      } catch (proErr) {
+        console.error("[auth/verify] pro subscription checkout prep failed:", proErr);
       }
     }
 

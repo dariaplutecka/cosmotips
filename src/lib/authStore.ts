@@ -8,6 +8,8 @@ type MagicLinkRecord = {
   createdAt: number;
   /** Stringified PendingFreeNatalV1 JSON (cross-browser resume after magic link). */
   pendingFreeNatalJson?: string;
+  /** Stringified PendingProSubscriptionMagicV1 JSON → Stripe subscription Checkout after verify. */
+  pendingProSubscriptionJson?: string;
 };
 
 let redis: Redis | undefined;
@@ -47,6 +49,7 @@ export async function storeMagicLinkToken(opts: {
   email: string;
   lang: string;
   pendingFreeNatalJson?: string;
+  pendingProSubscriptionJson?: string;
 }): Promise<void> {
   const record: MagicLinkRecord = {
     email: normalizeAuthEmail(opts.email),
@@ -54,6 +57,9 @@ export async function storeMagicLinkToken(opts: {
     createdAt: Date.now(),
     ...(opts.pendingFreeNatalJson !== undefined
       ? { pendingFreeNatalJson: opts.pendingFreeNatalJson }
+      : {}),
+    ...(opts.pendingProSubscriptionJson !== undefined
+      ? { pendingProSubscriptionJson: opts.pendingProSubscriptionJson }
       : {}),
   };
   await getRedisClient().set(magicLinkKey(hashToken(opts.token)), record, {

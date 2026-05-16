@@ -39,3 +39,20 @@ export const PendingFreeNatalV1Schema = z
 
 export type PendingFreeNatalV1 = z.infer<typeof PendingFreeNatalV1Schema>;
 
+/** Snapshot stored on the magic-link token so verify can open Stripe Checkout cross-device. */
+export const PendingProSubscriptionMagicV1Schema = z.object({
+  v: z.literal(1),
+  email: z.string().trim().email().max(254),
+  interval: z.enum(["monthly", "yearly"]),
+  name: z.string().trim().min(1).max(80),
+  dob: z.string().min(1),
+  tob: z.string().min(1),
+  pob: z.string().trim().min(1).max(120),
+  birthTimeUnknown: z.boolean(),
+  lang: AppLangSchema,
+});
+
+export type PendingProSubscriptionMagicV1 = z.infer<
+  typeof PendingProSubscriptionMagicV1Schema
+>;
+

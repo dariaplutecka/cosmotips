@@ -6,6 +6,7 @@ import {
   AppLangSchema,
   CheckoutPayloadSchema,
   PendingFreeNatalV1Schema,
+  PendingProSubscriptionMagicV1Schema,
 } from "@/lib/reportSchema";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/requestIp";
@@ -16,17 +17,35 @@ const MagicLinkPayloadSchema = z
     email: CheckoutPayloadSchema.shape.email,
     lang: AppLangSchema.default("en"),
     pendingFreeNatal: PendingFreeNatalV1Schema.optional(),
+    pendingProSubscription: PendingProSubscriptionMagicV1Schema.optional(),
   })
   .superRefine((data, ctx) => {
-    if (!data.pendingFreeNatal) return;
     if (
+      data.pendingFreeNatal &&
       normalizeAuthEmail(data.pendingFreeNatal.payload.email) !==
-      normalizeAuthEmail(data.email)
+        normalizeAuthEmail(data.email)
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "pending_email_mismatch",
         path: ["pendingFreeNatal", "payload", "email"],
+      });
+    }
+    if (
+      data.pendingProSubscription &&
+      normalizeAuthEmail(data.pendingProSubscription.email) !==
+        normalizeAuthEmail(data.email)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "pending_email_mismatch",
+        path: ["pendingProSubscription", "email"],
+      });
+    }
+    if (data.pendingFreeNatal && data.pendingProSubscription) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "only_one_pending_payload",
       });
     }
   });
@@ -60,6 +79,10 @@ export async function POST(request: Request) {
       pendingFreeNatalJson:
         parsed.data.pendingFreeNatal !== undefined
           ? JSON.stringify(parsed.data.pendingFreeNatal)
+          : undefined,
+      pendingProSubscriptionJson:
+        parsed.data.pendingProSubscription !== undefined
+          ? JSON.stringify(parsed.data.pendingProSubscription)
           : undefined,
     });
     const url = `${getBaseUrl(request)}/api/auth/verify?token=${encodeURIComponent(token)}&lang=${lang}`;

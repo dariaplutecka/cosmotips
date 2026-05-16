@@ -42,37 +42,37 @@ export const seoMeta: Record<
   en: {
     homeTitle: "CosmoTips — Personalized AI Astrology Reports",
     homeDescription:
-      "Get your personalized astrology report in minutes. Enter your birth data and receive an AI-generated horoscope report by email.",
+      "Astrology insights rooted in emotional clarity and self-understanding — personalized AI readings for identity, patterns, relationships, and direction.",
     articlesTitle: "Astrology Articles — CosmoTips",
     articlesDescription:
       "Read our astrology articles and learn more about your birth chart.",
     tarotTitle: "Tarot Reading — CosmoTips",
     tarotDescription:
-      "Choose a tarot spread and receive an intuitive AI-assisted reading for love, career, or health.",
+      "Tarot readings for intuition and clarity — reflective spreads with personalized AI guidance through transitions and emotional themes.",
     successTitle: "Your Report is Ready — CosmoTips",
   },
   pl: {
     homeTitle: "CosmoTips — Spersonalizowane Raporty Astrologiczne AI",
     homeDescription:
-      "Otrzymaj spersonalizowany raport astrologiczny w kilka minut. Podaj dane urodzenia i odbierz horoskop na maila.",
+      "Astrologiczne interpretacje blisko emocji i rozwoju — spersonalizowane raporty AI: motywy życiowe, relacje i kierunek zmian.",
     articlesTitle: "Artykuły Astrologiczne — CosmoTips",
     articlesDescription:
       "Czytaj nasze artykuły astrologiczne i dowiedz się więcej o swoim horoskopie.",
     tarotTitle: "Rozkład Tarota — CosmoTips",
     tarotDescription:
-      "Wybierz rozkład tarota i otrzymaj intuicyjną interpretację AI dotyczącą miłości, kariery lub zdrowia.",
+      "Tarot jako przestrzeń refleksji i intuicji — spersonalizowane interpretacje AI w przejściach i ważnych pytaniach.",
     successTitle: "Twój Raport Jest Gotowy — CosmoTips",
   },
   es: {
     homeTitle: "CosmoTips — Informes Astrológicos Personalizados con IA",
     homeDescription:
-      "Obtén tu informe astrológico personalizado en minutos. Introduce tus datos de nacimiento y recibe tu horóscopo por email.",
+      "Interpretaciones astrológicas con foco emocional y autoconocimiento — lecturas personalizadas con IA sobre patrones, relaciones y dirección.",
     articlesTitle: "Artículos de Astrología — CosmoTips",
     articlesDescription:
       "Lee nuestros artículos de astrología y aprende más sobre tu carta natal.",
     tarotTitle: "Lectura de Tarot — CosmoTips",
     tarotDescription:
-      "Elige una tirada de tarot y recibe una interpretación intuitiva con IA sobre amor, carrera o salud.",
+      "Tarot para intuición y claridad — tiradas reflexivas con orientación personalizada por IA en momentos de cambio.",
     successTitle: "Tu Informe Está Listo — CosmoTips",
   },
 };
@@ -172,13 +172,16 @@ export const tarotCopy: Record<
     namePlaceholder: "Your name",
     birthDate: "Date of birth",
     dailyCard: "Card of the Day",
-    dailyCardDesc: "One guiding card for today",
+    dailyCardDesc:
+      "Receive a daily tarot card with personalized insight into the energy, emotions, and themes influencing your day ahead.",
     dailyCardBadge: "Free",
     dailyCardCost: "Free once a day",
     threeCard: "Three-Card Spread",
-    threeCardDesc: "Past · Present · Future",
+    threeCardDesc:
+      "Explore the past, present, and future energies surrounding your question — revealing patterns, emotional dynamics, and possible next steps.",
     celticCross: "Celtic Cross",
-    celticCrossDesc: "Deep 10-card reading on a topic",
+    celticCrossDesc:
+      "An in-depth 10-card tarot reading designed to uncover deeper influences, emotional blocks, hidden dynamics, and potential outcomes surrounding your situation.",
     chooseTopic: "Choose an area to analyze",
     continue: "Continue",
     topicLove: "Love & Relationships",
@@ -215,19 +218,22 @@ export const tarotCopy: Record<
     pageSubtitle: "Karta dnia jest darmowa. Płatne rozkłady kosztują 5 EUR.",
     buyTokens: "Zapłać 5 EUR",
     tokensLeft: "Pozostałe tokeny: {n}",
-    chooseSpread: "Wybierz typ rozkładu",
+    chooseSpread: "Wybierz rodzaj rozkładu",
     checkoutEmail: "E-mail do zakupu tokena",
     name: "Imię",
     namePlaceholder: "Twoje imię",
     birthDate: "Data urodzenia",
     dailyCard: "Karta dnia",
-    dailyCardDesc: "Jedna karta przewodnia na dzisiaj",
+    dailyCardDesc:
+      "Otrzymaj codzienną kartę tarota wraz ze spersonalizowaną interpretacją energii, emocji i motywów wpływających na Twój dzień.",
     dailyCardBadge: "Darmowe",
     dailyCardCost: "Za darmo raz dziennie",
     threeCard: "Rozkład 3 Kart",
-    threeCardDesc: "Przeszłość · Teraźniejszość · Przyszłość",
+    threeCardDesc:
+      "Poznaj przeszłe, obecne i przyszłe energie związane z Twoim pytaniem — odkrywając schematy, emocjonalne dynamiki i możliwe kierunki rozwoju sytuacji.",
     celticCross: "Krzyż Celtycki",
-    celticCrossDesc: "Głęboki rozkład 10 kart na wybrany temat",
+    celticCrossDesc:
+      "Dogłębny rozkład 10 kart pomagający odkryć głębsze wpływy, blokady emocjonalne, ukryte dynamiki i możliwe rezultaty Twojej sytuacji.",
     chooseTopic: "Wybierz obszar analizy",
     continue: "Dalej",
     topicLove: "Miłość i relacje",
@@ -264,19 +270,22 @@ export const tarotCopy: Record<
     pageSubtitle: "La Carta del Día es gratis. Las tiradas de pago cuestan 5 EUR.",
     buyTokens: "Pagar 5 EUR",
     tokensLeft: "Fichas restantes: {n}",
-    chooseSpread: "Elige el tipo de tirada",
+    chooseSpread: "Elige un tipo de tirada",
     checkoutEmail: "Correo para comprar la ficha",
     name: "Nombre",
     namePlaceholder: "Tu nombre",
     birthDate: "Fecha de nacimiento",
     dailyCard: "Carta del Día",
-    dailyCardDesc: "Una carta guía para hoy",
+    dailyCardDesc:
+      "Recibe una carta diaria de tarot con una interpretación personalizada sobre las energías, emociones y temas que influirán en tu día.",
     dailyCardBadge: "Gratis",
     dailyCardCost: "Gratis una vez al día",
     threeCard: "Tirada de 3 Cartas",
-    threeCardDesc: "Pasado · Presente · Futuro",
+    threeCardDesc:
+      "Explora las energías del pasado, presente y futuro relacionadas con tu pregunta, revelando patrones, dinámicas emocionales y posibles caminos a seguir.",
     celticCross: "Cruz Celta",
-    celticCrossDesc: "Tirada profunda de 10 cartas sobre un tema",
+    celticCrossDesc:
+      "Una lectura profunda de 10 cartas diseñada para revelar influencias ocultas, bloqueos emocionales, dinámicas internas y posibles resultados de tu situación.",
     chooseTopic: "Elige un área de análisis",
     continue: "Continuar",
     topicLove: "Amor y relaciones",
@@ -521,7 +530,7 @@ export type HomeCopy = {
   heroTitle: string;
   heroLead: string;
   heroSub: string;
-  /** Encouraging copy about the currently selected module; shown below the hero. */
+  /** Akapity pod zakładkami Astrologia / Tarot (dla aktywnej zakładki). */
   toolPitchParagraphs: string[];
   tarotPitchParagraphs: string[];
   moduleTabs: {
@@ -547,9 +556,27 @@ export type HomeCopy = {
   emailPlaceholder: string;
   reportSectionTitle: string;
   dataStepTitle: string;
+  paymentStepTitle: string;
+  paymentOnceTitle: string;
+  paymentOnceHintFreePreview: string;
+  paymentOnceHintForecast: string;
+  paymentOnceHintPersonality: string;
+  /** Jednorazowa — cena wg wybranej wyżej karty raportu */
+  paymentOnceFollowsReportPrice: string;
+  paymentMonthlySubscriptionTitle: string;
+  paymentMonthlySubscriptionHint: string;
+  paymentYearlySubscriptionTitle: string;
+  paymentYearlySubscriptionHint: string;
+  paymentTarotOnceHint: string;
+  pickPaymentError: string;
+  paySubmit: string;
+  proceedToSubscriptionPayment: string;
+  sendSubscriptionMagicLink: string;
+  /** Krótka linia pod przyciskiem (bez kwot — są na kartach) */
+  paymentFooterHint: string;
   reports: Record<
     ReportTypeId,
-    { title: string; desc: string; freeBadge?: string }
+    { title: string; desc: string; freeBadge?: string; priceLabel: string }
   >;
   submit: string;
   submitting: string;
@@ -557,7 +584,6 @@ export type HomeCopy = {
   termsAcceptBefore: string;
   termsAcceptLink: string;
   termsAcceptAfter: string;
-  priceLine: string;
   footer: string;
   /** Etykieta linku w stopce → /articles */
   footerArticlesTitle: string;
@@ -630,10 +656,10 @@ export const successUi: Record<
     chartLoading: "Computing chart…",
     chartError: "Chart unavailable",
     reportTitle: {
-      natal_basic: "Basic natal chart",
-      personality: "Personality portrait",
-      weekly: "📅 Weekly forecast",
-      monthly: "Monthly forecast",
+      natal_basic: "Cosmic Blueprint",
+      personality: "Personality Portrait",
+      weekly: "Weekly Energy Forecast",
+      monthly: "Monthly Cosmic Forecast",
     },
     pdfPreparing: "Preparing PDF…",
     pdfDownload: "Download PDF",
@@ -666,10 +692,10 @@ export const successUi: Record<
     chartLoading: "Liczenie mapy…",
     chartError: "Nie udało się narysować mapy",
     reportTitle: {
-      natal_basic: "Podstawowy wykres natalny",
-      personality: "Opis osobowościowy",
-      weekly: "📅 Prognoza tygodniowa",
-      monthly: "Prognoza miesięczna",
+      natal_basic: "Kosmiczny Profil",
+      personality: "Portret Osobowości",
+      weekly: "Prognoza Energii na Tydzień",
+      monthly: "Miesięczna Prognoza Kosmiczna",
     },
     pdfPreparing: "Przygotowuję PDF…",
     pdfDownload: "Pobierz PDF",
@@ -703,10 +729,10 @@ export const successUi: Record<
     chartLoading: "Calculando carta…",
     chartError: "No se pudo dibujar la carta",
     reportTitle: {
-      natal_basic: "Carta natal básica",
-      personality: "Retrato de personalidad",
-      weekly: "📅 Pronóstico semanal",
-      monthly: "Pronóstico mensual",
+      natal_basic: "Perfil Cósmico",
+      personality: "Retrato de Personalidad",
+      weekly: "Pronóstico Energético Semanal",
+      monthly: "Pronóstico Cósmico Mensual",
     },
     pdfPreparing: "Preparando PDF…",
     pdfDownload: "Descargar PDF",
@@ -753,25 +779,25 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     heroSub:
       "Enter your birth details, choose a report type, then check out securely to receive your report.",
     toolPitchParagraphs: [
-      "A natal chart is a precise map of planetary positions at the exact moment of your birth, based on astronomical data. Its analysis helps identify your natural tendencies, behavioral patterns, and potential life directions.",
-      "Based on this, you can receive both an in-depth personality profile and forecasts highlighting the trends and influences that may unfold in your future.",
-      "Generate your report and discover what your unique cosmic blueprint reveals. ✨",
+      "Your birth chart reveals the emotional patterns, strengths, relationship dynamics, and life themes shaping who you are.",
+      "Receive personalized AI-powered astrology insights designed to help you better understand yourself, navigate change, and align with your next chapter.",
+      "Discover the blueprint written in the stars. ✨",
     ],
     tarotPitchParagraphs: [
-      "Tarot works through symbols, archetypes, and intuitive reflection. A spread can help you name what is already moving beneath the surface of a question.",
-      "Use it when you need a fresh perspective on a decision, relationship, emotional pattern, or moment of transition.",
-      "Soon you’ll be able to generate a personalized tarot reading here. ✨",
+      "Tarot helps uncover the emotional patterns, hidden dynamics, and inner tensions shaping your current situation.",
+      "Whether you’re navigating a relationship, decision, transition, or uncertainty, a reading can offer clarity, perspective, and deeper self-understanding.",
+      "Receive personalized AI-powered tarot insights designed to help you reconnect with your intuition. ✨",
     ],
     moduleTabs: {
-      natal: "Personal birth horoscope",
-      tarot: "Tarot reading",
+      natal: "Astrology",
+      tarot: "Tarot",
     },
-    moduleWorkspaceLabel: "Horoscope and tarot tools",
+    moduleWorkspaceLabel: "Astrology & Tarot workspace",
     tarotPanelTitle: "Tarot reading",
     tarotPanelLead:
-      "A new CosmoTips module is coming here: an intuitive tarot spread for questions, decisions, and inner guidance.",
+      "Reflective spreads for transitions, relationships, and moments when you want steadier footing.",
     tarotPanelNote:
-      "For now, choose the birth horoscope tab to generate your astrological report.",
+      "Choose a spread below and enter your details to generate a personalized reading.",
     dob: "Date of birth",
     dobYear: "Year",
     dobMonth: "Month",
@@ -786,23 +812,45 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     emailPlaceholder: "you@example.com",
     reportSectionTitle: "Choose a report type",
     dataStepTitle: "Complete your details",
+    paymentStepTitle: "Choose payment",
+    paymentOnceTitle: "One-time payment",
+    paymentOnceHintFreePreview: "Free Cosmic Blueprint preview — email confirmation",
+    paymentOnceHintForecast: "€5 · Weekly Energy Forecast or Monthly Cosmic Forecast · Stripe",
+    paymentOnceHintPersonality: "€10 · Personality Portrait · Stripe",
+    paymentOnceFollowsReportPrice:
+      "Pay for the report type selected above — price is shown on that card.",
+    paymentMonthlySubscriptionTitle: "Monthly Pro subscription",
+    paymentMonthlySubscriptionHint:
+      "€12 / month · Weekly Energy Forecast by email · Personality Portrait · 6 tarot tokens renewed each month",
+    paymentYearlySubscriptionTitle: "Yearly Pro subscription",
+    paymentYearlySubscriptionHint:
+      "€99 / year · Weekly Energy Forecast by email · Personality Portrait · 6 tarot tokens renewed each month · best value vs paying monthly",
+    paymentTarotOnceHint: "€5 · tarot token pack · Stripe",
+    pickPaymentError: "Choose a payment option to continue.",
+    paySubmit: "Pay",
+    proceedToSubscriptionPayment: "Continue to subscription checkout",
+    sendSubscriptionMagicLink: "Email me a confirmation link",
+    paymentFooterHint: "Secure checkout with Stripe.",
     reports: {
       natal_basic: {
-        title: "Basic natal chart",
-        desc: "Discover your natal chart and what your Sun, Moon, and Ascendant mean. Your first access is completely free.",
-        freeBadge: "Free",
+        title: "Cosmic Blueprint",
+        desc: "Explore the core of your birth chart and uncover the meaning behind your Sun, Moon, and Rising signs. A first glimpse into your personality, emotional world, and natural energy.",
+        priceLabel: "Free · First access",
       },
       personality: {
-        title: "Personality portrait",
-        desc: "An in-depth, personalized reading of your birth chart — who you are, your talents, and what drives you.",
+        title: "Personality Portrait",
+        desc: "A deeply personalized reading revealing your emotional patterns, strengths, relationship dynamics, hidden motivations, and life themes. Understand what drives you — and what may be holding you back.",
+        priceLabel: "€10",
       },
       weekly: {
-        title: "📅 Weekly forecast",
-        desc: "A forecast from today for the next 7 days — highlights key influences and what matters most in the near term.",
+        title: "Weekly Energy Forecast",
+        desc: "Discover the energies influencing your week ahead — including emotional shifts, relationship dynamics, opportunities, and moments to slow down or take action.",
+        priceLabel: "€5",
       },
       monthly: {
-        title: "Monthly forecast",
-        desc: "A forecast from today for the next 30 days — main trends and key moments in the period ahead.",
+        title: "Monthly Cosmic Forecast",
+        desc: "A personalized 30-day forecast revealing the major emotional, relational, and career themes influencing your month ahead. Gain clarity on what’s shifting, growing, and asking for your attention.",
+        priceLabel: "€5",
       },
     },
     submit: "Generate report",
@@ -810,8 +858,6 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     termsAcceptBefore: "I have read and accept the ",
     termsAcceptLink: "Terms of Service",
     termsAcceptAfter: ".",
-    priceLine:
-      "Weekly & monthly forecasts: €5 each · Personality portrait: €7 · Instant delivery · Stripe",
     footer:
       "Astrology is for reflection and entertainment. You’re always in control of your choices.",
     footerArticlesTitle: "Articles",
@@ -821,9 +867,9 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     langLabel: "Report language",
     placeNoMatch: "No matches",
     freeBasicUsedHint:
-      "The free report can only be used once. Please choose the full report option below.",
+      "The free Cosmic Blueprint can only be used once. Please choose the full report option below.",
     freeBasicAlreadyUsedError:
-      "The free basic natal preview was already used on this device. Pick a paid report type.",
+      "The free Cosmic Blueprint preview was already used on this device. Pick a paid report type.",
   },
   pl: {
     heroTitle: "Twoja historia została zapisana jeszcze przed Twoimi narodzinami.",
@@ -831,25 +877,25 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     heroSub:
       "Podaj dane urodzenia, wybierz typ raportu i opłać bezpiecznie przez Stripe.",
     toolPitchParagraphs: [
-      "Kosmogram urodzeniowy to precyzyjny zapis układu planet w chwili Twoich narodzin, oparty na danych astronomicznych. Jego analiza pozwala uchwycić Twoje predyspozycje, schematy działania oraz potencjalne kierunki rozwoju.",
-      "Na tej podstawie można stworzyć zarówno pogłębiony opis osobowości, jak i prognozy wskazujące, jakie tendencje mogą pojawiać się w Twoim życiu w przyszłości.",
-      "Wygeneruj swój raport i odkryj, co wynika z Twojego indywidualnego układu gwiazd. ✨",
+      "Twój kosmogram pokazuje emocjonalne schematy, naturalne talenty, dynamikę relacji i życiowe motywy, które kształtują to, kim jesteś.",
+      "Otrzymaj spersonalizowane astrologiczne analizy AI, które pomogą Ci lepiej zrozumieć siebie, odnaleźć kierunek i świadomie przechodzić przez zmiany.",
+      "Odkryj mapę zapisaną w gwiazdach. ✨",
     ],
     tarotPitchParagraphs: [
-      "Tarot działa językiem symboli, archetypów i intuicyjnej refleksji. Rozkład może pomóc nazwać to, co już porusza się pod powierzchnią pytania.",
-      "Sięgnij po niego, gdy potrzebujesz świeżego spojrzenia na decyzję, relację, emocjonalny wzorzec albo moment przejścia.",
-      "Wkrótce wygenerujesz tutaj spersonalizowany rozkład tarota. ✨",
+      "Tarot pomaga odkryć emocjonalne schematy, ukryte napięcia i dynamiki wpływające na Twoją obecną sytuację.",
+      "Niezależnie od tego, czy stoisz przed decyzją, zmianą, problemem w relacji czy momentem niepewności — interpretacja może pomóc Ci spojrzeć na wszystko z większą jasnością i zrozumieniem.",
+      "Otrzymaj spersonalizowane interpretacje tarota AI stworzone po to, by pomóc Ci lepiej usłyszeć własną intuicję. ✨",
     ],
     moduleTabs: {
-      natal: "Indywidualny horoskop urodzeniowy",
-      tarot: "Rozkład tarota",
+      natal: "Astrologia",
+      tarot: "Tarot",
     },
-    moduleWorkspaceLabel: "Narzędzia horoskopu i tarota",
-    tarotPanelTitle: "Rozkład tarota",
+    moduleWorkspaceLabel: "Astrologia i Tarot — narzędzia",
+    tarotPanelTitle: "Tarot",
     tarotPanelLead:
-      "Tutaj pojawi się nowy moduł CosmoTips: intuicyjny rozkład tarota do pytań, decyzji i pracy z tym, co dzieje się wewnętrznie.",
+      "Rozkłady na momenty przejść, relacji i wtedy, gdy potrzebujesz spokojniejszej perspektywy.",
     tarotPanelNote:
-      "Na razie wybierz zakładkę horoskopu urodzeniowego, aby wygenerować raport astrologiczny.",
+      "Wybierz rozkład i uzupełnij dane, aby wygenerować interpretację dopasowaną do Ciebie.",
     dob: "Data urodzenia",
     dobYear: "Rok",
     dobMonth: "Miesiąc",
@@ -862,25 +908,48 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     pobPlaceholder: "np. Warszawa, Polska",
     email: "E-mail",
     emailPlaceholder: "twoj@email.pl",
-    reportSectionTitle: "Wybierz typ raportu",
+    reportSectionTitle: "Wybierz rodzaj raportu",
     dataStepTitle: "Uzupełnij swoje dane",
+    paymentStepTitle: "Wybierz płatność",
+    paymentOnceTitle: "Płatność jednorazowa",
+    paymentOnceHintFreePreview: "Darmowy Kosmiczny Profil — potwierdzenie e-mailem",
+    paymentOnceHintForecast:
+      "5 EUR · Prognoza Energii na Tydzień lub Miesięczna Prognoza Kosmiczna · Stripe",
+    paymentOnceHintPersonality: "10 EUR · Portret Osobowości · Stripe",
+    paymentOnceFollowsReportPrice:
+      "Zapłać za wybrany powyżej raport — kwota jest na karcie typu raportu.",
+    paymentMonthlySubscriptionTitle: "Subskrypcja miesięczna Pro",
+    paymentMonthlySubscriptionHint:
+      "12 EUR / miesiąc · cotygodniowa prognoza energetyczna na e-mail · Portret Osobowości · 6 tokenów na tarota co miesiąc (odnawiane)",
+    paymentYearlySubscriptionTitle: "Subskrypcja roczna Pro",
+    paymentYearlySubscriptionHint:
+      "99 EUR / rok · cotygodniowa prognoza energetyczna na e-mail · Portret Osobowości · 6 tokenów na tarota co miesiąc · korzystniej niż 12× plan miesięczny",
+    paymentTarotOnceHint: "5 EUR · pakiet tokenów tarota · Stripe",
+    pickPaymentError: "Wybierz formę płatności, aby kontynuować.",
+    paySubmit: "Zapłać",
+    proceedToSubscriptionPayment: "Przejdź do płatności subskrypcji",
+    sendSubscriptionMagicLink: "Wyślij link potwierdzający na e-mail",
+    paymentFooterHint: "Bezpieczna płatność przez Stripe.",
     reports: {
       natal_basic: {
-        title: "Podstawowy wykres natalny",
-        desc: "Odkryj swój wykres natalny i znaczenie Słońca, Księżyca oraz Ascendentu. Pierwszy dostęp całkowicie za darmo.",
-        freeBadge: "Darmowe",
+        title: "Kosmiczny Profil",
+        desc: "Poznaj podstawę swojego kosmogramu i odkryj znaczenie znaku Słońca, Księżyca oraz Ascendentu. To pierwsze spojrzenie na Twoją osobowość, emocje i naturalną energię.",
+        priceLabel: "Gratis · Pierwszy dostęp",
       },
       personality: {
-        title: "Opis osobowościowy",
-        desc: "Pogłębiony, spersonalizowany opis Twojej mapy urodzeniowej — pokazuje, jaka jesteś, jakie masz talenty i co Cię napędza.",
+        title: "Portret Osobowości",
+        desc: "Dogłębna, spersonalizowana analiza pokazująca Twoje schematy emocjonalne, mocne strony, dynamikę relacji, ukryte motywacje i najważniejsze życiowe motywy. Zrozum, co naprawdę Cię napędza — i co może Cię blokować.",
+        priceLabel: "10 EUR",
       },
       weekly: {
-        title: "📅 Prognoza tygodniowa",
-        desc: "Prognoza od dzisiaj na 7 dni — wskazuje najważniejsze wpływy i wydarzenia w najbliższym czasie.",
+        title: "Prognoza Energii na Tydzień",
+        desc: "Poznaj energie wpływające na najbliższy tydzień — emocjonalne zmiany, relacje, szanse oraz momenty, w których warto działać lub zwolnić.",
+        priceLabel: "5 EUR",
       },
       monthly: {
-        title: "Prognoza miesięczna",
-        desc: "Prognoza od dzisiaj na kolejne 30 dni — pokazuje główne trendy i kluczowe momenty nadchodzącego okresu.",
+        title: "Miesięczna Prognoza Kosmiczna",
+        desc: "Spersonalizowana prognoza na kolejne 30 dni pokazująca najważniejsze tematy emocjonalne, relacyjne i zawodowe nadchodzącego miesiąca. Zyskaj większą jasność wokół zmian, które właśnie rozwijają się w Twoim życiu.",
+        priceLabel: "5 EUR",
       },
     },
     submit: "Generuj raport",
@@ -888,8 +957,6 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     termsAcceptBefore: "Akceptuję ",
     termsAcceptLink: "Terms of Service",
     termsAcceptAfter: " (regulamin).",
-    priceLine:
-      "Prognoza tygodniowa i miesięczna: 5 EUR każda · Opis osobowościowy: 7 EUR · Od razu · Stripe",
     footer:
       "Astrologia służy refleksji i rozrywce. Zawsze decydujesz o swoich wyborach.",
     footerArticlesTitle: "Artykuły",
@@ -899,9 +966,9 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     langLabel: "Język raportu",
     placeNoMatch: "Brak dopasowań",
     freeBasicUsedHint:
-      "Z darmowego raportu można skorzystać tylko raz. Wybierz poniżej opcję pełnego raportu.",
+      "Z Kosmicznego Profilu można skorzystać tylko raz. Wybierz poniżej opcję pełnego raportu.",
     freeBasicAlreadyUsedError:
-      "Darmowy podgląd mapy był już użyty na tym urządzeniu. Wybierz typ raportu płatnego.",
+      "Darmowy Kosmiczny Profil był już użyty na tym urządzeniu. Wybierz typ raportu płatnego.",
   },
   es: {
     heroTitle: "Tu historia escrita antes de nacer.",
@@ -909,25 +976,25 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     heroSub:
       "Introduce tus datos de nacimiento, elige un tipo de informe y paga con Stripe.",
     toolPitchParagraphs: [
-      "La carta natal es un registro preciso de la posición de los planetas en el momento exacto de tu nacimiento, basado en datos astronómicos. Su análisis permite identificar tus tendencias naturales, patrones de comportamiento y posibles direcciones de desarrollo.",
-      "A partir de ello, se puede crear tanto una descripción profunda de tu personalidad como predicciones sobre las tendencias que pueden manifestarse en tu futuro.",
-      "Genera tu informe y descubre qué revela tu mapa cósmico único. ✨",
+      "Tu carta natal revela los patrones emocionales, talentos naturales, dinámicas en las relaciones y temas de vida que influyen en quién eres.",
+      "Recibe interpretaciones astrológicas personalizadas con IA para comprenderte mejor, atravesar cambios con más claridad y conectar con tu próximo capítulo.",
+      "Descubre el mapa escrito en las estrellas. ✨",
     ],
     tarotPitchParagraphs: [
-      "El tarot habla a través de símbolos, arquetipos y reflexión intuitiva. Una tirada puede ayudarte a nombrar lo que ya se mueve bajo la superficie de una pregunta.",
-      "Úsalo cuando necesites una perspectiva nueva sobre una decisión, una relación, un patrón emocional o un momento de transición.",
-      "Pronto podrás generar aquí una lectura de tarot personalizada. ✨",
+      "El tarot ayuda a revelar patrones emocionales, tensiones internas y dinámicas ocultas que influyen en tu situación actual.",
+      "Ya sea que estés atravesando una decisión, una relación, un cambio o un momento de incertidumbre, una lectura puede darte claridad, perspectiva y una comprensión más profunda de ti mismo.",
+      "Recibe interpretaciones de tarot personalizadas con IA diseñadas para ayudarte a reconectar con tu intuición. ✨",
     ],
     moduleTabs: {
-      natal: "Horóscopo natal personalizado",
-      tarot: "Lectura de tarot",
+      natal: "Astrología",
+      tarot: "Tarot",
     },
-    moduleWorkspaceLabel: "Herramientas de carta natal y tarot",
-    tarotPanelTitle: "Lectura de tarot",
+    moduleWorkspaceLabel: "Espacio de trabajo — Astrología y Tarot",
+    tarotPanelTitle: "Tarot",
     tarotPanelLead:
-      "Aquí aparecerá un nuevo módulo de CosmoTips: una tirada intuitiva de tarot para preguntas, decisiones y orientación interior.",
+      "Tiradas para reflexionar en transiciones, relaciones y cuando necesitas más claridad.",
     tarotPanelNote:
-      "Por ahora, elige la pestaña del horóscopo natal para generar tu informe astrológico.",
+      "Elige una tirada y completa tus datos para generar una lectura personalizada.",
     dob: "Fecha de nacimiento",
     dobYear: "Año",
     dobMonth: "Mes",
@@ -940,25 +1007,48 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     pobPlaceholder: "p. ej., Madrid, España",
     email: "Correo electrónico",
     emailPlaceholder: "tu@ejemplo.com",
-    reportSectionTitle: "Elige el tipo de informe",
+    reportSectionTitle: "Elige un tipo de reporte",
     dataStepTitle: "Completa tus datos",
+    paymentStepTitle: "Elige el pago",
+    paymentOnceTitle: "Pago único",
+    paymentOnceHintFreePreview: "Perfil Cósmico gratuito — confirmación por email",
+    paymentOnceHintForecast:
+      "5 EUR · Pronóstico Energético Semanal o Pronóstico Cósmico Mensual · Stripe",
+    paymentOnceHintPersonality: "10 EUR · Retrato de Personalidad · Stripe",
+    paymentOnceFollowsReportPrice:
+      "Paga el tipo de informe elegido arriba — el precio está en esa tarjeta.",
+    paymentMonthlySubscriptionTitle: "Suscripción mensual Pro",
+    paymentMonthlySubscriptionHint:
+      "12 EUR / mes · pronóstico energético semanal por email · Retrato de Personalidad · 6 fichas de tarot al mes (renovables)",
+    paymentYearlySubscriptionTitle: "Suscripción anual Pro",
+    paymentYearlySubscriptionHint:
+      "99 EUR / año · pronóstico energético semanal por email · Retrato de Personalidad · 6 fichas de tarot al mes (renovables) · más barato que 12 mensualidades",
+    paymentTarotOnceHint: "5 EUR · paquete de fichas de tarot · Stripe",
+    pickPaymentError: "Elige una opción de pago para continuar.",
+    paySubmit: "Pagar",
+    proceedToSubscriptionPayment: "Ir al pago de la suscripción",
+    sendSubscriptionMagicLink: "Enviar enlace de confirmación por email",
+    paymentFooterHint: "Pago seguro con Stripe.",
     reports: {
       natal_basic: {
-        title: "Carta natal básica",
-        desc: "Descubre tu carta natal y el significado del Sol, la Luna y el Ascendente. El primer acceso es totalmente gratis.",
-        freeBadge: "Gratis",
+        title: "Perfil Cósmico",
+        desc: "Explora la base de tu carta natal y descubre el significado de tu Sol, Luna y Ascendente. Una primera mirada a tu personalidad, emociones y energía natural.",
+        priceLabel: "Gratis · Primer acceso",
       },
       personality: {
-        title: "Retrato de personalidad",
-        desc: "Una lectura profunda y personalizada de tu carta natal: quién eres, tus talentos y qué te impulsa.",
+        title: "Retrato de Personalidad",
+        desc: "Una interpretación profundamente personalizada que revela tus patrones emocionales, fortalezas, dinámicas relacionales, motivaciones internas y temas clave de vida. Comprende qué te impulsa — y qué podría estar frenándote.",
+        priceLabel: "10 EUR",
       },
       weekly: {
-        title: "📅 Pronóstico semanal",
-        desc: "Pronóstico desde hoy para los próximos 7 días: destaca las influencias clave y lo más importante a corto plazo.",
+        title: "Pronóstico Energético Semanal",
+        desc: "Descubre las energías que influirán en tu semana: cambios emocionales, relaciones, oportunidades y momentos para actuar o bajar el ritmo.",
+        priceLabel: "5 EUR",
       },
       monthly: {
-        title: "Pronóstico mensual",
-        desc: "Pronóstico desde hoy para los próximos 30 días: tendencias principales y momentos clave del período que viene.",
+        title: "Pronóstico Cósmico Mensual",
+        desc: "Un pronóstico personalizado para los próximos 30 días que revela los temas emocionales, relacionales y profesionales más importantes del mes. Obtén claridad sobre los cambios, oportunidades y procesos que están tomando forma en tu vida.",
+        priceLabel: "5 EUR",
       },
     },
     submit: "Generar informe",
@@ -966,8 +1056,6 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     termsAcceptBefore: "He leído y acepto los ",
     termsAcceptLink: "Términos de servicio (Terms of Service)",
     termsAcceptAfter: ".",
-    priceLine:
-      "Pronóstico semanal y mensual: 5 EUR cada uno · Retrato de personalidad: 7 EUR · Al instante · Stripe",
     footer:
       "La astrología es para reflexionar y entretener. Tú decides siempre.",
     footerArticlesTitle: "Artículos",
@@ -977,9 +1065,9 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     langLabel: "Idioma del informe",
     placeNoMatch: "Sin coincidencias",
     freeBasicUsedHint:
-      "El informe gratuito solo puede usarse una vez. Elige abajo la opción de informe completo.",
+      "El Perfil Cósmico gratuito solo puede usarse una vez. Elige abajo una opción de reporte completo.",
     freeBasicAlreadyUsedError:
-      "La vista básica gratuita ya se usó en este dispositivo. Elige un tipo de informe de pago.",
+      "La vista previa gratuita del Perfil Cósmico ya se usó en este dispositivo. Elige un tipo de reporte de pago.",
   },
 };
 
