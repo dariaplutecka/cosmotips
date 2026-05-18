@@ -323,8 +323,8 @@ export const articlesPageCopy: Record<AppLang, ArticlesPageCopy> = {
   en: {
     pageTitle: "Articles",
     backHome: "Back home",
-    articleOpen: "Read article",
-    articleCloseAria: "Close article",
+    articleOpen: "Show full article",
+    articleCloseAria: "Collapse article",
     articles: [
       natalHistoryArticleEn,
       emptyArticleSlot,
@@ -334,8 +334,8 @@ export const articlesPageCopy: Record<AppLang, ArticlesPageCopy> = {
   pl: {
     pageTitle: "Artykuły",
     backHome: "Strona główna",
-    articleOpen: "Czytaj artykuł",
-    articleCloseAria: "Zamknij artykuł",
+    articleOpen: "Pokaż cały artykuł",
+    articleCloseAria: "Zwiń artykuł",
     articles: [
       natalHistoryArticlePl,
       emptyArticleSlot,
@@ -345,8 +345,8 @@ export const articlesPageCopy: Record<AppLang, ArticlesPageCopy> = {
   es: {
     pageTitle: "Artículos",
     backHome: "Inicio",
-    articleOpen: "Leer artículo",
-    articleCloseAria: "Cerrar artículo",
+    articleOpen: "Ver artículo completo",
+    articleCloseAria: "Contraer artículo",
     articles: [
       natalHistoryArticleEs,
       emptyArticleSlot,
