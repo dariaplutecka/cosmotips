@@ -38,6 +38,9 @@ export default async function SuccessPage({
               <span className="mt-0.5 h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
               <div className="min-w-0 space-y-2 text-white/70">
                 <p className="font-semibold text-white/90">
+                  {successUi[initialLang].generating}
+                </p>
+                <p className="font-semibold text-white/90">
                   {successUi[initialLang].generatingDurationHint}
                 </p>
                 <p className="text-sm leading-relaxed text-white/65">

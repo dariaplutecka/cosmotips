@@ -385,6 +385,7 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
                 <div className="flex gap-4 sm:items-start">
                   <span className="mt-0.5 h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
                   <div className="min-w-0 space-y-2">
+                    <p className="font-semibold text-white/90">{su.generating}</p>
                     <p className="font-semibold text-white/90">
                       {su.generatingDurationHint}
                     </p>
@@ -433,9 +434,14 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
                 </div>
               ) : null}
               {chartLoading ? (
-                <div className="flex justify-center py-6 text-sm text-white/55">
-                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-violet-300" />
-                  {su.chartLoading}
+                <div className="space-y-2 py-6">
+                  <div className="flex justify-center text-sm text-white/55">
+                    <span className="mr-2 h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white/20 border-t-violet-300" />
+                    {su.chartLoading}
+                  </div>
+                  <p className="text-center text-xs leading-relaxed text-white/50">
+                    {su.generatingStayOnPage}
+                  </p>
                 </div>
               ) : chart ? (
                 <div className="border-b border-white/10 pb-8">

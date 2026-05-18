@@ -646,7 +646,7 @@ export const successUi: Record<
     generating: "Generating your report…",
     generatingDurationHint: "This may take up to 5 minutes ✨",
     generatingStayOnPage:
-      "Your report is being generated — please don't close or refresh this page.",
+      "Please keep this tab open — don't close your browser or refresh the page.",
     regenerate: "Regenerate",
     print: "Download / Print",
     tryAgain: "Try again",
@@ -682,7 +682,7 @@ export const successUi: Record<
     generating: "Generuję raport…",
     generatingDurationHint: "To może potrwać do 5 minut ✨",
     generatingStayOnPage:
-      "Trwa generowanie Twojego raportu — prosimy, nie zamykaj ani nie odświeżaj tej strony.",
+      "Nie zamykaj przeglądarki ani tej karty i nie odświeżaj strony — poczekaj, aż zobaczysz treść.",
     regenerate: "Wygeneruj ponownie",
     print: "Pobierz / drukuj",
     tryAgain: "Spróbuj ponownie",
@@ -719,7 +719,7 @@ export const successUi: Record<
     generating: "Generando tu informe…",
     generatingDurationHint: "Esto puede tardar hasta 5 minutos ✨",
     generatingStayOnPage:
-      "Tu informe está siendo generado — por favor, no cierres ni actualices esta página.",
+      "Mantén esta pestaña abierta: no cierres el navegador ni actualices la página.",
     regenerate: "Regenerar",
     print: "Descargar / imprimir",
     tryAgain: "Reintentar",

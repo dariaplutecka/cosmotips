@@ -25,7 +25,7 @@ import {
   type TarotCard,
   type TarotTopic,
 } from "@/lib/tarotDeck";
-import { errorMessages, homeCopy, tarotCopy } from "@/lib/uiCopy";
+import { errorMessages, homeCopy, successUi, tarotCopy } from "@/lib/uiCopy";
 import ReactMarkdown from "react-markdown";
 
 /** Same typography as saved astrological reports (`/reports`). */
@@ -363,7 +363,7 @@ function HomePageContent() {
   const [placeOpen, setPlaceOpen] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [freeBasicUsed, setFreeBasicUsed] = useState(false);
-  const [activeModule, setActiveModule] = useState<HomeModule>("tarot");
+  const [activeModule, setActiveModule] = useState<HomeModule>("natal");
   const [tarotState, setTarotState] = useState<TarotPanelState>("idle");
   const [name, setName] = useState("");
   const [tarotSpread, setTarotSpread] = useState<SpreadType>("daily_card");
@@ -2112,13 +2112,26 @@ function HomePageContent() {
                     <p className="mt-4 text-sm font-semibold text-violet-100">
                       {tarot.shuffling}
                     </p>
+                    <p className="mt-3 max-w-md text-pretty text-xs leading-relaxed text-white/60">
+                      {successUi[lang].generatingStayOnPage}
+                    </p>
                   </div>
                 ) : null}
 
                 {tarotState === "generating" ? (
-                  <div className="mt-6 flex items-center justify-center gap-3 py-10 text-white/75">
-                    <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-violet-200" />
-                    {tarot.generating}
+                  <div className="mx-auto mt-6 flex max-w-lg gap-4 py-10 sm:items-start">
+                    <span className="mt-1 h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-white/20 border-t-violet-200" />
+                    <div className="min-w-0 space-y-2 text-left text-white/80">
+                      <p className="font-semibold text-violet-100">
+                        {tarot.generating}
+                      </p>
+                      <p className="font-semibold text-violet-50">
+                        {successUi[lang].generatingDurationHint}
+                      </p>
+                      <p className="text-sm leading-relaxed text-white/65">
+                        {successUi[lang].generatingStayOnPage}
+                      </p>
+                    </div>
                   </div>
                 ) : null}
 
