@@ -121,6 +121,11 @@ function ArticlesContent() {
           {children}
         </h3>
       ),
+      h3: ({ children }) => (
+        <h4 className="mt-6 mb-2 text-[1.05rem] font-semibold tracking-tight text-violet-200/95 first:mt-0">
+          {children}
+        </h4>
+      ),
       p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
       ul: ({ children }) => (
         <ul className="mb-4 list-disc space-y-2 pl-6">{children}</ul>

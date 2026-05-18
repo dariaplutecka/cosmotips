@@ -1,5 +1,13 @@
 import type { AppLang } from "@/lib/reportSchema";
 import {
+  articleNatalChartBeginnerEnBody,
+  articleNatalChartBeginnerEsBody,
+  articleNatalChartBeginnerPlBody,
+  articleSaturnReturnEnBody,
+  articleSaturnReturnEsBody,
+  articleSaturnReturnPlBody,
+} from "@/lib/articleSeoPackBodies";
+import {
   articleSelfKnowledgeEnBody,
   articleSelfKnowledgeEsBody,
   articleSelfKnowledgePlBody,
@@ -142,6 +150,17 @@ ${bibliographyPl}`,
         "Analiza wykresu natalnego jako narzędzie samopoznania: astrologia jako symboliczny język życia",
       body: articleSelfKnowledgePlBody,
     },
+    {
+      id: "natal-chart-beginners-guide",
+      title:
+        "Co to jest kosmogram? Przewodnik dla początkujących po astrologii natalnej",
+      body: articleNatalChartBeginnerPlBody,
+    },
+    {
+      id: "saturn-return-explained",
+      title: "Powrót Saturna: znaczenie, kryzys i transformacja",
+      body: articleSaturnReturnPlBody,
+    },
   ],
   es: [
     {
@@ -206,6 +225,17 @@ ${bibliographyEs}`,
       title:
         "El análisis de la carta natal como herramienta de autoconocimiento: la astrología como una forma de comprender la vida",
       body: articleSelfKnowledgeEsBody,
+    },
+    {
+      id: "natal-chart-beginners-guide",
+      title:
+        "¿Qué es una carta natal? Guía para principiantes sobre astrología natal",
+      body: articleNatalChartBeginnerEsBody,
+    },
+    {
+      id: "saturn-return-explained",
+      title: "Retorno de Saturno: significado y transformación personal",
+      body: articleSaturnReturnEsBody,
     },
   ],
   en: [
@@ -273,6 +303,18 @@ ${bibliographyEn}`,
       title:
         "Natal Chart Analysis as a Tool for Self-Understanding: Astrology as a Way of Interpreting Life",
       body: articleSelfKnowledgeEnBody,
+    },
+    {
+      id: "natal-chart-beginners-guide",
+      title:
+        "What Is a Natal Chart? Beginner's Guide to Understanding Your Birth Chart",
+      body: articleNatalChartBeginnerEnBody,
+    },
+    {
+      id: "saturn-return-explained",
+      title:
+        "Saturn Return Explained: Meaning, Timing, and Spiritual Transformation",
+      body: articleSaturnReturnEnBody,
     },
   ],
 };
