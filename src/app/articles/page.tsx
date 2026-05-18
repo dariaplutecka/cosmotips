@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import type { AppLang } from "@/lib/reportSchema";
 import { CosmotipsTopBar } from "@/components/CosmotipsTopBar";
-import { articleContent } from "@/lib/articleContent";
+import { siteArticlesByLang } from "@/lib/articleContent";
 import { articlesPageCopy, homeCopy } from "@/lib/uiCopy";
 
 function ArticlesContent() {
@@ -15,7 +15,7 @@ function ArticlesContent() {
   const lang: AppLang =
     raw === "pl" || raw === "es" ? raw : "en";
   const c = articlesPageCopy[lang];
-  const article = articleContent[lang];
+  const articles = siteArticlesByLang[lang];
 
   const cardShell =
     "w-full rounded-3xl border border-white/10 bg-white/5 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset] backdrop-blur";
@@ -42,27 +42,42 @@ function ArticlesContent() {
           </Link>
         </div>
 
-        <article
-          className={`${cardShell} relative overflow-x-clip overflow-y-visible p-6 pb-10 sm:p-9 sm:pb-12 md:p-12 md:pb-14 lg:px-14 lg:pb-16`}
-        >
-          <h2 className="cosmotips-heading-3">
-            {article.title}
-          </h2>
-          <div className="mt-8 w-full max-w-none border-t border-white/10 pt-8 text-pretty text-base leading-[1.75] text-white/85 sm:text-lg sm:leading-[1.8] md:text-[1.0625rem] md:leading-[1.82]">
-            <ReactMarkdown
-              components={{
-                h2: ({ children }) => (
-                  <h2 className="cosmotips-heading-3 mt-8 mb-3 text-violet-100">
-                    {children}
-                  </h2>
-                ),
-                p: ({ children }) => <p className="mb-5">{children}</p>,
-              }}
+        <div className="flex flex-col gap-10">
+          {articles.map((article) => (
+            <article
+              key={article.id}
+              className={`${cardShell} relative overflow-x-clip overflow-y-visible p-6 pb-10 sm:p-9 sm:pb-12 md:p-12 md:pb-14 lg:px-14 lg:pb-16`}
             >
-              {article.body}
-            </ReactMarkdown>
-          </div>
-        </article>
+              <h2 className="cosmotips-heading-3">{article.title}</h2>
+              <div className="mt-8 w-full max-w-none border-t border-white/10 pt-8 text-pretty text-base leading-[1.75] text-white/85 sm:text-lg sm:leading-[1.8] md:text-[1.0625rem] md:leading-[1.82]">
+                <ReactMarkdown
+                  components={{
+                    h2: ({ children }) => (
+                      <h2 className="cosmotips-heading-3 mt-8 mb-3 text-violet-100">
+                        {children}
+                      </h2>
+                    ),
+                    p: ({ children }) => <p className="mb-5">{children}</p>,
+                    ul: ({ children }) => (
+                      <ul className="mb-5 list-disc space-y-2 pl-6">{children}</ul>
+                    ),
+                    ol: ({ children }) => (
+                      <ol className="mb-5 list-decimal space-y-2 pl-6">{children}</ol>
+                    ),
+                    li: ({ children }) => (
+                      <li className="pl-1 leading-relaxed">{children}</li>
+                    ),
+                    hr: () => (
+                      <hr className="my-8 border-t border-white/15" aria-hidden />
+                    ),
+                  }}
+                >
+                  {article.body}
+                </ReactMarkdown>
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
     </div>
   );

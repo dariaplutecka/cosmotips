@@ -1,4 +1,9 @@
 import type { AppLang } from "@/lib/reportSchema";
+import {
+  articleSelfKnowledgeEnBody,
+  articleSelfKnowledgeEsBody,
+  articleSelfKnowledgePlBody,
+} from "@/lib/articleSelfKnowledgeBodies";
 
 const bibliographyEn = `
 ## References
@@ -60,9 +65,17 @@ const bibliographyEs = `
 [8] Hanegraaff, Wouter J. *New Age Religion and Western Culture*. SUNY Press, 1998.
 `;
 
-export const articleContent: Record<AppLang, { title: string; body: string }> = {
-  pl: {
-    title:
+export type SiteArticle = {
+  id: string;
+  title: string;
+  body: string;
+};
+
+export const siteArticlesByLang: Record<AppLang, SiteArticle[]> = {
+  pl: [
+    {
+      id: "natal-astrology-history-science",
+      title:
       "Astrologia natalna w kontekście historii nauki: między obserwacją nieba a interpretacją znaczeń",
     body: `## Wstęp
 
@@ -122,11 +135,20 @@ Astrologia natalna znajduje się na pograniczu historii nauki, filozofii i symbo
 
 Jej trwała obecność w kulturze pokazuje, że człowiek nie poszukuje wyłącznie danych i faktów, ale także znaczeń. Historia astrologii jest więc jednocześnie historią ludzkiej potrzeby interpretowania świata i własnego miejsca we wszechświecie.
 ${bibliographyPl}`,
-  },
-  es: {
-    title:
-      "Astrología natal en el contexto de la historia de la ciencia: entre la observación del cielo y la interpretación de significados",
-    body: `## Introducción
+    },
+    {
+      id: "natal-chart-self-knowledge",
+      title:
+        "Analiza wykresu natalnego jako narzędzie samopoznania: astrologia jako symboliczny język życia",
+      body: articleSelfKnowledgePlBody,
+    },
+  ],
+  es: [
+    {
+      id: "natal-astrology-history-science",
+      title:
+        "Astrología natal en el contexto de la historia de la ciencia: entre la observación del cielo y la interpretación de significados",
+      body: `## Introducción
 
 La astrología natal es uno de los sistemas más antiguos de interpretación de la relación entre el ser humano y el cosmos. Sus raíces se remontan a las civilizaciones antiguas de Mesopotamia, Egipto y Grecia, donde la observación del cielo formaba parte integral de la religión, la política y la organización de la vida social.
 
@@ -178,9 +200,18 @@ Algunos investigadores consideran que su popularidad refleja la búsqueda de sen
 
 La astrología natal ocupa un espacio intermedio entre historia de la ciencia, filosofía y simbolismo cultural. Aunque la ciencia contemporánea rechaza sus afirmaciones empíricas, la astrología sigue siendo un fenómeno cultural significativo y un testimonio histórico de la relación humana con el cosmos.
 ${bibliographyEs}`,
-  },
-  en: {
-    title:
+    },
+    {
+      id: "natal-chart-self-knowledge",
+      title:
+        "El análisis de la carta natal como herramienta de autoconocimiento: la astrología como una forma de comprender la vida",
+      body: articleSelfKnowledgeEsBody,
+    },
+  ],
+  en: [
+    {
+      id: "natal-astrology-history-science",
+      title:
       "Natal Astrology in the Context of the History of Science: Between Celestial Observation and the Interpretation of Meaning",
     body: `## Introduction
 
@@ -236,5 +267,12 @@ Natal astrology occupies an intermediate space between the history of science, p
 
 Its persistence suggests that human beings seek not only facts and measurements, but also meaning.
 ${bibliographyEn}`,
-  },
+    },
+    {
+      id: "natal-chart-self-knowledge",
+      title:
+        "Natal Chart Analysis as a Tool for Self-Understanding: Astrology as a Way of Interpreting Life",
+      body: articleSelfKnowledgeEnBody,
+    },
+  ],
 };
