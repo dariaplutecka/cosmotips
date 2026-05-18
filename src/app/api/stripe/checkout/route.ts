@@ -74,6 +74,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ url: `${origin}/success?${params.toString()}` });
   }
 
+  /* Allowlista przed Pro / Stripe — bez ukrycia za sesją lub stanem Redis subskrypcji. */
+  if (isFreeReportEmailAllowed(email)) {
+    const sessionId = `comp_${randomUUID()}`;
+    await storeFreeReportPayload(sessionId, parsed.data);
+    const params = new URLSearchParams({
+      session_id: sessionId,
+      comp: "1",
+      lang,
+    });
+    return NextResponse.json({ url: `${origin}/success?${params.toString()}` });
+  }
+
   const authSession = await getAuthSession();
   const proSubscriber =
     authSession?.email === email.trim().toLowerCase() && (await isProSubscriber(email));
@@ -100,17 +112,6 @@ export async function POST(req: Request) {
       });
       return NextResponse.json({ url: `${origin}/success?${params.toString()}` });
     }
-  }
-
-  if (isFreeReportEmailAllowed(email)) {
-    const sessionId = `comp_${randomUUID()}`;
-    await storeFreeReportPayload(sessionId, parsed.data);
-    const params = new URLSearchParams({
-      session_id: sessionId,
-      comp: "1",
-      lang,
-    });
-    return NextResponse.json({ url: `${origin}/success?${params.toString()}` });
   }
 
   if (skipPaymentForDev) {
