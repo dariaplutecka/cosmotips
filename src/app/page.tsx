@@ -309,7 +309,7 @@ const celticCrossLayoutClasses = [
   "md:col-start-3 md:row-start-2 md:rotate-90",
   "md:col-start-3 md:row-start-3",
   "md:col-start-2 md:row-start-2",
-  "md:col-start-3 md:row-start-2",
+  "md:col-start-3 md:row-start-1",
   "md:col-start-4 md:row-start-2",
   "md:col-start-5 md:row-start-4",
   "md:col-start-5 md:row-start-3",
