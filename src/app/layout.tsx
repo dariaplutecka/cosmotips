@@ -3,8 +3,14 @@ import Script from "next/script";
 import { headers } from "next/headers";
 import { Lato, Montserrat } from "next/font/google";
 import type { AppLang } from "@/lib/reportSchema";
-import { buildAlternates } from "@/lib/seoUtils";
-import { seoMeta } from "@/lib/uiCopy";
+import { buildAlternates, getSiteUrl } from "@/lib/seoUtils";
+import {
+  cancelPageCopy,
+  contactPageCopy,
+  savedReportsPageCopy,
+  seoMeta,
+  termsPageCopy,
+} from "@/lib/uiCopy";
 import "./globals.css";
 
 const GTM_ID = "GTM-PQLLTGHC";
@@ -26,25 +32,118 @@ function parseAppLang(value: string | null): AppLang {
   return "en";
 }
 
-function metadataForPath(lang: AppLang, pathname: string): Metadata {
+const ogLocale: Record<AppLang, string> = {
+  en: "en_US",
+  pl: "pl_PL",
+  es: "es_ES",
+};
+
+function shareAndIndexMetadata(
+  title: string,
+  description: string,
+  path: string,
+  lang: AppLang,
+): Pick<Metadata, "openGraph" | "twitter" | "robots"> {
+  const base = getSiteUrl();
+  const url = `${base}${path}`;
+  return {
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true },
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "CosmoTips",
+      locale: ogLocale[lang],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
+
+function metadataForPath(lang: AppLang, pathnameRaw: string): Metadata {
   const meta = seoMeta[lang];
+  const pathname =
+    pathnameRaw === "" ? "/" : pathnameRaw.startsWith("/") ? pathnameRaw : `/${pathnameRaw}`;
+
+  if (pathname === "/success") {
+    return {
+      title: meta.successTitle,
+      description: meta.homeDescription,
+      robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
+    };
+  }
+
+  if (pathname === "/cancel") {
+    const cc = cancelPageCopy[lang];
+    return {
+      title: `${cc.title} — CosmoTips`,
+      description: cc.body,
+      alternates: buildAlternates("/cancel"),
+      robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
+    };
+  }
+
+  if (pathname === "/reports") {
+    const sr = savedReportsPageCopy[lang];
+    return {
+      title: `${sr.pageTitle} — CosmoTips`,
+      description: sr.subtitle,
+      alternates: buildAlternates("/reports"),
+      robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
+    };
+  }
+
+  if (pathname === "/contact") {
+    const c = contactPageCopy[lang];
+    const title = `${c.pageTitle} — CosmoTips`;
+    return {
+      title,
+      description: c.lead,
+      alternates: buildAlternates("/contact"),
+      ...shareAndIndexMetadata(title, c.lead, "/contact", lang),
+    };
+  }
+
+  if (pathname === "/terms") {
+    const tt = termsPageCopy[lang];
+    const title = `${tt.title} — CosmoTips`;
+    const description =
+      "CosmoTips Terms of Service — personalised reports, Stripe payments, subscriptions, and consumer rights.";
+    return {
+      title,
+      description,
+      alternates: buildAlternates("/terms"),
+      ...shareAndIndexMetadata(title, description, "/terms", lang),
+    };
+  }
+
   if (pathname === "/articles") {
     return {
       title: meta.articlesTitle,
       description: meta.articlesDescription,
       alternates: buildAlternates("/articles"),
+      ...shareAndIndexMetadata(
+        meta.articlesTitle,
+        meta.articlesDescription,
+        "/articles",
+        lang,
+      ),
     };
   }
-  if (pathname === "/success") {
-    return {
-      title: meta.successTitle,
-      description: meta.homeDescription,
-    };
-  }
+
   return {
     title: meta.homeTitle,
     description: meta.homeDescription,
     alternates: buildAlternates("/"),
+    ...shareAndIndexMetadata(meta.homeTitle, meta.homeDescription, "/", lang),
   };
 }
 
