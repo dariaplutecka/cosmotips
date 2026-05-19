@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import type { AppLang } from "@/lib/reportSchema";
 import { formatResendSendError } from "@/lib/resendFormatError";
-import { reportEmailCopy, tarotCopy } from "@/lib/uiCopy";
+import { reportPdfEmailCopy, successUi, tarotCopy } from "@/lib/uiCopy";
 import {
   parseMarkdownBlocks,
   type MarkdownBlock,
@@ -23,6 +23,60 @@ export type SendReportPdfResult =
   | { sent: false; reason: "no_api_key" | "no_from" | "send_failed"; detail?: string };
 
 export type SendTarotEmailResult = SendReportPdfResult;
+
+function cosmotipsEmailBaseUrl(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_BASE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    "https://cosmotips.vercel.app";
+  return raw.replace(/\/+$/, "");
+}
+
+/**
+ * Same visual shell as the tarot transactional email — dark violet gradient, amber accents.
+ * `bodyHtmlTrusted` must be built from escaped / trusted fragments only (no raw user HTML).
+ */
+function buildCosmotipsEmailHtml(opts: {
+  lang: AppLang;
+  headingPlain: string;
+  /** Optional eyebrow subtitle under heading (escaped here). */
+  leadParagraphPlain: string | null;
+  /** Inner HTML fragment (trusted). */
+  bodyHtmlTrusted: string;
+}): string {
+  const baseUrl = cosmotipsEmailBaseUrl();
+  const leadHtml = opts.leadParagraphPlain
+    ? `<p style="margin:0 0 18px;color:#d8cdeb;font-size:15px;line-height:1.6;">${escapeHtml(opts.leadParagraphPlain)}</p>`
+    : "";
+  return `
+    <div style="margin:0;padding:0;background:#1a1033;color:#f7f0ff;font-family:Arial,Helvetica,sans-serif;">
+      <div style="max-width:720px;margin:0 auto;padding:34px 20px;">
+        <div style="border:1px solid rgba(201,168,76,0.34);border-radius:26px;background:linear-gradient(180deg,#241744 0%,#1a1033 100%);padding:30px;box-shadow:0 18px 60px rgba(0,0,0,0.35);">
+          <div style="font-size:13px;letter-spacing:0.18em;text-transform:uppercase;color:#c9a84c;font-weight:700;">CosmoTips</div>
+          <h1 style="margin:10px 0 8px;color:#fff7dd;font-size:30px;line-height:1.18;">${escapeHtml(opts.headingPlain)}</h1>
+          ${leadHtml}
+          ${opts.bodyHtmlTrusted}
+          <div style="margin-top:30px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.1);color:#b9acd3;font-size:13px;line-height:1.6;">
+            <strong style="color:#fff7dd;">CosmoTips</strong><br />
+            <a href="${escapeHtml(baseUrl)}" style="color:#c9a84c;text-decoration:none;">${escapeHtml(tarotFooterText(opts.lang))}</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function reportPdfAstrologyInnerHtml(lang: AppLang): string {
+  const c = reportPdfEmailCopy[lang];
+  return `
+          <p style="margin:0 0 16px;color:#f2ecff;font-size:16px;line-height:1.75;">${escapeHtml(c.thanksLine)}</p>
+          <p style="margin:0 0 20px;color:#f2ecff;font-size:16px;line-height:1.75;">${escapeHtml(c.pdfDetailLine)}</p>
+          <div style="margin:6px 0 8px;padding:18px 20px;border:1px solid rgba(201,168,76,0.42);border-radius:18px;background:#231640;">
+            <div style="font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#c9a84c;margin-bottom:8px;">${escapeHtml(c.pdfCalloutTitle)}</div>
+            <div style="font-size:15px;line-height:1.6;color:#fff7dd;">${escapeHtml(c.pdfCalloutBody)}</div>
+          </div>
+        `;
+}
 
 function escapeHtml(value: string): string {
   return value
@@ -278,7 +332,17 @@ export async function sendReportPdfEmail(opts: {
     };
   }
 
-  const copy = reportEmailCopy[opts.lang];
+  const headline = successUi[opts.lang].reportTitle[opts.reportType];
+  const pdfFrag = reportPdfEmailCopy[opts.lang];
+  const plainBase = cosmotipsEmailBaseUrl();
+  const html = buildCosmotipsEmailHtml({
+    lang: opts.lang,
+    headingPlain: headline,
+    leadParagraphPlain: null,
+    bodyHtmlTrusted: reportPdfAstrologyInnerHtml(opts.lang),
+  });
+  const text = `${headline}\n\n${pdfFrag.thanksLine}\n\n${pdfFrag.pdfDetailLine}\n\n${pdfFrag.pdfCalloutTitle}: ${pdfFrag.pdfCalloutBody}\n\nCosmoTips — ${plainBase}`;
+  const subject = `${headline} · CosmoTips`;
   const resend = new Resend(apiKey);
 
   try {
@@ -286,9 +350,9 @@ export async function sendReportPdfEmail(opts: {
     const { data, error } = await resend.emails.send({
       from,
       to,
-      subject: copy.subject,
-      html: copy.htmlBody,
-      text: copy.textBody,
+      subject,
+      html,
+      text,
       attachments: [
         {
           filename: pdfFilename(opts.reportType),
@@ -354,7 +418,7 @@ export async function sendTarotEmail(opts: {
       : opts.spreadType === "three_card"
         ? copy.threeCard
         : copy.celticCross;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim() || "https://cosmotips.vercel.app";
+  const baseUrl = cosmotipsEmailBaseUrl();
   const positions = tarotPositions(opts.spreadType, opts.lang);
   const spreadContext =
     opts.spreadType === "daily_card"
@@ -369,32 +433,25 @@ export async function sendTarotEmail(opts: {
   const interpretationPlain = markdownBlocksToTarotPlainText(
     parseMarkdownBlocks(opts.interpretation),
   );
-  const text = `${title}\n${spreadContext}\n\n${cardsText}\n\n${interpretationPlain}\n\nCosmoTips — ${baseUrl}`;
-  const html = `
-    <div style="margin:0;padding:0;background:#1a1033;color:#f7f0ff;font-family:Arial,Helvetica,sans-serif;">
-      <div style="max-width:720px;margin:0 auto;padding:34px 20px;">
-        <div style="border:1px solid rgba(201,168,76,0.34);border-radius:26px;background:linear-gradient(180deg,#241744 0%,#1a1033 100%);padding:30px;box-shadow:0 18px 60px rgba(0,0,0,0.35);">
-          <div style="font-size:13px;letter-spacing:0.18em;text-transform:uppercase;color:#c9a84c;font-weight:700;">CosmoTips</div>
-          <h1 style="margin:10px 0 8px;color:#fff7dd;font-size:30px;line-height:1.18;">${escapeHtml(title)}</h1>
-          <p style="margin:0 0 18px;color:#d8cdeb;font-size:15px;line-height:1.6;">${escapeHtml(spreadContext)}</p>
+  const tarotBodyTrusted = `
           ${tarotCardsHtml(opts.cards, opts.spreadType, opts.lang)}
           <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,0.7),transparent);margin:6px 0 24px;"></div>
           <div>${tarotInterpretationHtml(opts.interpretation)}</div>
-          <div style="margin-top:30px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.1);color:#b9acd3;font-size:13px;line-height:1.6;">
-            <strong style="color:#fff7dd;">CosmoTips</strong><br />
-            <a href="${escapeHtml(baseUrl)}" style="color:#c9a84c;text-decoration:none;">${escapeHtml(tarotFooterText(opts.lang))}</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
+        `;
+  const html = buildCosmotipsEmailHtml({
+    lang: opts.lang,
+    headingPlain: title,
+    leadParagraphPlain: spreadContext,
+    bodyHtmlTrusted: tarotBodyTrusted,
+  });
 
+  const text = `${title}\n${spreadContext}\n\n${cardsText}\n\n${interpretationPlain}\n\nCosmoTips — ${baseUrl}`;
   const resend = new Resend(apiKey);
   try {
     const { data, error } = await resend.emails.send({
       from,
       to,
-      subject: title,
+      subject: `${title} · CosmoTips`,
       html,
       text,
     });

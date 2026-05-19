@@ -744,34 +744,33 @@ export const successUi: Record<
   },
 };
 
-/** Transactional email when PDF is attached (server-side; Resend). */
-export const reportEmailCopy: Record<
+/** Transactional copy for astrology PDF emails — HTML is built in `reportEmail.ts` with shared CosmoTips styling. */
+export const reportPdfEmailCopy: Record<
   AppLang,
-  { subject: string; htmlBody: string; textBody: string }
+  { thanksLine: string; pdfDetailLine: string; pdfCalloutTitle: string; pdfCalloutBody: string }
 > = {
   en: {
-    subject: "CosmoTips Report",
-    htmlBody:
-      "<p>Thank you for your purchase.</p><p>Your personalized report is attached as a PDF.</p><p>— CosmoTips</p>",
-    textBody:
-      "Thank you for your purchase.\n\nYour personalized report is attached as a PDF.\n\n— CosmoTips",
+    thanksLine: "Thank you for your order — we appreciate you being here.",
+    pdfDetailLine:
+      "Your full reading is in the attached PDF. Open it on your phone or desktop; you can save or print it anytime.",
+    pdfCalloutTitle: "Attachment",
+    pdfCalloutBody: "Look for the PDF file in this message (same email thread).",
   },
   pl: {
-    subject: "CosmoTips Report",
-    htmlBody:
-      "<p>Dziękujemy za zakup.</p><p>Twój spersonalizowany raport znajdziesz w załączniku PDF.</p><p>— CosmoTips</p>",
-    textBody:
-      "Dziękujemy za zakup.\n\nTwój spersonalizowany raport znajdziesz w załączniku PDF.\n\n— CosmoTips",
+    thanksLine: "Dziękujemy za zamówienie — cieszymy się, że jesteś z nami.",
+    pdfDetailLine:
+      "Pełna treść raportu znajduje się w załączonym pliku PDF. Otwórz go w telefonie lub na komputerze — możesz go też zapisać lub wydrukować.",
+    pdfCalloutTitle: "Załącznik",
+    pdfCalloutBody: "Szukaj pliku PDF w tej samej wiadomości e-mail.",
   },
   es: {
-    subject: "CosmoTips Report",
-    htmlBody:
-      "<p>Gracias por tu compra.</p><p>Tu informe personalizado va adjunto en PDF.</p><p>— CosmoTips</p>",
-    textBody:
-      "Gracias por tu compra.\n\nTu informe personalizado va adjunto en PDF.\n\n— CosmoTips",
+    thanksLine: "Gracias por tu pedido — nos alegra tenerte aquí.",
+    pdfDetailLine:
+      "La lectura completa va en el PDF adjunto. Ábrelo en el móvil o en el ordenador; puedes guardarlo o imprimirlo cuando quieras.",
+    pdfCalloutTitle: "Adjunto",
+    pdfCalloutBody: "Busca el archivo PDF en este mismo correo.",
   },
 };
-
 export const homeCopy: Record<AppLang, HomeCopy> = {
   en: {
     heroTitle: "Your story written before you were born.",
