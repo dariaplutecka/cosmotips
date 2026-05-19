@@ -1,5 +1,10 @@
 import type { AppLang } from "@/lib/reportSchema";
 import {
+  articleMercuryRetrogradeEnBody,
+  articleMercuryRetrogradeEsBody,
+  articleMercuryRetrogradePlBody,
+} from "@/lib/articleMercuryRetrogradeBodies";
+import {
   articleNatalChartBeginnerEnBody,
   articleNatalChartBeginnerEsBody,
   articleNatalChartBeginnerPlBody,
@@ -161,6 +166,11 @@ ${bibliographyPl}`,
       title: "Powrót Saturna: znaczenie, kryzys i transformacja",
       body: articleSaturnReturnPlBody,
     },
+    {
+      id: "mercury-retrograde-explained",
+      title: "Merkury w retrogradacji: co oznacza i jak przetrwać ten okres",
+      body: articleMercuryRetrogradePlBody,
+    },
   ],
   es: [
     {
@@ -236,6 +246,11 @@ ${bibliographyEs}`,
       id: "saturn-return-explained",
       title: "Retorno de Saturno: significado y transformación personal",
       body: articleSaturnReturnEsBody,
+    },
+    {
+      id: "mercury-retrograde-explained",
+      title: "Mercurio retrógrado: qué significa y cómo atravesarlo",
+      body: articleMercuryRetrogradeEsBody,
     },
   ],
   en: [
@@ -315,6 +330,12 @@ ${bibliographyEn}`,
       title:
         "Saturn Return Explained: Meaning, Timing, and Spiritual Transformation",
       body: articleSaturnReturnEnBody,
+    },
+    {
+      id: "mercury-retrograde-explained",
+      title:
+        "Mercury Retrograde Explained: What It Means and How to Navigate It",
+      body: articleMercuryRetrogradeEnBody,
     },
   ],
 };
