@@ -150,6 +150,18 @@ export async function POST(req: Request) {
     ],
     success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&lang=${encodeURIComponent(lang)}`,
     cancel_url: `${origin}/cancel?lang=${encodeURIComponent(lang)}`,
+    /**
+     * Tworzy fakturę Stripe (PDF + rekord rozliczeniowy). Konsument dostaje maile Stripe
+     * z potwierdzeniem/z linkiem — włączone w Dashboardzie: ustawienia powiadomień dla klienta.
+     * Zob. README („Stripe receipts & invoices”).
+     */
+    invoice_creation: {
+      enabled: true,
+      invoice_data: {
+        description: `CosmoTips — ${reportDescription(reportType)}`,
+        footer: "CosmoTips",
+      },
+    },
     metadata: {
       email,
       dob,

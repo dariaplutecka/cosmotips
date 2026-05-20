@@ -630,6 +630,15 @@ export const successUi: Record<
     noReportFound: string;
     missingSession: string;
     generateFailedGeneric: string;
+    /** Gwiazdki po wyświetleniu raportu */
+    rateTitle: string;
+    rateAriaLabel: (stars: number) => string;
+    rateThanks: string;
+    rateAlreadySubmitted: string;
+    rateSubmitFailed: string;
+    /** Tylko po prawdziwym Checkout (`cs_*`) — potwierdzenie zakupu z Stripe */
+    purchaseReceiptStripeNote: string;
+    rateSaving: string;
   }
 > = {
   en: {
@@ -667,6 +676,14 @@ export const successUi: Record<
     noReportFound: "No report found.",
     missingSession: "Missing session id from Stripe.",
     generateFailedGeneric: "Something went wrong.",
+    rateTitle: "How was this report?",
+    rateAriaLabel: (n: number) => `Rate ${n} stars out of 5`,
+    rateThanks: "Thank you — your feedback helps us improve.",
+    rateAlreadySubmitted: "You’ve already rated this report. Thank you!",
+    rateSubmitFailed: "Couldn’t save your rating. You can skip this.",
+    purchaseReceiptStripeNote:
+      "Purchase receipt: Stripe emails a confirmation (and billing invoice PDF when enabled) for paid checkouts — check the inbox you paid with, including spam. You can manage receipts anytime in Stripe’s emailed links.",
+    rateSaving: "Saving your rating…",
   },
   pl: {
     pendingTitle: "Twój raport",
@@ -704,6 +721,15 @@ export const successUi: Record<
     noReportFound: "Nie znaleziono raportu.",
     missingSession: "Brak identyfikatora sesji Stripe.",
     generateFailedGeneric: "Coś poszło nie tak.",
+    rateTitle: "Jak oceniasz ten raport?",
+    rateAriaLabel: (n: number) => `Oceń na ${n} gwiazdek z 5`,
+    rateThanks: "Dziękujemy — Twoja ocena pomaga nam rozwijać usługę.",
+    rateAlreadySubmitted: "Ta sesja już została oceniona. Dziękujemy!",
+    rateSubmitFailed:
+      "Nie udało się zapisać oceny — możesz pominąć ten krok.",
+    purchaseReceiptStripeNote:
+      "Potwierdzenie zakupu: Stripe wyśle e-mail z podsumowaniem płatności oraz (jeśli włączone na koncie Stripe) dokument faktury z linkiem do PDF — sprawdź skrzynkę podaną przy płatności, także spam. Zarządzanie paragonami i fakturą jest dostępne z linków w mailach Stripe.",
+    rateSaving: "Zapisuję ocenę…",
   },
   es: {
     pendingTitle: "Tu informe",
@@ -741,6 +767,18 @@ export const successUi: Record<
     noReportFound: "No se encontró el informe.",
     missingSession: "Falta el id de sesión de Stripe.",
     generateFailedGeneric: "Algo salió mal.",
+    rateTitle: "¿Qué te pareció este informe?",
+    rateAriaLabel: (n: number) =>
+      `Valorar con ${n} estrellas de 5`,
+    rateThanks:
+      "Gracias — tu valoración nos ayuda a mejorar.",
+    rateAlreadySubmitted:
+      "Ya valoraste esta compra/informe. ¡Gracias!",
+    rateSubmitFailed:
+      "No pudimos guardar la valoración. Puedes saltar este paso.",
+    purchaseReceiptStripeNote:
+      "Comprobante de compra: Stripe envía por correo la confirmación y, cuando está activado en tu cuenta Stripe, una factura con enlace al PDF — revisa la bandeja del email que usaste al pagar, también spam.",
+    rateSaving: "Guardando tu valoración…",
   },
 };
 

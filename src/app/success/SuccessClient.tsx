@@ -115,6 +115,44 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
   const [emailPdfInfo, setEmailPdfInfo] = useState<EmailPdfFromApi | null>(
     null,
   );
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
+  const [ratingAcknowledged, setRatingAcknowledged] = useState(false);
+  const [ratingDuplicate, setRatingDuplicate] = useState(false);
+  const [ratingError, setRatingError] = useState(false);
+
+  const isStripePaidCheckout =
+    sessionId.startsWith("cs_live_") || sessionId.startsWith("cs_test_");
+
+  const submitRating = useCallback(
+    async (stars: number) => {
+      if (!sessionId || ratingSubmitting || ratingAcknowledged) return;
+      setRatingSubmitting(true);
+      setRatingError(false);
+      try {
+        const res = await fetch("/api/report/rating", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ session_id: sessionId, rating: stars }),
+        });
+        const data = (await res.json().catch(() => null)) as
+          | { ok?: boolean; duplicate?: boolean }
+          | null;
+        if (!res.ok) {
+          setRatingError(true);
+        } else {
+          setRatingDuplicate(Boolean(data?.duplicate));
+          setRatingError(false);
+        }
+        setRatingAcknowledged(true);
+      } catch {
+        setRatingError(true);
+        setRatingAcknowledged(true);
+      } finally {
+        setRatingSubmitting(false);
+      }
+    },
+    [sessionId, ratingSubmitting, ratingAcknowledged],
+  );
 
   const uiLang: AppLang =
     meta?.lang ??
@@ -169,6 +207,9 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
     setError(null);
     setLoading(true);
     setEmailPdfInfo(null);
+    setRatingAcknowledged(false);
+    setRatingDuplicate(false);
+    setRatingError(false);
     try {
       const params = new URLSearchParams({ session_id: sessionId });
       if (devMode) {
@@ -489,6 +530,60 @@ export function SuccessClient({ initialLang }: { initialLang: AppLang }) {
               >
                 {report}
               </ReactMarkdown>
+
+              <div className="mt-8 space-y-4 border-t border-white/10 pt-8">
+                <p className="text-center text-sm font-semibold text-white/85">
+                  {su.rateTitle}
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {([1, 2, 3, 4, 5] as const).map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      disabled={ratingSubmitting || ratingAcknowledged}
+                      aria-label={su.rateAriaLabel(n)}
+                      className={`flex min-h-[52px] min-w-[52px] flex-col items-center justify-center gap-0.5 rounded-2xl px-2 transition ${
+                        ratingSubmitting || ratingAcknowledged
+                          ? "cursor-not-allowed opacity-40"
+                          : "cursor-pointer hover:bg-amber-400/15 active:scale-95"
+                      }`}
+                      onClick={() => void submitRating(n)}
+                    >
+                      <span className="text-2xl leading-none text-amber-300 drop-shadow-[0_0_12px_rgba(251,191,36,0.35)]">
+                        ★
+                      </span>
+                      <span className="text-[11px] font-medium text-white/45">
+                        {n}/5
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {ratingAcknowledged ? (
+                  <p
+                    className={
+                      ratingError
+                        ? "text-center text-sm text-amber-100/85"
+                        : "text-center text-sm text-emerald-100/90"
+                    }
+                  >
+                    {ratingError
+                      ? su.rateSubmitFailed
+                      : ratingDuplicate
+                        ? su.rateAlreadySubmitted
+                        : su.rateThanks}
+                  </p>
+                ) : ratingSubmitting ? (
+                  <p className="text-center text-xs text-white/55">
+                    {su.rateSaving}
+                  </p>
+                ) : null}
+                {isStripePaidCheckout ? (
+                  <p className="mx-auto max-w-xl text-center text-xs leading-relaxed text-white/55">
+                    {su.purchaseReceiptStripeNote}
+                  </p>
+                ) : null}
+              </div>
+
               <div className="mt-8 flex justify-center">
                 <button
                   onClick={() => void downloadPdf()}

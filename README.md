@@ -53,6 +53,17 @@ By default `npm run dev` binds to **`localhost` only** and skips `os.networkInte
 
 If you previously saw `uv_interface_addresses` / `Unknown system error 1` when starting `next dev`, use the project's `npm run dev` script (with `-H localhost`) or explicitly pass `-H localhost`.
 
+## Stripe receipts & invoices
+
+CosmoTips report checkout enables **Stripe invoice creation** (`invoice_creation` on Checkout) so Stripe records a downloadable invoice alongside the payment.
+
+Customer emails are handled by Stripe (not CosmoTips):
+
+1. Stripe Dashboard → **Settings** → **Customer emails**: turn on receipts / successful payment confirmations for your brand.
+2. After payment, the buyer receives Stripe’s confirmation (and can open the billing invoice PDF from Stripe’s hosted links).
+
+For **VAT/EU invoicing**, tax IDs, billing address, etc., configure your Stripe Business settings and invoicing branding there — CosmoTips only passes line items + optional invoice footer text.
+
 ## How the payment → report flow works
 
 1. Home form posts to `POST /api/stripe/checkout`
