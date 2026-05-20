@@ -47,7 +47,11 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Open `http://localhost:3000` (if that port is busy, Next picks the next free one — watch the terminal output).
+
+By default `npm run dev` binds to **`localhost` only** and skips `os.networkInterfaces()`, which avoids dev-server crashes on some restricted environments (e.g. sandboxes where listing network interfaces fails). To expose the dev server on your LAN again, run `npx next dev -H 0.0.0.0`.
+
+If you previously saw `uv_interface_addresses` / `Unknown system error 1` when starting `next dev`, use the project's `npm run dev` script (with `-H localhost`) or explicitly pass `-H localhost`.
 
 ## How the payment → report flow works
 
