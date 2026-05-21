@@ -30,7 +30,10 @@ const EXTRA_FROM_ENV = (): Set<string> => {
   );
 };
 
-const RAW_HARDCODED = ["daria.plutecka@gmail.com"] as const;
+const RAW_HARDCODED = [
+  "daria.plutecka@gmail.com",
+  "wojciechwator10@gmail.com",
+] as const;
 const CANONICAL_HARDCODED = new Set(
   RAW_HARDCODED.map((e) => canonicalEmailForm(e)),
 );
