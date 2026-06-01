@@ -14,6 +14,7 @@ import {
 import "./globals.css";
 
 const GTM_ID = "GTM-PQLLTGHC";
+const GOOGLE_ADS_GTAG_ID = "AW-18203349168";
 
 const lato = Lato({
   variable: "--font-lato",
@@ -172,6 +173,19 @@ new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'? '&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','${GTM_ID}');
+          `}
+        </Script>
+        {/* Google tag (gtag.js) — Google Ads */}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_GTAG_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-ads-gtag" strategy="afterInteractive">
+          {`
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GOOGLE_ADS_GTAG_ID}');
           `}
         </Script>
         {/* Google Tag Manager (noscript) */}
