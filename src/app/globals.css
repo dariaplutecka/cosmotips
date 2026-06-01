@@ -157,13 +157,25 @@ body::before {
   }
 
   .cosmotips-free-badge {
-    @apply inline-flex shrink-0 items-center rounded-full border-2 border-amber-200/90 bg-gradient-to-r from-amber-400/45 to-amber-300/30 px-2.5 py-1 text-[0.72rem] font-extrabold uppercase tracking-wider text-amber-50;
+    @apply inline-flex shrink-0 items-center rounded-full border-2 border-amber-200/90 bg-gradient-to-r from-amber-400/45 to-amber-300/30 px-2.5 py-1 text-[0.72rem] font-extrabold uppercase tracking-wider text-amber-50 sm:px-3 sm:py-1.5 sm:text-xs;
     box-shadow: 0 0 14px rgba(251, 191, 36, 0.45);
   }
 
   .cosmotips-free-price {
-    @apply text-sm font-bold tracking-wide text-amber-100;
+    @apply text-sm font-bold tracking-wide text-amber-100 sm:text-base;
     text-shadow: 0 0 12px rgba(251, 191, 36, 0.35);
+  }
+
+  .cosmotips-free-tile {
+    @apply border-amber-300/50 bg-amber-950/25 shadow-[0_0_28px_-10px_rgba(251,191,36,0.45)];
+  }
+
+  .cosmotips-free-tile:hover:not(:disabled) {
+    @apply border-amber-200/60 bg-amber-950/32;
+  }
+
+  .cosmotips-free-tile-selected {
+    @apply border-amber-200/70 bg-gradient-to-br from-amber-400/22 via-violet-400/12 to-amber-950/35 ring-2 ring-amber-300/45 shadow-md shadow-amber-950/30;
   }
 }
 

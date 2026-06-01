@@ -1934,6 +1934,7 @@ function HomePageContent() {
                     const selected = reportType === id;
                     const c = copy.reports[id];
                     const locked = id === "natal_basic" && freeBasicUsed;
+                    const isFreeReport = id === "natal_basic" && !locked;
                     return (
                       <button
                         key={id}
@@ -1946,10 +1947,12 @@ function HomePageContent() {
                           "flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-xl border p-3.5 text-left transition sm:p-4",
                           locked
                             ? "cursor-not-allowed border-white/10 bg-black/20 opacity-45"
-                            : selected
-                              ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
-                              : id === "natal_basic"
-                                ? "border-amber-300/35 bg-amber-950/20 hover:border-amber-200/45 hover:bg-amber-950/30"
+                            : isFreeReport
+                              ? selected
+                                ? "cosmotips-free-tile-selected"
+                                : "cosmotips-free-tile hover:border-amber-200/60 hover:bg-amber-950/32"
+                              : selected
+                                ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
                                 : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
                         ].join(" ")}
                       >
@@ -1968,7 +1971,7 @@ function HomePageContent() {
                                 "cosmotips-tile-body mt-1",
                                 id === "natal_basic" && !locked
                                   ? "cosmotips-free-price"
-                                  : "text-xs font-semibold tracking-wide text-amber-100/85",
+                                  : "text-xs font-semibold tracking-wide text-amber-100/85 sm:text-sm",
                               ].join(" ")}
                             >
                               {c.priceLabel}
@@ -1981,7 +1984,9 @@ function HomePageContent() {
                             className={[
                               "mt-0.5 h-5 w-5 shrink-0 self-start rounded-full border",
                               selected
-                                ? "border-violet-200/60 bg-violet-300"
+                                ? isFreeReport
+                                  ? "border-amber-200/70 bg-amber-300"
+                                  : "border-violet-200/60 bg-violet-300"
                                 : "border-violet-300/35 bg-transparent",
                             ].join(" ")}
                             aria-hidden="true"
@@ -2035,6 +2040,7 @@ function HomePageContent() {
                         },
                       ]).map((spread) => {
                         const selected = tarotSpread === spread.id;
+                        const isFreeSpread = spread.id === "daily_card";
                         return (
                           <button
                             key={spread.id}
@@ -2046,10 +2052,12 @@ function HomePageContent() {
                             }}
                             className={[
                               "flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-xl border p-3.5 text-left transition sm:p-4",
-                              selected
-                                ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
-                                : spread.id === "daily_card"
-                                  ? "border-amber-300/45 bg-amber-950/20 hover:border-amber-200/50 hover:bg-amber-950/30"
+                              isFreeSpread
+                                ? selected
+                                  ? "cosmotips-free-tile-selected"
+                                  : "cosmotips-free-tile hover:border-amber-200/60 hover:bg-amber-950/32"
+                                : selected
+                                  ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
                                   : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
                             ].join(" ")}
                           >
@@ -2081,7 +2089,9 @@ function HomePageContent() {
                                 className={[
                                   "mt-0.5 h-5 w-5 shrink-0 self-start rounded-full border",
                                   selected
-                                    ? "border-violet-200/60 bg-violet-300"
+                                    ? isFreeSpread
+                                      ? "border-amber-200/70 bg-amber-300"
+                                      : "border-violet-200/60 bg-violet-300"
                                     : "border-violet-300/35 bg-transparent",
                                 ].join(" ")}
                                 aria-hidden="true"
