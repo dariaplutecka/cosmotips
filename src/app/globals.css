@@ -165,18 +165,6 @@ body::before {
     @apply text-sm font-bold tracking-wide text-amber-100 sm:text-base;
     text-shadow: 0 0 12px rgba(251, 191, 36, 0.35);
   }
-
-  .cosmotips-free-tile {
-    @apply border-amber-300/50 bg-amber-950/25 shadow-[0_0_28px_-10px_rgba(251,191,36,0.45)];
-  }
-
-  .cosmotips-free-tile:hover:not(:disabled) {
-    @apply border-amber-200/60 bg-amber-950/32;
-  }
-
-  .cosmotips-free-tile-selected {
-    @apply border-amber-200/70 bg-gradient-to-br from-amber-400/22 via-violet-400/12 to-amber-950/35 ring-2 ring-amber-300/45 shadow-md shadow-amber-950/30;
-  }
 }
 
 /* Typography scale: one body face (Lato) and three reusable heading levels. */

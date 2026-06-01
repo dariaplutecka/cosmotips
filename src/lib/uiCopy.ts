@@ -595,6 +595,9 @@ export type HomeCopy = {
   navLogoHomeAria: string;
   langLabel: string;
   placeNoMatch: string;
+  /** Kafelki wyboru — zwijanie długiego opisu na mobile */
+  tileDescReadMore: string;
+  tileDescReadLess: string;
   /** Gdy darmowy podgląd (natal_basic) już zużyty w tej przeglądarce */
   freeBasicUsedHint: string;
   /** Przy próbie ponownego zamówienia darmowego typu */
@@ -904,6 +907,8 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     navLogoHomeAria: "CosmoTips — home and order form",
     langLabel: "Report language",
     placeNoMatch: "No matches",
+    tileDescReadMore: "Read more",
+    tileDescReadLess: "Show less",
     freeBasicUsedHint:
       "The free Cosmic Blueprint can only be used once. Please choose the full report option below.",
     freeBasicAlreadyUsedError:
@@ -1004,6 +1009,8 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     navLogoHomeAria: "CosmoTips — strona główna z formularzem zamówienia",
     langLabel: "Język raportu",
     placeNoMatch: "Brak dopasowań",
+    tileDescReadMore: "Czytaj więcej",
+    tileDescReadLess: "Zwiń",
     freeBasicUsedHint:
       "Z Kosmicznego Profilu można skorzystać tylko raz. Wybierz poniżej opcję pełnego raportu.",
     freeBasicAlreadyUsedError:
@@ -1104,6 +1111,8 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
     navLogoHomeAria: "CosmoTips — inicio con el formulario de pedido",
     langLabel: "Idioma del informe",
     placeNoMatch: "Sin coincidencias",
+    tileDescReadMore: "Leer más",
+    tileDescReadLess: "Mostrar menos",
     freeBasicUsedHint:
       "El Perfil Cósmico gratuito solo puede usarse una vez. Elige abajo una opción de reporte completo.",
     freeBasicAlreadyUsedError:

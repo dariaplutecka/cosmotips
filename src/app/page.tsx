@@ -17,6 +17,7 @@ import {
   isoFromPartStrings,
 } from "@/lib/birthDateParts";
 import { CosmotipsTopBar } from "@/components/CosmotipsTopBar";
+import { SelectionTileDescription } from "@/components/SelectionTileDescription";
 import { HomeFooter } from "@/components/HomeFooter";
 import { NatalChartHeroIllustration } from "@/components/NatalChartHeroIllustration";
 import {
@@ -1929,36 +1930,46 @@ function HomePageContent() {
               <h2 className="cosmotips-heading-3">
                   1. {copy.reportSectionTitle}
               </h2>
-                <div className="grid min-w-0 gap-2.5 sm:grid-cols-2 sm:items-stretch [&>*]:min-w-0">
+                <div className="grid min-w-0 gap-2.5 sm:grid-cols-2 sm:items-start [&>*]:min-w-0">
                   {reportCardIds.map((id) => {
                     const selected = reportType === id;
                     const c = copy.reports[id];
                     const locked = id === "natal_basic" && freeBasicUsed;
                     const isFreeReport = id === "natal_basic" && !locked;
                     return (
-                      <button
+                      <div
                         key={id}
-                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        aria-disabled={locked}
+                        tabIndex={locked ? -1 : 0}
                         onClick={() => {
                           if (locked) return;
                           setReportType(id);
                         }}
+                        onKeyDown={(e) => {
+                          if (locked) return;
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setReportType(id);
+                          }
+                        }}
                         className={[
-                          "flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-xl border p-3.5 text-left transition sm:p-4",
+                          "flex w-full min-w-0 flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
                           locked
                             ? "cursor-not-allowed border-white/10 bg-black/20 opacity-45"
-                            : isFreeReport
-                              ? selected
-                                ? "cosmotips-free-tile-selected"
-                                : "cosmotips-free-tile hover:border-amber-200/60 hover:bg-amber-950/32"
-                              : selected
-                                ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
-                                : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
-                        ].join(" ")}
+                            : "cursor-pointer",
+                          !locked &&
+                            (selected
+                              ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
+                              : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10"),
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
                       >
-                        <div className="flex min-h-0 min-w-0 flex-1 gap-3">
-                          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                            <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
+                        <div className="flex min-w-0 gap-3">
+                          <div className="flex min-w-0 flex-1 flex-col">
+                            <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
                               <span className="cosmotips-tile-body">{c.title}</span>
                               {c.freeBadge && !locked ? (
                                 <span className="cosmotips-free-badge">
@@ -1976,9 +1987,12 @@ function HomePageContent() {
                             >
                               {c.priceLabel}
                             </p>
-                            <p className="cosmotips-tile-body mt-1 min-h-0 flex-1 text-sm leading-6 text-white/75">
-                              {c.desc}
-                            </p>
+                            <SelectionTileDescription
+                              id={`report-${id}`}
+                              text={c.desc}
+                              readMoreLabel={copy.tileDescReadMore}
+                              readLessLabel={copy.tileDescReadLess}
+                            />
                           </div>
                           <div
                             className={[
@@ -1992,7 +2006,7 @@ function HomePageContent() {
                             aria-hidden="true"
                           />
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -2015,7 +2029,7 @@ function HomePageContent() {
                     <h2 className="cosmotips-heading-3">
                       1. {tarot.chooseSpread}
                     </h2>
-                    <div className="grid min-w-0 gap-2.5 sm:grid-cols-2 sm:items-stretch [&>*]:min-w-0">
+                    <div className="grid min-w-0 gap-2.5 sm:grid-cols-2 sm:items-start [&>*]:min-w-0">
                       {([
                         {
                           id: "daily_card" as const,
@@ -2042,28 +2056,34 @@ function HomePageContent() {
                         const selected = tarotSpread === spread.id;
                         const isFreeSpread = spread.id === "daily_card";
                         return (
-                          <button
+                          <div
                             key={spread.id}
-                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            tabIndex={0}
                             onClick={() => {
                               setTarotError(null);
                               setTarotMessage(null);
                               setTarotSpread(spread.id);
                             }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                setTarotError(null);
+                                setTarotMessage(null);
+                                setTarotSpread(spread.id);
+                              }
+                            }}
                             className={[
-                              "flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-xl border p-3.5 text-left transition sm:p-4",
-                              isFreeSpread
-                                ? selected
-                                  ? "cosmotips-free-tile-selected"
-                                  : "cosmotips-free-tile hover:border-amber-200/60 hover:bg-amber-950/32"
-                                : selected
-                                  ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
-                                  : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
+                              "flex w-full min-w-0 cursor-pointer flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                              selected
+                                ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
+                                : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
                             ].join(" ")}
                           >
-                            <div className="flex min-h-0 min-w-0 flex-1 gap-3">
-                              <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                                <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
+                            <div className="flex min-w-0 gap-3">
+                              <div className="flex min-w-0 flex-1 flex-col">
+                                <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
                                   <span className="cosmotips-tile-body">{spread.title}</span>
                                   {spread.badge ? (
                                     <span className="cosmotips-free-badge">
@@ -2076,14 +2096,17 @@ function HomePageContent() {
                                     "cosmotips-tile-body mt-1",
                                     spread.id === "daily_card"
                                       ? "cosmotips-free-price"
-                                      : "text-xs font-semibold tracking-wide text-amber-100/85",
+                                      : "text-xs font-semibold tracking-wide text-amber-100/85 sm:text-sm",
                                   ].join(" ")}
                                 >
                                   {spread.meta}
                                 </p>
-                                <p className="cosmotips-tile-body mt-1 min-h-0 flex-1 text-sm leading-6 text-white/75">
-                                  {spread.desc}
-                                </p>
+                                <SelectionTileDescription
+                                  id={`tarot-${spread.id}`}
+                                  text={spread.desc}
+                                  readMoreLabel={copy.tileDescReadMore}
+                                  readLessLabel={copy.tileDescReadLess}
+                                />
                               </div>
                               <div
                                 className={[
@@ -2097,7 +2120,7 @@ function HomePageContent() {
                                 aria-hidden="true"
                               />
                             </div>
-                          </button>
+                          </div>
                         );
                       })}
                     </div>
