@@ -872,6 +872,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       natal_basic: {
         title: "Cosmic Blueprint",
         desc: "Explore the core of your birth chart and uncover the meaning behind your Sun, Moon, and Rising signs. A first glimpse into your personality, emotional world, and natural energy.",
+        freeBadge: "Free",
         priceLabel: "Free · First access",
       },
       personality: {
@@ -971,6 +972,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       natal_basic: {
         title: "Kosmiczny Profil",
         desc: "Poznaj podstawę swojego kosmogramu i odkryj znaczenie znaku Słońca, Księżyca oraz Ascendentu. To pierwsze spojrzenie na Twoją osobowość, emocje i naturalną energię.",
+        freeBadge: "Darmowe",
         priceLabel: "Gratis · Pierwszy dostęp",
       },
       personality: {
@@ -1070,6 +1072,7 @@ export const homeCopy: Record<AppLang, HomeCopy> = {
       natal_basic: {
         title: "Perfil Cósmico",
         desc: "Explora la base de tu carta natal y descubre el significado de tu Sol, Luna y Ascendente. Una primera mirada a tu personalidad, emociones y energía natural.",
+        freeBadge: "Gratis",
         priceLabel: "Gratis · Primer acceso",
       },
       personality: {

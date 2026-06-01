@@ -1929,7 +1929,7 @@ function HomePageContent() {
               <h2 className="cosmotips-heading-3">
                   1. {copy.reportSectionTitle}
               </h2>
-                <div className="grid gap-2.5 sm:grid-cols-2 sm:items-stretch">
+                <div className="grid min-w-0 gap-2.5 sm:grid-cols-2 sm:items-stretch [&>*]:min-w-0">
                   {reportCardIds.map((id) => {
                     const selected = reportType === id;
                     const c = copy.reports[id];
@@ -1943,7 +1943,7 @@ function HomePageContent() {
                           setReportType(id);
                         }}
                         className={[
-                          "flex h-full min-h-0 flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                          "flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-xl border p-3.5 text-left transition sm:p-4",
                           locked
                             ? "cursor-not-allowed border-white/10 bg-black/20 opacity-45"
                             : selected
@@ -1953,20 +1953,27 @@ function HomePageContent() {
                                 : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
                         ].join(" ")}
                       >
-                        <div className="flex min-h-0 flex-1 gap-3">
+                        <div className="flex min-h-0 min-w-0 flex-1 gap-3">
                           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                            <div className="flex shrink-0 flex-wrap items-center gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
-                              <span>{c.title}</span>
-                              {c.freeBadge ? (
-                                <span className="rounded-full border border-amber-300/45 bg-amber-400/20 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-amber-100">
+                            <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
+                              <span className="cosmotips-tile-body">{c.title}</span>
+                              {c.freeBadge && !locked ? (
+                                <span className="cosmotips-free-badge">
                                   {c.freeBadge}
                                 </span>
                               ) : null}
                             </div>
-                            <p className="mt-1 text-xs font-semibold tracking-wide text-amber-100/85">
+                            <p
+                              className={[
+                                "cosmotips-tile-body mt-1",
+                                id === "natal_basic" && !locked
+                                  ? "cosmotips-free-price"
+                                  : "text-xs font-semibold tracking-wide text-amber-100/85",
+                              ].join(" ")}
+                            >
                               {c.priceLabel}
                             </p>
-                            <p className="mt-1 min-h-0 flex-1 text-sm leading-6 text-white/75">
+                            <p className="cosmotips-tile-body mt-1 min-h-0 flex-1 text-sm leading-6 text-white/75">
                               {c.desc}
                             </p>
                           </div>
@@ -2003,7 +2010,7 @@ function HomePageContent() {
                     <h2 className="cosmotips-heading-3">
                       1. {tarot.chooseSpread}
                     </h2>
-                    <div className="grid gap-2.5 sm:grid-cols-2 sm:items-stretch">
+                    <div className="grid min-w-0 gap-2.5 sm:grid-cols-2 sm:items-stretch [&>*]:min-w-0">
                       {([
                         {
                           id: "daily_card" as const,
@@ -2038,26 +2045,35 @@ function HomePageContent() {
                               setTarotSpread(spread.id);
                             }}
                             className={[
-                              "flex h-full min-h-0 flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                              "flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-xl border p-3.5 text-left transition sm:p-4",
                               selected
                                 ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
-                                : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
+                                : spread.id === "daily_card"
+                                  ? "border-amber-300/45 bg-amber-950/20 hover:border-amber-200/50 hover:bg-amber-950/30"
+                                  : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
                             ].join(" ")}
                           >
-                            <div className="flex min-h-0 flex-1 gap-3">
+                            <div className="flex min-h-0 min-w-0 flex-1 gap-3">
                               <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                                <div className="flex shrink-0 flex-wrap items-center gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
-                                  <span>{spread.title}</span>
+                                <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
+                                  <span className="cosmotips-tile-body">{spread.title}</span>
                                   {spread.badge ? (
-                                    <span className="rounded-full border border-amber-300/45 bg-amber-400/20 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-amber-100">
+                                    <span className="cosmotips-free-badge">
                                       {spread.badge}
                                     </span>
                                   ) : null}
                                 </div>
-                                <p className="mt-1 text-xs font-semibold tracking-wide text-amber-100/85">
+                                <p
+                                  className={[
+                                    "cosmotips-tile-body mt-1",
+                                    spread.id === "daily_card"
+                                      ? "cosmotips-free-price"
+                                      : "text-xs font-semibold tracking-wide text-amber-100/85",
+                                  ].join(" ")}
+                                >
                                   {spread.meta}
                                 </p>
-                                <p className="mt-1 min-h-0 flex-1 text-sm leading-6 text-white/75">
+                                <p className="cosmotips-tile-body mt-1 min-h-0 flex-1 text-sm leading-6 text-white/75">
                                   {spread.desc}
                                 </p>
                               </div>
@@ -2579,21 +2595,21 @@ function HomePageContent() {
                   <h2 id="natal-payment-step" className="cosmotips-heading-3 scroll-mt-24">
                     3. {copy.paymentStepTitle}
                   </h2>
-                  <div className="grid gap-2.5 sm:grid-cols-2 sm:items-stretch">
+                  <div className="grid min-w-0 gap-2.5 sm:grid-cols-2 sm:items-stretch [&>*]:min-w-0">
                     <button
                       type="button"
                       onClick={() => setNatalPaymentChoice("once")}
                       className={[
-                        "flex h-full flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                        "flex h-full min-w-0 w-full flex-col overflow-hidden rounded-xl border p-3.5 text-left transition sm:p-4",
                         natalPaymentChoice === "once"
                           ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
                           : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
                       ].join(" ")}
                     >
-                      <span className="text-sm font-semibold text-white">
+                      <span className="cosmotips-tile-body text-sm font-semibold text-white">
                         ① {copy.paymentOnceTitle}
                       </span>
-                      <span className="mt-2 text-sm leading-6 text-white/75">
+                      <span className="cosmotips-tile-body mt-2 text-sm leading-6 text-white/75">
                         {natalOncePaymentHint}
                       </span>
                     </button>
@@ -2601,16 +2617,16 @@ function HomePageContent() {
                       type="button"
                       onClick={() => setNatalPaymentChoice("subscription_monthly")}
                       className={[
-                        "flex h-full flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                        "flex h-full min-w-0 w-full flex-col overflow-hidden rounded-xl border p-3.5 text-left transition sm:p-4",
                         natalPaymentChoice === "subscription_monthly"
                           ? "border-amber-300/55 bg-amber-400/15 shadow-md shadow-amber-950/25 ring-1 ring-amber-200/25"
                           : "border-amber-200/25 bg-amber-950/15 hover:border-amber-300/45 hover:bg-amber-950/25",
                       ].join(" ")}
                     >
-                      <span className="text-sm font-semibold text-amber-50">
+                      <span className="cosmotips-tile-body text-sm font-semibold text-amber-50">
                         ② {copy.paymentMonthlySubscriptionTitle}
                       </span>
-                      <span className="mt-2 text-sm leading-6 text-white/78">
+                      <span className="cosmotips-tile-body mt-2 text-sm leading-6 text-white/78">
                         {copy.paymentMonthlySubscriptionHint}
                       </span>
                     </button>
@@ -2618,16 +2634,16 @@ function HomePageContent() {
                       type="button"
                       onClick={() => setNatalPaymentChoice("subscription_yearly")}
                       className={[
-                        "flex h-full flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                        "flex h-full min-w-0 w-full flex-col overflow-hidden rounded-xl border p-3.5 text-left transition sm:p-4",
                         natalPaymentChoice === "subscription_yearly"
                           ? "border-amber-300/55 bg-amber-400/15 shadow-md shadow-amber-950/25 ring-1 ring-amber-200/25"
                           : "border-amber-200/25 bg-amber-950/15 hover:border-amber-300/45 hover:bg-amber-950/25",
                       ].join(" ")}
                     >
-                      <span className="text-sm font-semibold text-amber-50">
+                      <span className="cosmotips-tile-body text-sm font-semibold text-amber-50">
                         ③ {copy.paymentYearlySubscriptionTitle}
                       </span>
-                      <span className="mt-2 text-sm leading-6 text-white/78">
+                      <span className="cosmotips-tile-body mt-2 text-sm leading-6 text-white/78">
                         {copy.paymentYearlySubscriptionHint}
                       </span>
                     </button>
@@ -2656,21 +2672,21 @@ function HomePageContent() {
                   <h2 className="cosmotips-heading-3">
                     3. {copy.paymentStepTitle}
                   </h2>
-                  <div className="grid gap-2.5 sm:grid-cols-2 sm:items-stretch">
+                  <div className="grid min-w-0 gap-2.5 sm:grid-cols-2 sm:items-stretch [&>*]:min-w-0">
                     <button
                       type="button"
                       onClick={() => setTarotPaymentChoice("once")}
                       className={[
-                        "flex h-full flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                        "flex h-full min-w-0 w-full flex-col overflow-hidden rounded-xl border p-3.5 text-left transition sm:p-4",
                         tarotPaymentChoice === "once"
                           ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
                           : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
                       ].join(" ")}
                     >
-                      <span className="text-sm font-semibold text-white">
+                      <span className="cosmotips-tile-body text-sm font-semibold text-white">
                         ① {copy.paymentOnceTitle}
                       </span>
-                      <span className="mt-2 text-sm leading-6 text-white/75">
+                      <span className="cosmotips-tile-body mt-2 text-sm leading-6 text-white/75">
                         {copy.paymentTarotOnceHint}
                       </span>
                     </button>
@@ -2680,16 +2696,16 @@ function HomePageContent() {
                         setTarotPaymentChoice("subscription_monthly")
                       }
                       className={[
-                        "flex h-full flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                        "flex h-full min-w-0 w-full flex-col overflow-hidden rounded-xl border p-3.5 text-left transition sm:p-4",
                         tarotPaymentChoice === "subscription_monthly"
                           ? "border-amber-300/55 bg-amber-400/15 shadow-md shadow-amber-950/25 ring-1 ring-amber-200/25"
                           : "border-amber-200/25 bg-amber-950/15 hover:border-amber-300/45 hover:bg-amber-950/25",
                       ].join(" ")}
                     >
-                      <span className="text-sm font-semibold text-amber-50">
+                      <span className="cosmotips-tile-body text-sm font-semibold text-amber-50">
                         ② {copy.paymentMonthlySubscriptionTitle}
                       </span>
-                      <span className="mt-2 text-sm leading-6 text-white/78">
+                      <span className="cosmotips-tile-body mt-2 text-sm leading-6 text-white/78">
                         {copy.paymentMonthlySubscriptionHint}
                       </span>
                     </button>
@@ -2699,16 +2715,16 @@ function HomePageContent() {
                         setTarotPaymentChoice("subscription_yearly")
                       }
                       className={[
-                        "flex h-full flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                        "flex h-full min-w-0 w-full flex-col overflow-hidden rounded-xl border p-3.5 text-left transition sm:p-4",
                         tarotPaymentChoice === "subscription_yearly"
                           ? "border-amber-300/55 bg-amber-400/15 shadow-md shadow-amber-950/25 ring-1 ring-amber-200/25"
                           : "border-amber-200/25 bg-amber-950/15 hover:border-amber-300/45 hover:bg-amber-950/25",
                       ].join(" ")}
                     >
-                      <span className="text-sm font-semibold text-amber-50">
+                      <span className="cosmotips-tile-body text-sm font-semibold text-amber-50">
                         ③ {copy.paymentYearlySubscriptionTitle}
                       </span>
-                      <span className="mt-2 text-sm leading-6 text-white/78">
+                      <span className="cosmotips-tile-body mt-2 text-sm leading-6 text-white/78">
                         {copy.paymentYearlySubscriptionHint}
                       </span>
                     </button>

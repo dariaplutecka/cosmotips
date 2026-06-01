@@ -149,6 +149,22 @@ body::before {
     color: #111827;
     background-color: #ffffff;
   }
+
+  /* Selection tiles (report / tarot / payment): PL & ES copy must wrap inside cards on narrow viewports */
+  .cosmotips-tile-body {
+    @apply min-w-0 break-words text-pretty;
+    overflow-wrap: anywhere;
+  }
+
+  .cosmotips-free-badge {
+    @apply inline-flex shrink-0 items-center rounded-full border-2 border-amber-200/90 bg-gradient-to-r from-amber-400/45 to-amber-300/30 px-2.5 py-1 text-[0.72rem] font-extrabold uppercase tracking-wider text-amber-50;
+    box-shadow: 0 0 14px rgba(251, 191, 36, 0.45);
+  }
+
+  .cosmotips-free-price {
+    @apply text-sm font-bold tracking-wide text-amber-100;
+    text-shadow: 0 0 12px rgba(251, 191, 36, 0.35);
+  }
 }
 
 /* Typography scale: one body face (Lato) and three reusable heading levels. */
