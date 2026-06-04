@@ -221,7 +221,7 @@ function proUiText(lang: AppLang) {
       yearly: "Pro rocznie",
       subscriptionSuccess: "Subskrypcja Pro została aktywowana.",
       subscriptionCancelled: "Subskrypcja nie została dokończona.",
-      modalTitle: "Zaloguj się aby subskrybować",
+      modalTitle: "Zaloguj się, aby subskrybować",
       modalEmailPlaceholder: "Twój e-mail",
       modalMagicLink: "Wyślij link logowania",
       modalGoogle: "Kontynuuj z Google",

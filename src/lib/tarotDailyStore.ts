@@ -5,6 +5,12 @@ import { tarotDeck, type TarotCard } from "@/lib/tarotDeck";
 
 const DAILY_TTL_SECONDS = 60 * 60 * 24 * 3;
 const WARSAW_TIME_ZONE = "Europe/Warsaw";
+/**
+ * Bump when the daily-card prompt/wording changes so stale cached interpretations
+ * are bypassed (old keys simply expire via TTL). Cleans only this cache without
+ * touching sessions, tokens, ratings, or subscription data in Redis.
+ */
+const DAILY_INTERPRETATION_CACHE_VERSION = "v2";
 
 let redis: Redis | null | undefined;
 let missingEnvWarned = false;
@@ -56,7 +62,7 @@ function interpretationKey(
   date: string,
   personalizationKey: string,
 ): string {
-  return `tarot:daily:interpretation:${date}:${lang}:${card.id}:${card.reversed ? "r" : "u"}:${personalizationKey}`;
+  return `tarot:daily:interpretation:${DAILY_INTERPRETATION_CACHE_VERSION}:${date}:${lang}:${card.id}:${card.reversed ? "r" : "u"}:${personalizationKey}`;
 }
 
 function hashToInt(input: string): number {

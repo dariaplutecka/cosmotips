@@ -295,7 +295,7 @@ export const tarotCopy: Record<
     generating: "Leyendo las cartas...",
     emailSent: "Tu tirada ha sido enviada a {email}.",
     subTeaser: "Próximamente: una suscripción de tarot con tiradas regulares y una guía mensual más profunda.",
-    notifyMe: "Avisadme",
+    notifyMe: "Avísame",
     oneToken: "5 EUR",
     enterEmail: "Introduce tu correo",
     generateReading: "Generar tirada",
@@ -725,7 +725,8 @@ export const successUi: Record<
     missingSession: "Brak identyfikatora sesji Stripe.",
     generateFailedGeneric: "Coś poszło nie tak.",
     rateTitle: "Jak oceniasz ten raport?",
-    rateAriaLabel: (n: number) => `Oceń na ${n} gwiazdek z 5`,
+    rateAriaLabel: (n: number) =>
+      `Oceń na ${n} ${n === 1 ? "gwiazdkę" : n >= 2 && n <= 4 ? "gwiazdki" : "gwiazdek"} z 5`,
     rateThanks: "Dziękujemy — Twoja ocena pomaga nam rozwijać usługę.",
     rateAlreadySubmitted: "Ta sesja już została oceniona. Dziękujemy!",
     rateSubmitFailed:
@@ -776,7 +777,7 @@ export const successUi: Record<
     rateThanks:
       "Gracias — tu valoración nos ayuda a mejorar.",
     rateAlreadySubmitted:
-      "Ya valoraste esta compra/informe. ¡Gracias!",
+      "Ya valoraste este informe. ¡Gracias!",
     rateSubmitFailed:
       "No pudimos guardar la valoración. Puedes saltar este paso.",
     purchaseReceiptStripeNote:
