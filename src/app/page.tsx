@@ -1930,7 +1930,7 @@ function HomePageContent() {
               <h2 className="cosmotips-heading-3">
                   1. {copy.reportSectionTitle}
               </h2>
-                <div className="grid min-w-0 gap-2.5 sm:grid-cols-2 sm:items-start [&>*]:min-w-0">
+                <div className="grid min-w-0 gap-2.5 sm:grid-cols-2 sm:items-stretch [&>*]:min-w-0">
                   {reportCardIds.map((id) => {
                     const selected = reportType === id;
                     const c = copy.reports[id];
@@ -1955,7 +1955,7 @@ function HomePageContent() {
                           }
                         }}
                         className={[
-                          "flex w-full min-w-0 flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                          "flex h-full w-full min-w-0 flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
                           locked
                             ? "cursor-not-allowed border-white/10 bg-black/20 opacity-45"
                             : "cursor-pointer",
@@ -1967,8 +1967,8 @@ function HomePageContent() {
                           .filter(Boolean)
                           .join(" ")}
                       >
-                        <div className="flex min-w-0 gap-3">
-                          <div className="flex min-w-0 flex-1 flex-col">
+                        <div className="flex min-h-0 min-w-0 flex-1 gap-3">
+                          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                             <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
                               <span className="cosmotips-tile-body">{c.title}</span>
                               {c.freeBadge && !locked ? (
@@ -2029,7 +2029,7 @@ function HomePageContent() {
                     <h2 className="cosmotips-heading-3">
                       1. {tarot.chooseSpread}
                     </h2>
-                    <div className="grid min-w-0 gap-2.5 sm:grid-cols-2 sm:items-start [&>*]:min-w-0">
+                    <div className="grid min-w-0 gap-2.5 sm:grid-cols-2 sm:items-stretch [&>*]:min-w-0">
                       {([
                         {
                           id: "daily_card" as const,
@@ -2075,14 +2075,14 @@ function HomePageContent() {
                               }
                             }}
                             className={[
-                              "flex w-full min-w-0 cursor-pointer flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
+                              "flex h-full w-full min-w-0 cursor-pointer flex-col rounded-xl border p-3.5 text-left transition sm:p-4",
                               selected
                                 ? "border-violet-300/55 bg-violet-400/20 shadow-md shadow-violet-950/30 ring-1 ring-violet-200/25"
                                 : "border-violet-200/25 bg-black/25 hover:border-violet-300/40 hover:bg-violet-500/10",
                             ].join(" ")}
                           >
-                            <div className="flex min-w-0 gap-3">
-                              <div className="flex min-w-0 flex-1 flex-col">
+                            <div className="flex min-h-0 min-w-0 flex-1 gap-3">
+                              <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                                 <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm font-semibold text-white sm:text-[0.9375rem]">
                                   <span className="cosmotips-tile-body">{spread.title}</span>
                                   {spread.badge ? (

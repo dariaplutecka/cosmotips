@@ -37,7 +37,7 @@ export function SelectionTileDescription(props: {
   const showToggle = clamped || expanded;
 
   return (
-    <div className="mt-1 min-w-0">
+    <div className="mt-1 min-w-0 flex-1">
       <p
         ref={descRef}
         id={`${id}-desc`}
